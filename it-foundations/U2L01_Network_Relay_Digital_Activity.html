@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Network Relay — Route the Message</title>
+<style>
+  :root {
+    --navy: #0F1B2D;
+    --teal: #0E7C7B;
+    --mint: #6FC3B4;
+    --amber: #C97A2B;
+    --light: #EAF4F4;
+    --gray: #9AA6A6;
+    --danger: #B5473A;
+    --white: #FFFFFF;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: Calibri, "Segoe UI", sans-serif;
+    background: var(--light);
+    color: #1a1a1a;
+    min-height: 100vh;
+  }
+  #app { max-width: 1100px; margin: 0 auto; padding: 18px 20px 40px; }
+
+  header {
+    background: var(--navy);
+    color: white;
+    border-radius: 14px;
+    padding: 16px 22px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+  header h1 {
+    font-family: Cambria, Georgia, serif;
+    font-size: 1.5rem;
+    margin: 0;
+    letter-spacing: 0.02em;
+  }
+  header .sub { font-size: 0.85rem; color: var(--mint); margin-top: 2px; }
+  .lang-toggle {
+    background: transparent;
+    border: 1.5px solid var(--mint);
+    color: var(--mint);
+    border-radius: 999px;
+    padding: 6px 14px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    font-weight: 600;
+  }
+  .lang-toggle:hover { background: rgba(111,195,180,0.15); }
+
+  .progress-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .progress-dot {
+    flex: 1;
+    height: 8px;
+    border-radius: 4px;
+    background: #D7E4E4;
+  }
+  .progress-dot.done { background: var(--teal); }
+  .progress-dot.current { background: var(--amber); }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 2.1fr 1fr;
+    gap: 18px;
+  }
+  @media (max-width: 820px) {
+    .layout { grid-template-columns: 1fr; }
+  }
+
+  .card {
+    background: white;
+    border-radius: 14px;
+    padding: 18px 20px;
+    box-shadow: 0 1px 3px rgba(15,27,45,0.08);
+  }
+
+  .map-card svg { width: 100%; height: auto; display: block; }
+
+  .node circle { stroke-width: 3; cursor: pointer; transition: all 0.15s ease; }
+  .node text { font-family: Calibri, sans-serif; font-weight: 700; font-size: 15px; fill: white; pointer-events: none; }
+  .node.blocked circle { fill: var(--gray); cursor: not-allowed; }
+  .node.blocked .x-mark { stroke: var(--danger); stroke-width: 3; }
+  .node.available circle { fill: var(--teal); }
+  .node.available:hover circle { fill: var(--amber); }
+  .node.sender circle { fill: var(--navy); }
+  .node.target circle { fill: var(--mint); }
+  .node.in-path circle { fill: var(--amber); }
+  .node.disabled circle { fill: #C9D6D6; cursor: default; }
+
+  .edge { stroke: #C7D6D6; stroke-width: 4; }
+  .edge.in-path { stroke: var(--amber); stroke-width: 6; }
+
+  .traveler {
+    fill: var(--navy);
+    stroke: white;
+    stroke-width: 2;
+  }
+
+  .sidebar { display: flex; flex-direction: column; gap: 14px; }
+
+  .directory h3, .status h3 {
+    font-family: Cambria, Georgia, serif;
+    color: var(--teal);
+    margin: 0 0 8px;
+    font-size: 1.05rem;
+  }
+  .directory ul { list-style: none; margin: 0; padding: 0; }
+  .directory li {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    border-bottom: 1px solid #EEF4F4;
+    font-size: 0.92rem;
+  }
+  .directory .addr { font-weight: 700; color: var(--navy); }
+  .directory .addr.hidden-addr { color: var(--gray); font-style: italic; font-weight: 400; }
+
+  .target-banner {
+    background: var(--light);
+    border-left: 4px solid var(--teal);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 0.95rem;
+    margin-bottom: 10px;
+  }
+  .target-banner .es { color: #555; font-style: italic; font-size: 0.86rem; display: block; margin-top: 4px; }
+
+  button.primary {
+    background: var(--teal);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    width: 100%;
+  }
+  button.primary:hover { background: #0b6362; }
+  button.primary:disabled { background: #C9D6D6; cursor: not-allowed; }
+
+  button.secondary {
+    background: transparent;
+    color: var(--teal);
+    border: 1.5px solid var(--teal);
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 6px;
+  }
+
+  .feedback {
+    min-height: 40px;
+    font-size: 0.92rem;
+    padding: 8px 0;
+  }
+  .feedback.error { color: var(--danger); font-weight: 600; }
+  .feedback.info { color: #444; }
+  .feedback .es { display: block; font-style: italic; color: #666; font-size: 0.85rem; margin-top: 3px; }
+
+  .instructions {
+    font-size: 0.88rem;
+    color: #444;
+    line-height: 1.45;
+    margin-bottom: 10px;
+  }
+  .instructions .es { display: block; font-style: italic; color: #666; margin-top: 4px; }
+
+  /* Success / summary overlay */
+  .overlay {
+    position: fixed; inset: 0;
+    background: rgba(15,27,45,0.55);
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+    z-index: 20;
+  }
+  .overlay.hidden { display: none; }
+  .modal {
+    background: white;
+    border-radius: 16px;
+    max-width: 560px;
+    width: 100%;
+    padding: 28px 26px;
+    max-height: 86vh;
+    overflow-y: auto;
+  }
+  .modal h2 {
+    font-family: Cambria, Georgia, serif;
+    color: var(--navy);
+    margin-top: 0;
+  }
+  .modal p.es { font-style: italic; color: #555; }
+  .vocab-card {
+    background: var(--light);
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+  }
+  .vocab-card b { color: var(--teal); }
+  .vocab-card .es { display: block; font-style: italic; color: #555; font-size: 0.88rem; margin-top: 3px; }
+
+  .modal-buttons { display: flex; gap: 10px; margin-top: 16px; }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div>
+      <h1 id="title">Network Relay</h1>
+      <div class="sub" id="subtitle">Route the message — U2L01 Digital Activity</div>
+    </div>
+    <button class="lang-toggle" id="langToggle" onclick="toggleLang()">Español</button>
+  </header>
+
+  <div class="progress-row" id="progressRow"></div>
+
+  <div class="layout">
+    <div class="card map-card">
+      <div class="instructions" id="instructionsBox"></div>
+      <svg id="mapSvg" viewBox="0 0 900 500" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+
+    <div class="sidebar">
+      <div class="card directory">
+        <h3 id="directoryTitle">Destination Directory</h3>
+        <ul id="directoryList"></ul>
+      </div>
+
+      <div class="card status">
+        <div class="target-banner" id="targetBanner"></div>
+        <button class="primary" id="lookupBtn" onclick="lookupAddress()"></button>
+        <div class="feedback" id="feedbackBox"></div>
+        <button class="secondary" id="resetBtn" onclick="resetRoute()"></button>
+        <button class="secondary" id="outageBtn" onclick="reportOutage()" style="display:none; border-color:#B5473A; color:#B5473A;"></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="overlay hidden" id="overlay">
+  <div class="modal" id="modalContent"></div>
+</div>
+
+<script>
+const STR = {
+  en: {
+    title: "Network Relay",
+    subtitle: "Route the message — U2L01 Digital Activity",
+    langBtn: "Español",
+    directoryTitle: "Destination Directory",
+    lookupIdle: "Look up address",
+    lookupDone: "Address found — node {node}",
+    instructions: "Click the Sender node to start, then click connected nodes to build a path to the destination. A grayed-out node is down — find another way around it.",
+    resetRoute: "Reset route",
+    incoming: "Someone wants to send a message to:",
+    invalidLink: "No direct link between {a} and {b} — check the map for a connected path.",
+    blockedClick: "That node is down right now. Route around it.",
+    needLookup: "Look up the address first — you can't route to a name, only to an address.",
+    startAtSender: "Start by clicking the Sender node (S).",
+    reachedTarget: "Message delivered!",
+    roundLabel: "Round {n} of {total}",
+    successTitle: "Delivered!",
+    successBodyPlain: "Your message found its way to {name}.",
+    successBodyReroute: "Node {blocked} was down, but your message still got through — because more than one path existed.",
+    successBodyWaypoint: "Notice your message passed straight through Coach's Office on its way to {name}. A device can be a final destination AND a relay for someone else's traffic at the same time.",
+    nextRound: "Next round",
+    finishGame: "See summary",
+    names: { R1: "the Library", R2: "Coach's Office", R3: "Maria's Locker" },
+    summaryTitle: "Nice work — here's what you just did",
+    vocab: [
+      { term: "IP Address", def: "The node letter you looked up — a unique address that identifies where something lives on the network." },
+      { term: "DNS (Domain Name System)", def: "The directory you checked before sending anything. It's how devices turn a name into an address." },
+      { term: "Router", def: "Every node your message passed through — each one just passes information toward its destination." },
+      { term: "Redundancy", def: "Having more than one path available. When a node went down, another path still got your message there." },
+      { term: "Scalability", def: "A network's ability to grow and keep working as more paths and nodes are added." },
+      { term: "Outage", def: "When every path to a destination is down at once. No amount of clever rerouting can fix that — it takes a repair. That's what troubleshooting is for." }
+    ],
+    playAgain: "Play again",
+    mapChangedNote: "Note: the connections between nodes have changed for this round — don't assume last round's path still works.",
+    reportOutageIdle: "I don't think this can be delivered",
+    reportOutageWrongTitle: "Not quite — keep looking",
+    reportOutageWrong: "There's still at least one working path from here. Try a few more connections before deciding it's impossible.",
+    reportOutageWrongEs: "Todavía existe al menos un camino que funciona desde aquí. Prueba algunas conexiones más antes de decidir que es imposible.",
+    outageSuccessTitle: "Correct diagnosis!",
+    outageSuccessBody: "Every path to {name} is genuinely blocked right now. No rerouting can fix that — this is a real outage, and it takes an actual repair, not a cleverer route. We'll come back to exactly this kind of situation when we get to troubleshooting.",
+  },
+  es: {
+    title: "Retransmisión de Red",
+    subtitle: "Enruta el mensaje — Actividad Digital U2L01",
+    langBtn: "English",
+    directoryTitle: "Directorio de Destinos",
+    lookupIdle: "Buscar dirección",
+    lookupDone: "Dirección encontrada — nodo {node}",
+    instructions: "Haz clic en el nodo Remitente para comenzar, luego haz clic en nodos conectados para construir un camino hacia el destino. Un nodo en gris está caído — busca otra ruta.",
+    resetRoute: "Reiniciar ruta",
+    incoming: "Alguien quiere enviar un mensaje a:",
+    invalidLink: "No hay conexión directa entre {a} y {b} — revisa el mapa para encontrar un camino conectado.",
+    blockedClick: "Ese nodo está caído en este momento. Busca otra ruta.",
+    needLookup: "Primero busca la dirección — no puedes enrutar a un nombre, solo a una dirección.",
+    startAtSender: "Comienza haciendo clic en el nodo Remitente (S).",
+    reachedTarget: "¡Mensaje entregado!",
+    roundLabel: "Ronda {n} de {total}",
+    successTitle: "¡Entregado!",
+    successBodyPlain: "Tu mensaje llegó a {name}.",
+    successBodyReroute: "El nodo {blocked} estaba caído, pero tu mensaje llegó de todas formas — porque existía más de un camino.",
+    successBodyWaypoint: "Nota que tu mensaje pasó directamente por la Oficina del Entrenador en camino a {name}. Un dispositivo puede ser un destino final Y un relevo para el tráfico de alguien más, al mismo tiempo.",
+    nextRound: "Siguiente ronda",
+    finishGame: "Ver resumen",
+    names: { R1: "la Biblioteca", R2: "la Oficina del Entrenador", R3: "el Casillero de María" },
+    summaryTitle: "Buen trabajo — esto es lo que acabas de hacer",
+    vocab: [
+      { term: "Dirección IP", def: "La letra del nodo que buscaste — una dirección única que identifica dónde vive algo en la red." },
+      { term: "DNS (Sistema de Nombres de Dominio)", def: "El directorio que revisaste antes de enviar algo. Así es como los dispositivos convierten un nombre en una dirección." },
+      { term: "Router (enrutador)", def: "Cada nodo por el que pasó tu mensaje — cada uno solo pasa la información hacia su destino." },
+      { term: "Redundancia", def: "Tener más de un camino disponible. Cuando un nodo se cayó, otro camino igual llevó tu mensaje." },
+      { term: "Escalabilidad", def: "La capacidad de una red para crecer y seguir funcionando a medida que se agregan más caminos y nodos." },
+      { term: "Interrupción (Outage)", def: "Cuando todos los caminos hacia un destino están caídos a la vez. Ninguna ruta ingeniosa puede arreglar eso — se necesita una reparación. Para eso sirve la resolución de problemas." }
+    ],
+    playAgain: "Jugar de nuevo",
+    mapChangedNote: "Nota: las conexiones entre nodos cambiaron para esta ronda — no asumas que el camino de la ronda anterior todavía funciona.",
+    reportOutageIdle: "Creo que esto no se puede entregar",
+    reportOutageWrongTitle: "No exactamente — sigue buscando",
+    reportOutageWrong: "Todavía existe al menos un camino que funciona desde aquí. Prueba algunas conexiones más antes de decidir que es imposible.",
+    outageSuccessTitle: "¡Diagnóstico correcto!",
+    outageSuccessBody: "Todos los caminos hacia {name} están realmente bloqueados en este momento. Ninguna ruta puede arreglar eso — esto es una interrupción real, y se necesita una reparación de verdad, no una ruta más ingeniosa. Volveremos exactamente a este tipo de situación cuando lleguemos a resolución de problemas.",
+  }
+};
+
+let lang = "en";
+
+// --- Graph data: node positions are shared across map variants (same "building"),
+// but which nodes connect to which ("which hallways exist") changes per map. ---
+const NODES = {
+  S:  { x: 70,  y: 250, label: "S",  type: "sender" },
+  A:  { x: 280, y: 130, label: "A",  type: "relay" },
+  B:  { x: 280, y: 370, label: "B",  type: "relay" },
+  C:  { x: 520, y: 130, label: "C",  type: "relay" },
+  D:  { x: 520, y: 370, label: "D",  type: "relay" },
+  R1: { x: 800, y: 70,  label: "R1", type: "dest" },
+  R2: { x: 800, y: 250, label: "R2", type: "dest" },
+  R3: { x: 800, y: 430, label: "R3", type: "dest" }
+};
+
+const MAPS = {
+  map1: [["S","A"],["S","B"],["A","C"],["A","D"],["B","C"],["B","D"],["C","R1"],["C","R2"],["C","R3"],["D","R2"],["D","R3"]],
+  map2: [["S","A"],["S","B"],["A","B"],["A","C"],["B","D"],["C","D"],["C","R1"],["D","R1"],["C","R2"],["D","R3"]],
+  map3: [["S","A"],["S","B"],["A","C"],["A","D"],["B","C"],["B","D"],["C","R1"],["C","R2"],["D","R2"],["R2","R3"]]
+};
+
+function buildAdj(edges) {
+  const adj = {};
+  Object.keys(NODES).forEach(n => adj[n] = new Set());
+  edges.forEach(([a,b]) => { adj[a].add(b); adj[b].add(a); });
+  return adj;
+}
+
+function bfsReachable(adj, start, target, blocked) {
+  const seen = new Set([start]);
+  const q = [start];
+  while (q.length) {
+    const cur = q.shift();
+    if (cur === target) return true;
+    for (const next of adj[cur]) {
+      if (blocked.includes(next)) continue;
+      if (!seen.has(next)) { seen.add(next); q.push(next); }
+    }
+  }
+  return false;
+}
+
+const ROUNDS = [
+  { mapId: "map1", target: "R1", blocked: [] },
+  { mapId: "map1", target: "R2", blocked: ["C"] },
+  { mapId: "map1", target: "R3", blocked: ["D"] },
+  { mapId: "map2", target: "R2", blocked: [] },
+  { mapId: "map2", target: "R1", blocked: ["D"] },
+  { mapId: "map3", target: "R3", blocked: [], viaWaypoint: "R2" },
+  { mapId: "map1", target: "R1", blocked: ["A","B"] }
+];
+
+// --- State ---
+let state = {
+  round: 0,
+  lookedUp: false,
+  path: [],
+  finished: false
+};
+
+function currentEdges() { return MAPS[currentRound().mapId]; }
+function currentAdj() { return buildAdj(currentEdges()); }
+
+function t(key, vars) {
+  let s = STR[lang][key];
+  if (vars) Object.keys(vars).forEach(k => s = s.replace("{" + k + "}", vars[k]));
+  return s;
+}
+
+function toggleLang() {
+  lang = lang === "en" ? "es" : "en";
+  renderStatic();
+  render();
+}
+
+function renderStatic() {
+  document.getElementById("title").textContent = t("title");
+  document.getElementById("subtitle").textContent = t("subtitle");
+  document.getElementById("langToggle").textContent = t("langBtn");
+  document.getElementById("directoryTitle").textContent = t("directoryTitle");
+  document.getElementById("resetBtn").textContent = t("resetRoute");
+  const ins = STR[lang].instructions;
+  const insEn = STR.en.instructions, insEs = STR.es.instructions;
+  document.getElementById("instructionsBox").innerHTML =
+    lang === "en"
+      ? insEn + "<span class='es'>" + insEs + "</span>"
+      : insEs + "<span class='es'>" + insEn + "</span>";
+}
+
+function currentRound() { return ROUNDS[state.round]; }
+
+function buildDirectory() {
+  const list = document.getElementById("directoryList");
+  list.innerHTML = "";
+  ["R1","R2","R3"].forEach(nodeId => {
+    const li = document.createElement("li");
+    const nameSpan = document.createElement("span");
+    nameSpan.textContent = STR[lang].names[nodeId];
+    const addrSpan = document.createElement("span");
+    const isTarget = currentRound().target === nodeId;
+    if (isTarget && state.lookedUp) {
+      addrSpan.className = "addr";
+      addrSpan.textContent = nodeId;
+    } else {
+      addrSpan.className = "addr hidden-addr";
+      addrSpan.textContent = "?";
+    }
+    li.appendChild(nameSpan);
+    li.appendChild(addrSpan);
+    list.appendChild(li);
+  });
+}
+
+function buildProgress() {
+  const row = document.getElementById("progressRow");
+  row.innerHTML = "";
+  for (let i = 0; i < ROUNDS.length; i++) {
+    const dot = document.createElement("div");
+    dot.className = "progress-dot" + (i < state.round ? " done" : i === state.round ? " current" : "");
+    row.appendChild(dot);
+  }
+}
+
+function setFeedback(msg, type) {
+  const box = document.getElementById("feedbackBox");
+  box.className = "feedback" + (type ? " " + type : "");
+  box.textContent = msg;
+}
+
+function buildTargetBanner() {
+  const name = STR[lang].names[currentRound().target];
+  const nameOther = lang === "en" ? STR.es.names[currentRound().target] : STR.en.names[currentRound().target];
+  const banner = document.getElementById("targetBanner");
+  let html = `<strong>${t("roundLabel", {n: state.round + 1, total: ROUNDS.length})}</strong><br>${t("incoming")} <b>${name}</b>` +
+    `<span class="es">${lang === "en" ? STR.es.incoming : STR.en.incoming} <b>${nameOther}</b></span>`;
+  const prevMapId = state.round > 0 ? ROUNDS[state.round - 1].mapId : null;
+  if (prevMapId && prevMapId !== currentRound().mapId) {
+    html += `<div style="margin-top:8px;color:#B5473A;font-weight:600;font-size:0.85rem;">${t("mapChangedNote")}</div>`;
+  }
+  banner.innerHTML = html;
+}
+
+function buildLookupButton() {
+  const btn = document.getElementById("lookupBtn");
+  if (state.lookedUp) {
+    btn.textContent = t("lookupDone", { node: currentRound().target });
+    btn.disabled = true;
+  } else {
+    btn.textContent = t("lookupIdle");
+    btn.disabled = false;
+  }
+}
+
+function lookupAddress() {
+  state.lookedUp = true;
+  render();
+  setFeedback(t("startAtSender"), "info");
+}
+
+function resetRoute() {
+  state.path = [];
+  render();
+}
+
+function reportOutage() {
+  const round = currentRound();
+  const adj = currentAdj();
+  const reachable = bfsReachable(adj, state.path[state.path.length - 1] || "S", round.target, round.blocked);
+  if (reachable) {
+    setFeedback(t("reportOutageWrong"), "error");
+  } else {
+    state.finished = true;
+    showOutageSuccess();
+  }
+}
+
+function showOutageSuccess() {
+  const round = currentRound();
+  const overlay = document.getElementById("overlay");
+  const modal = document.getElementById("modalContent");
+  const isLast = state.round === ROUNDS.length - 1;
+  const nameEn = STR.en.names[round.target], nameEs = STR.es.names[round.target];
+  const bodyEn = STR.en.outageSuccessBody.replace("{name}", nameEn);
+  const bodyEs = STR.es.outageSuccessBody.replace("{name}", nameEs);
+  modal.innerHTML = `
+    <h2>${t("outageSuccessTitle")}</h2>
+    <p>${lang === "en" ? bodyEn : bodyEs}</p>
+    <p class="es">${lang === "en" ? bodyEs : bodyEn}</p>
+    <div class="modal-buttons">
+      <button class="primary" id="continueBtn">${isLast ? t("finishGame") : t("nextRound")}</button>
+    </div>
+  `;
+  document.getElementById("continueBtn").onclick = () => {
+    overlay.classList.add("hidden");
+    if (isLast) {
+      showSummary();
+    } else {
+      state.round += 1;
+      state.lookedUp = false;
+      state.path = [];
+      state.finished = false;
+      render();
+    }
+  };
+  overlay.classList.remove("hidden");
+}
+
+function nodeClass(id) {
+  const round = currentRound();
+  const classes = ["node"];
+  if (id === "S") classes.push("sender");
+  else if (round.blocked.includes(id)) classes.push("blocked");
+  else classes.push("available");
+  if (id === round.target && state.lookedUp) classes.push("target");
+  if (state.path.includes(id)) classes.push("in-path");
+  if (!state.lookedUp && id !== "S") classes.push("disabled");
+  return classes.join(" ");
+}
+
+function drawMap() {
+  const svg = document.getElementById("mapSvg");
+  svg.innerHTML = "";
+  const ns = "http://www.w3.org/2000/svg";
+
+  // edges first
+  currentEdges().forEach(([a,b]) => {
+    const line = document.createElementNS(ns, "line");
+    const inPath = isEdgeInPath(a,b);
+    line.setAttribute("x1", NODES[a].x);
+    line.setAttribute("y1", NODES[a].y);
+    line.setAttribute("x2", NODES[b].x);
+    line.setAttribute("y2", NODES[b].y);
+    line.setAttribute("class", "edge" + (inPath ? " in-path" : ""));
+    svg.appendChild(line);
+  });
+
+  // nodes
+  Object.keys(NODES).forEach(id => {
+    const n = NODES[id];
+    const g = document.createElementNS(ns, "g");
+    g.setAttribute("class", nodeClass(id));
+    g.setAttribute("transform", `translate(${n.x},${n.y})`);
+    g.onclick = () => handleNodeClick(id);
+
+    const circle = document.createElementNS(ns, "circle");
+    circle.setAttribute("r", n.type === "dest" ? 30 : 26);
+    g.appendChild(circle);
+
+    if (currentRound().blocked.includes(id)) {
+      const x1 = document.createElementNS(ns, "line");
+      x1.setAttribute("x1", -12); x1.setAttribute("y1", -12);
+      x1.setAttribute("x2", 12); x1.setAttribute("y2", 12);
+      x1.setAttribute("class", "x-mark");
+      const x2 = document.createElementNS(ns, "line");
+      x2.setAttribute("x1", 12); x2.setAttribute("y1", -12);
+      x2.setAttribute("x2", -12); x2.setAttribute("y2", 12);
+      x2.setAttribute("class", "x-mark");
+      g.appendChild(x1); g.appendChild(x2);
+    } else {
+      const text = document.createElementNS(ns, "text");
+      text.setAttribute("text-anchor", "middle");
+      text.setAttribute("dy", "5");
+      text.textContent = id;
+      g.appendChild(text);
+    }
+
+    // destination name label under node
+    if (n.type === "dest") {
+      const label = document.createElementNS(ns, "text");
+      label.setAttribute("text-anchor", "middle");
+      label.setAttribute("y", 48);
+      label.setAttribute("fill", "#333");
+      label.setAttribute("font-size", "13");
+      label.setAttribute("font-family", "Calibri, sans-serif");
+      label.textContent = STR[lang].names[id];
+      svg.appendChild(label.cloneNode(true));
+      const labelPositioned = svg.lastChild;
+      labelPositioned.setAttribute("x", n.x);
+      labelPositioned.setAttribute("y", n.y + 48);
+    }
+    if (n.type === "sender") {
+      const label = document.createElementNS(ns, "text");
+      label.setAttribute("text-anchor", "middle");
+      label.setAttribute("fill", "#333");
+      label.setAttribute("font-size", "13");
+      label.setAttribute("font-family", "Calibri, sans-serif");
+      label.setAttribute("x", n.x);
+      label.setAttribute("y", n.y + 48);
+      label.textContent = lang === "en" ? "Sender" : "Remitente";
+      svg.appendChild(label);
+    }
+
+    svg.appendChild(g);
+  });
+}
+
+function isEdgeInPath(a, b) {
+  for (let i = 0; i < state.path.length - 1; i++) {
+    if ((state.path[i] === a && state.path[i+1] === b) || (state.path[i] === b && state.path[i+1] === a)) return true;
+  }
+  return false;
+}
+
+function handleNodeClick(id) {
+  if (state.finished) return;
+  const round = currentRound();
+
+  if (!state.lookedUp) {
+    setFeedback(t("needLookup"), "error");
+    return;
+  }
+  if (round.blocked.includes(id)) {
+    setFeedback(t("blockedClick"), "error");
+    return;
+  }
+
+  if (state.path.length === 0) {
+    if (id !== "S") {
+      setFeedback(t("startAtSender"), "error");
+      return;
+    }
+    state.path.push("S");
+    render();
+    return;
+  }
+
+  const last = state.path[state.path.length - 1];
+  if (id === last) return;
+
+  if (!currentAdj()[last].has(id)) {
+    setFeedback(t("invalidLink", { a: last, b: id }), "error");
+    return;
+  }
+
+  state.path.push(id);
+  setFeedback("", "");
+  render();
+
+  if (id === round.target) {
+    state.finished = true;
+    setTimeout(() => showSuccess(), 350);
+  }
+}
+
+function showSuccess() {
+  const round = currentRound();
+  const overlay = document.getElementById("overlay");
+  const modal = document.getElementById("modalContent");
+  const isLast = state.round === ROUNDS.length - 1;
+  const nameEn = STR.en.names[round.target], nameEs = STR.es.names[round.target];
+  let bodyKey = "successBodyPlain";
+  if (round.viaWaypoint && state.path.includes(round.viaWaypoint)) bodyKey = "successBodyWaypoint";
+  else if (round.blocked.length) bodyKey = "successBodyReroute";
+  const bodyEn = STR.en[bodyKey].replace("{name}", nameEn).replace("{blocked}", round.blocked[0]);
+  const bodyEs = STR.es[bodyKey].replace("{name}", nameEs).replace("{blocked}", round.blocked[0]);
+
+  modal.innerHTML = `
+    <h2>${t("successTitle")}</h2>
+    <p>${lang === "en" ? bodyEn : bodyEs}</p>
+    <p class="es">${lang === "en" ? bodyEs : bodyEn}</p>
+    <div class="modal-buttons">
+      <button class="primary" id="continueBtn">${isLast ? t("finishGame") : t("nextRound")}</button>
+    </div>
+  `;
+  document.getElementById("continueBtn").onclick = () => {
+    overlay.classList.add("hidden");
+    if (isLast) {
+      showSummary();
+    } else {
+      state.round += 1;
+      state.lookedUp = false;
+      state.path = [];
+      state.finished = false;
+      render();
+    }
+  };
+  overlay.classList.remove("hidden");
+}
+
+function showSummary() {
+  const overlay = document.getElementById("overlay");
+  const modal = document.getElementById("modalContent");
+  const vocab = STR[lang].vocab;
+  const vocabOther = lang === "en" ? STR.es.vocab : STR.en.vocab;
+  let cardsHtml = "";
+  vocab.forEach((v, i) => {
+    cardsHtml += `<div class="vocab-card"><b>${v.term}</b> — ${v.def}<span class="es"><b>${vocabOther[i].term}</b> — ${vocabOther[i].def}</span></div>`;
+  });
+  modal.innerHTML = `
+    <h2>${t("summaryTitle")}</h2>
+    ${cardsHtml}
+    <div class="modal-buttons">
+      <button class="primary" id="restartBtn">${t("playAgain")}</button>
+    </div>
+  `;
+  document.getElementById("restartBtn").onclick = () => {
+    state = { round: 0, lookedUp: false, path: [], finished: false };
+    overlay.classList.add("hidden");
+    render();
+  };
+  overlay.classList.remove("hidden");
+}
+
+function render() {
+  buildProgress();
+  buildDirectory();
+  buildTargetBanner();
+  buildLookupButton();
+  drawMap();
+  const outageBtn = document.getElementById("outageBtn");
+  outageBtn.textContent = t("reportOutageIdle");
+  outageBtn.style.display = (state.lookedUp && !state.finished) ? "block" : "none";
+}
+
+renderStatic();
+render();
+</script>
+</body>
+</html>
