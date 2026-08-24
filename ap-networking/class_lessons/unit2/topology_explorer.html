@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bulldog Networking — Network Topology Explorer</title>
+<style>
+  :root{
+    --navy:#0B1F3A;
+    --navy-2:#123058;
+    --green:#8FC53E;
+    --green-dark:#6EA22A;
+    --cream:#F4F1E9;
+    --caution:#E8A33D;
+    --error:#C1443C;
+    --ink:#1B2430;
+    --line-off:#c9c2ab;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    background:linear-gradient(180deg,var(--navy) 0%, var(--navy-2) 100%);
+    color:var(--cream);
+    min-height:100vh;
+    padding:24px;
+  }
+  h1,h2,h3{font-family:'Space Grotesk','Inter',sans-serif;margin:0;}
+  .wrap{max-width:1180px;margin:0 auto;}
+
+  .masthead{margin-bottom:16px;}
+  .kicker{
+    font-size:12px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--green);font-weight:700;
+  }
+  .masthead h1{font-size:26px;margin-top:2px;}
+
+  /* TABS */
+  .tabbar{
+    display:flex;gap:6px;margin:18px 0 20px 0;
+    border-bottom:1.5px solid rgba(244,241,233,.15);
+  }
+  .tab-btn{
+    background:transparent;border:none;color:rgba(244,241,233,.55);
+    font-family:inherit;font-size:14px;font-weight:700;
+    padding:10px 6px;cursor:pointer;position:relative;
+  }
+  .tab-btn.active{color:var(--cream);}
+  .tab-btn.active::after{
+    content:"";position:absolute;left:0;right:0;bottom:-1.5px;height:3px;
+    background:var(--green);border-radius:2px;
+  }
+
+  .panel{display:none;}
+  .panel.active{display:block;}
+
+  /* EVOLUTION STAGE STEPPER */
+  .stepper{
+    display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;
+  }
+  .step-btn{
+    flex:1;min-width:110px;
+    background:rgba(244,241,233,.06);
+    border:1.5px solid rgba(244,241,233,.18);
+    color:var(--cream);
+    border-radius:10px;
+    padding:10px 12px;
+    cursor:pointer;
+    font-family:inherit;
+    text-align:left;
+    transition:all .15s ease;
+  }
+  .step-btn .num{font-size:10.5px;color:var(--green);font-weight:800;letter-spacing:.08em;}
+  .step-btn .lab{font-size:13.5px;font-weight:700;margin-top:2px;}
+  .step-btn.active{background:var(--green);border-color:var(--green);}
+  .step-btn.active .num, .step-btn.active .lab{color:var(--navy);}
+
+  .stage-grid{
+    display:grid;
+    grid-template-columns:1fr 300px;
+    gap:20px;
+    align-items:start;
+  }
+  @media (max-width:860px){.stage-grid{grid-template-columns:1fr;}}
+
+  .card{
+    background:var(--cream);color:var(--ink);
+    border-radius:14px;padding:18px 20px;
+    box-shadow:0 10px 24px rgba(0,0,0,.25);
+  }
+  .card h3{font-size:15.5px;margin-bottom:6px;}
+  .card p{font-size:13.5px;line-height:1.55;margin:0;}
+  .callout{
+    border-left:3px solid var(--green-dark);
+    background:#fff;padding:9px 12px;border-radius:6px;
+    font-size:13px;line-height:1.5;margin-top:10px;
+  }
+  .callout.problem{border-left-color:var(--error);}
+  .callout.problem b{color:var(--error);}
+  .callout.solution b{color:var(--green-dark);}
+
+  .canvas-wrap{
+    background:var(--cream);color:var(--ink);
+    border-radius:14px;padding:14px;
+    box-shadow:0 10px 24px rgba(0,0,0,.25);
+    margin-bottom:14px;
+  }
+  .canvas-toolbar{
+    display:flex;justify-content:space-between;align-items:center;
+    margin-bottom:6px;font-size:12.5px;color:#5b6472;
+  }
+  .reset-btn{
+    background:#eee9dc;border:none;color:var(--ink);
+    padding:6px 12px;border-radius:7px;font-size:12px;font-weight:700;
+    cursor:pointer;font-family:inherit;
+  }
+  .reset-btn:hover{background:#e2ddcc;}
+
+  svg .node-circle{fill:var(--navy);stroke:#fff;stroke-width:2;cursor:pointer;transition:fill .2s;}
+  svg .node-circle.down{fill:var(--error);}
+  svg .node-circle.hub{fill:var(--navy-2);}
+  svg .node-label{font-size:11px;fill:var(--ink);font-family:'Inter',sans-serif;font-weight:600;pointer-events:none;}
+  svg .node-status{font-size:9px;fill:var(--error);font-family:'Inter',sans-serif;font-weight:700;pointer-events:none;}
+  svg .edge-line{stroke:#9aa3ad;stroke-width:4;cursor:pointer;}
+  svg .edge-line:hover{stroke:var(--navy);}
+  svg .edge-line.cut{stroke:var(--error);stroke-dasharray:6 5;}
+
+  .status-readout{
+    font-size:12.5px;
+    background:#fff;border-radius:8px;padding:10px 12px;margin-top:4px;
+  }
+  .status-readout b{color:var(--navy);}
+  .status-readout.ok{color:var(--green-dark);}
+  .status-readout.bad{color:var(--error);}
+
+  .hint{font-size:11.5px;color:#6b7280;margin-top:4px;}
+
+  /* DATA FLOW TAB */
+  .flow-controls{
+    display:flex;gap:10px;flex-wrap:wrap;align-items:center;
+    background:var(--cream);color:var(--ink);
+    border-radius:14px;padding:14px 16px;margin-bottom:14px;
+    box-shadow:0 10px 24px rgba(0,0,0,.25);
+  }
+  .flow-controls label{font-size:12px;font-weight:700;color:#5b6472;margin-right:4px;}
+  .flow-controls select{
+    padding:7px 10px;border-radius:7px;border:1.5px solid #d7d2c2;
+    font-family:inherit;font-size:13px;
+  }
+  .send-btn{
+    background:var(--navy);color:#fff;border:none;
+    padding:9px 18px;border-radius:8px;font-weight:700;font-size:13px;
+    cursor:pointer;font-family:inherit;margin-left:auto;
+  }
+  .send-btn:hover{background:var(--navy-2);}
+  .send-btn:disabled{opacity:.4;cursor:not-allowed;}
+
+  .flow-log{
+    background:#fff;border-radius:10px;padding:12px 14px;
+    font-size:13px;line-height:1.6;min-height:40px;
+  }
+  .flow-log .log-line{
+    padding:5px 0;border-top:1px dashed #e3ddca;
+    opacity:0;animation:fadeIn .3s ease forwards;
+  }
+  .flow-log .log-line:first-child{border-top:none;}
+  @keyframes fadeIn{to{opacity:1;}}
+  .flow-log .log-line b{color:var(--navy);}
+
+  .packet-dot{
+    fill:var(--green-dark);
+    filter:drop-shadow(0 1px 2px rgba(0,0,0,.3));
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="masthead">
+    <div class="kicker">Bulldog Networking · Topic 3.2</div>
+    <h1>Network Topology Explorer</h1>
+  </div>
+
+  <div class="tabbar">
+    <button class="tab-btn active" data-tab="evolution" onclick="switchTab('evolution')">How We Got Here</button>
+    <button class="tab-btn" data-tab="flow" onclick="switchTab('flow')">How Data Actually Travels</button>
+  </div>
+
+  <!-- ===================== EVOLUTION PANEL ===================== -->
+  <div class="panel active" id="panel-evolution">
+    <div class="stepper" id="stepper"></div>
+    <div class="stage-grid">
+      <div>
+        <div class="canvas-wrap">
+          <div class="canvas-toolbar">
+            <span id="canvasHint">Click a cable to simulate it failing.</span>
+            <button class="reset-btn" onclick="resetStage()">Reset</button>
+          </div>
+          <svg id="topoSvg" viewBox="0 0 620 340" style="width:100%;height:auto;display:block;"></svg>
+          <div class="status-readout" id="statusReadout">All devices connected.</div>
+        </div>
+      </div>
+      <div class="card" id="stageCard">
+        <!-- injected -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== DATA FLOW PANEL ===================== -->
+  <div class="panel" id="panel-flow">
+    <div class="flow-controls">
+      <div>
+        <label>From</label>
+        <select id="srcSelect"></select>
+      </div>
+      <div>
+        <label>To</label>
+        <select id="dstSelect"></select>
+      </div>
+      <button class="send-btn" id="sendBtn" onclick="sendPacket()">Send Packet</button>
+    </div>
+    <div class="canvas-wrap">
+      <svg id="flowSvg" viewBox="0 0 620 300" style="width:100%;height:auto;display:block;"></svg>
+    </div>
+    <div class="flow-log" id="flowLog">
+      <div class="log-line">Pick a source and destination device, then send a packet to see how it gets routed.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// =====================================================================
+// TAB SWITCHING
+// =====================================================================
+function switchTab(tab){
+  document.querySelectorAll(".tab-btn").forEach(b => b.classList.toggle("active", b.dataset.tab === tab));
+  document.getElementById("panel-evolution").classList.toggle("active", tab === "evolution");
+  document.getElementById("panel-flow").classList.toggle("active", tab === "flow");
+}
+
+// =====================================================================
+// EVOLUTION TAB
+// =====================================================================
+const stages = [
+  {
+    key: "bus",
+    label: "Bus (1970s)",
+    title: "The Bus: One Shared Cable",
+    body: "Every device taps into a single shared backbone cable. It's cheap and simple to install — you just need one length of cable and a connector at each device.",
+    problem: null,
+    solution: "<b>The setup:</b> minimal cabling, minimal cost. Great for a handful of devices in one room.",
+    hint: "Click anywhere along the backbone cable to simulate a break.",
+    build(){
+      const nodes = [
+        {id:"A", x:70, y:230, label:"A"},
+        {id:"B", x:200, y:230, label:"B"},
+        {id:"C", x:330, y:230, label:"C"},
+        {id:"D", x:460, y:230, label:"D"},
+        {id:"E", x:580, y:230, label:"E"},
+      ];
+      const backboneY = 150;
+      const edges = [
+        {id:"e1", from:"A", to:"B", type:"backbone"},
+        {id:"e2", from:"B", to:"C", type:"backbone"},
+        {id:"e3", from:"C", to:"D", type:"backbone"},
+        {id:"e4", from:"D", to:"E", type:"backbone"},
+      ];
+      // drop lines (not cuttable) from node up to backbone
+      const drops = nodes.map(n => ({from:n, toY:backboneY}));
+      return {nodes, edges, backboneY, drops, referenceNode:"A"};
+    },
+    onCut(cutInfo){
+      return "Cutting the backbone splits it into two dead sections. Every device on the far side loses contact with everything on the near side — <b>one bad splice takes down the whole network.</b>";
+    },
+  },
+  {
+    key: "ring",
+    label: "Ring (1980s)",
+    title: "The Ring: Closing the Loop",
+    body: "Bus's problem was obvious: one break, and half your devices go dark. The fix — connect the ends together into a loop, so data can still get around a broken segment.",
+    problem: "<b>Coming from Bus:</b> a single cable break split the whole network into two silent halves.",
+    solution: "<b>The fix:</b> close the line into a loop. Now there are two paths between any two devices instead of one.",
+    hint: "Click a link to cut it — watch what happens with one cut vs. two.",
+    build(){
+      const nodes = [];
+      const n = 5;
+      const cx=310, cy=175, r=130;
+      for(let i=0;i<n;i++){
+        const angle = (i/n) * 2*Math.PI - Math.PI/2;
+        nodes.push({id:String.fromCharCode(65+i), x: cx+r*Math.cos(angle), y: cy+r*Math.sin(angle), label:String.fromCharCode(65+i)});
+      }
+      const edges = [];
+      for(let i=0;i<n;i++){
+        edges.push({id:"e"+i, from:nodes[i].id, to:nodes[(i+1)%n].id, type:"ring"});
+      }
+      return {nodes, edges, referenceNode:"A"};
+    },
+    onCut(cutInfo){
+      if(cutInfo.cutCount === 1){
+        return "One cut, and the ring just becomes a line — data goes the long way around. <b>Everyone's still connected.</b> That's the whole point of the loop.";
+      }
+      return "Two cuts, though, and the ring splits into two dead groups — just like the bus did. <b>One redundant path only survives one failure.</b>";
+    },
+  },
+  {
+    key: "star",
+    label: "Star (1990s)",
+    title: "The Star: A Central Switch",
+    body: "Ring survived one failure but not two, and a break anywhere still slowed the whole loop down while data rerouted. The fix — stop connecting devices to each other, and connect them all to one central switch instead.",
+    problem: "<b>Coming from Ring:</b> a second failure anywhere on the loop takes the whole network down, and troubleshooting means walking the entire loop to find the break.",
+    solution: "<b>The fix:</b> a central switch. Now a broken cable only affects the one device on that cable — much easier to install, scale, and troubleshoot.",
+    hint: "Click a spoke to cut one device's cable — then click the central switch itself.",
+    build(){
+      const nodes = [
+        {id:"HUB", x:310, y:175, label:"Switch", isHub:true},
+        {id:"A", x:310, y:40, label:"A"},
+        {id:"B", x:520, y:110, label:"B"},
+        {id:"C", x:460, y:300, label:"C"},
+        {id:"D", x:160, y:300, label:"D"},
+        {id:"E", x:100, y:110, label:"E"},
+      ];
+      const edges = ["A","B","C","D","E"].map((id,i) => ({id:"e"+i, from:"HUB", to:id, type:"spoke"}));
+      return {nodes, edges, referenceNode:"HUB"};
+    },
+    onCut(cutInfo){
+      if(cutInfo.hubDown){
+        return "Cut the switch itself, and <b>every single device drops offline at once</b> — this is a single point of failure. Star fixed the ring's per-cable fragility, but the whole network now depends on one box.";
+      }
+      return "Only that one device lost its connection. Everyone else on the star is completely unaffected — <b>this is the win over bus and ring.</b>";
+    },
+  },
+  {
+    key: "mesh",
+    label: "Mesh (Backbones & WANs)",
+    title: "Mesh: Redundant Paths Everywhere",
+    body: "Star fixed per-device failures but created a single point of failure at the switch. The fix — give every device a direct connection to every other device, so there's no single box the whole network depends on.",
+    problem: "<b>Coming from Star:</b> the central switch going down takes out every device at once, no matter how reliable the spokes are.",
+    solution: "<b>The fix:</b> full redundancy. With multiple paths between any two nodes, several failures can happen at once and traffic just reroutes.",
+    hint: "Cut several links — notice how much harder it is to actually disconnect anything.",
+    build(){
+      const nodes = [];
+      const n = 5;
+      const cx=310, cy=175, r=130;
+      for(let i=0;i<n;i++){
+        const angle = (i/n) * 2*Math.PI - Math.PI/2;
+        nodes.push({id:String.fromCharCode(65+i), x: cx+r*Math.cos(angle), y: cy+r*Math.sin(angle), label:String.fromCharCode(65+i)});
+      }
+      const edges = [];
+      let c=0;
+      for(let i=0;i<n;i++){
+        for(let j=i+1;j<n;j++){
+          edges.push({id:"e"+(c++), from:nodes[i].id, to:nodes[j].id, type:"mesh"});
+        }
+      }
+      return {nodes, edges, referenceNode:"A", linkCount:edges.length};
+    },
+    onCut(cutInfo){
+      if(cutInfo.allConnected){
+        return `${cutInfo.cutCount} link(s) cut, and every device can still reach every other device — just through a different path. This is why mesh backbones survive multiple simultaneous failures. The tradeoff: 5 devices already need ${cutInfo.linkCount} cables — that number grows fast as devices are added.`;
+      }
+      return "You've cut enough links to actually isolate a device — it takes a lot more effort than star or bus, but it's not impossible. More links = more cost and more cabling to manage.";
+    },
+  },
+];
+
+let currentStageIdx = 0;
+let stageState = null; // { nodes, edges (with cut flags), hubDown, referenceNode }
+
+function buildStepper(){
+  const stepper = document.getElementById("stepper");
+  stepper.innerHTML = stages.map((s,i) => `
+    <button class="step-btn ${i===currentStageIdx?'active':''}" onclick="goToStage(${i})">
+      <div class="num">${i+1} / ${stages.length}</div>
+      <div class="lab">${s.label}</div>
+    </button>
+  `).join("");
+}
+
+function goToStage(i){
+  currentStageIdx = i;
+  loadStage();
+  buildStepper();
+}
+
+function loadStage(){
+  const stage = stages[currentStageIdx];
+  const built = stage.build();
+  stageState = {
+    nodes: built.nodes.map(n => ({...n, down:false})),
+    edges: built.edges.map(e => ({...e, cut:false})),
+    backboneY: built.backboneY,
+    drops: built.drops,
+    referenceNode: built.referenceNode,
+    linkCount: built.linkCount,
+  };
+  document.getElementById("canvasHint").textContent = stage.hint;
+
+  const card = document.getElementById("stageCard");
+  card.innerHTML = `
+    <h3>${stage.title}</h3>
+    <p>${stage.body}</p>
+    ${stage.problem ? `<div class="callout problem">${stage.problem}</div>` : ""}
+    <div class="callout solution">${stage.solution}</div>
+    <div class="callout" id="reactionCallout" style="display:none;"></div>
+  `;
+
+  renderTopology();
+  updateStatusReadout();
+}
+
+function resetStage(){
+  loadStage();
+}
+
+function renderTopology(){
+  const svg = document.getElementById("topoSvg");
+  const stage = stages[currentStageIdx];
+  let html = "";
+
+  // backbone segments for bus (drawn first so nodes sit on top)
+  if(stage.key === "bus"){
+    stageState.drops.forEach(d => {
+      html += `<line x1="${d.from.x}" y1="${d.from.y}" x2="${d.from.x}" y2="${d.toY}" stroke="#c9c2ab" stroke-width="3"></line>`;
+    });
+  }
+
+  // edges
+  stageState.edges.forEach(e => {
+    const a = stageState.nodes.find(n => n.id === e.from);
+    const b = stageState.nodes.find(n => n.id === e.to);
+    let x1=a.x, y1=a.y, x2=b.x, y2=b.y;
+    if(stage.key === "bus"){
+      y1 = stageState.backboneY; y2 = stageState.backboneY;
+    }
+    html += `<line class="edge-line ${e.cut?'cut':''}" data-edge="${e.id}" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" onclick="toggleEdge('${e.id}')"></line>`;
+  });
+
+  // nodes
+  stageState.nodes.forEach(n => {
+    const down = n.down || (n.isHub === false && false);
+    html += `<g onclick="${n.isHub ? `toggleHub('${n.id}')` : ''}">
+      <circle class="node-circle ${down?'down':''} ${n.isHub?'hub':''}" cx="${n.x}" cy="${n.y}" r="${n.isHub?26:20}" data-node="${n.id}"></circle>
+      <text class="node-label" x="${n.x}" y="${n.y+4}" text-anchor="middle" style="fill:#fff;">${n.label}</text>
+      ${down ? `<text class="node-status" x="${n.x}" y="${n.y+38}" text-anchor="middle">OFFLINE</text>` : ""}
+    </g>`;
+  });
+
+  svg.innerHTML = html;
+}
+
+function toggleEdge(edgeId){
+  const stage = stages[currentStageIdx];
+  const edge = stageState.edges.find(e => e.id === edgeId);
+  edge.cut = !edge.cut;
+  renderTopology();
+  evaluateAndReact();
+}
+
+function toggleHub(nodeId){
+  const node = stageState.nodes.find(n => n.id === nodeId);
+  if(!node.isHub) return;
+  node.down = !node.down;
+  renderTopology();
+  evaluateAndReact();
+}
+
+function computeReachability(){
+  // build adjacency using non-cut edges where neither endpoint is down
+  const adj = {};
+  stageState.nodes.forEach(n => adj[n.id] = []);
+  stageState.edges.forEach(e => {
+    const fromDown = stageState.nodes.find(n=>n.id===e.from).down;
+    const toDown = stageState.nodes.find(n=>n.id===e.to).down;
+    if(!e.cut && !fromDown && !toDown){
+      adj[e.from].push(e.to);
+      adj[e.to].push(e.from);
+    }
+  });
+  const ref = stageState.referenceNode;
+  const visited = new Set([ref]);
+  const queue = [ref];
+  while(queue.length){
+    const cur = queue.shift();
+    adj[cur].forEach(nb => { if(!visited.has(nb)){ visited.add(nb); queue.push(nb);} });
+  }
+  return visited;
+}
+
+function updateStatusReadout(){
+  const readout = document.getElementById("statusReadout");
+  const reachable = computeReachability();
+  const total = stageState.nodes.filter(n=>!n.isHub).length + (stageState.nodes.some(n=>n.isHub)?1:0);
+  const offlineNodes = stageState.nodes.filter(n => !reachable.has(n.id) || n.down);
+  if(offlineNodes.length === 0){
+    readout.className = "status-readout ok";
+    readout.textContent = "All devices connected.";
+  } else {
+    readout.className = "status-readout bad";
+    readout.textContent = `Offline / unreachable: ${offlineNodes.map(n=>n.label).join(", ")}`;
+  }
+}
+
+function evaluateAndReact(){
+  updateStatusReadout();
+  const stage = stages[currentStageIdx];
+  const reachable = computeReachability();
+  const anyDown = stageState.nodes.some(n => n.down || !reachable.has(n.id));
+  const cutCount = stageState.edges.filter(e=>e.cut).length;
+  const hubNode = stageState.nodes.find(n=>n.isHub);
+  const hubDown = hubNode ? hubNode.down : false;
+
+  if(cutCount === 0 && !hubDown){
+    document.getElementById("reactionCallout").style.display = "none";
+    return;
+  }
+
+  const msg = stage.onCut({
+    cutCount, hubDown,
+    allConnected: !anyDown,
+    linkCount: stageState.linkCount,
+  });
+  const el = document.getElementById("reactionCallout");
+  el.style.display = "block";
+  el.innerHTML = msg;
+}
+
+// =====================================================================
+// DATA FLOW TAB
+// =====================================================================
+const flowDevices = [
+  {id:"A1", label:"A1 — Front Office PC", ip:"192.168.1.10", subnet:"192.168.1.0/24", segment:"A", x:90, y:60},
+  {id:"A2", label:"A2 — Front Office Laptop", ip:"192.168.1.20", subnet:"192.168.1.0/24", segment:"A", x:90, y:150},
+  {id:"B1", label:"B1 — Back Office PC", ip:"192.168.2.10", subnet:"192.168.2.0/24", segment:"B", x:530, y:60},
+  {id:"B2", label:"B2 — Back Office Laptop", ip:"192.168.2.20", subnet:"192.168.2.0/24", segment:"B", x:530, y:150},
+];
+const flowSwitches = {
+  A: {x:220, y:105, label:"Switch A"},
+  B: {x:400, y:105, label:"Switch B"},
+};
+const routerPos = {x:310, y:220, label:"Router"};
+
+function initFlowSelectors(){
+  const src = document.getElementById("srcSelect");
+  const dst = document.getElementById("dstSelect");
+  const opts = flowDevices.map(d => `<option value="${d.id}">${d.label} (${d.ip})</option>`).join("");
+  src.innerHTML = opts;
+  dst.innerHTML = opts;
+  dst.value = flowDevices[2].id;
+  renderFlowDiagram();
+}
+
+function renderFlowDiagram(highlightPath){
+  const svg = document.getElementById("flowSvg");
+  let html = "";
+
+  // links: device -> its switch
+  flowDevices.forEach(d => {
+    const sw = flowSwitches[d.segment];
+    html += `<line x1="${d.x}" y1="${d.y}" x2="${sw.x}" y2="${sw.y}" stroke="#c9c2ab" stroke-width="3"></line>`;
+  });
+  // switch -> router
+  Object.values(flowSwitches).forEach(sw => {
+    html += `<line x1="${sw.x}" y1="${sw.y}" x2="${routerPos.x}" y2="${routerPos.y}" stroke="#c9c2ab" stroke-width="3"></line>`;
+  });
+
+  // highlight path if provided
+  if(highlightPath){
+    for(let i=0;i<highlightPath.length-1;i++){
+      const p1 = highlightPath[i], p2 = highlightPath[i+1];
+      html += `<line x1="${p1.x}" y1="${p1.y}" x2="${p2.x}" y2="${p2.y}" stroke="#8FC53E" stroke-width="5"></line>`;
+    }
+  }
+
+  // switches
+  Object.values(flowSwitches).forEach(sw => {
+    html += `<rect x="${sw.x-30}" y="${sw.y-18}" width="60" height="36" rx="8" fill="#123058" stroke="#fff" stroke-width="2"></rect>
+      <text x="${sw.x}" y="${sw.y+4}" text-anchor="middle" style="fill:#fff;font-size:11px;font-weight:700;font-family:Inter,sans-serif;">${sw.label}</text>`;
+  });
+  // router
+  html += `<polygon points="${routerPos.x},${routerPos.y-24} ${routerPos.x+34},${routerPos.y} ${routerPos.x},${routerPos.y+24} ${routerPos.x-34},${routerPos.y}" fill="#0B1F3A" stroke="#fff" stroke-width="2"></polygon>
+    <text x="${routerPos.x}" y="${routerPos.y+4}" text-anchor="middle" style="fill:#fff;font-size:11px;font-weight:700;font-family:Inter,sans-serif;">${routerPos.label}</text>`;
+
+  // devices
+  flowDevices.forEach(d => {
+    html += `<circle cx="${d.x}" cy="${d.y}" r="20" fill="#0B1F3A" stroke="#fff" stroke-width="2"></circle>
+      <text x="${d.x}" y="${d.y+4}" text-anchor="middle" style="fill:#fff;font-size:11px;font-weight:700;font-family:Inter,sans-serif;">${d.id}</text>
+      <text x="${d.x}" y="${d.y+38}" text-anchor="middle" style="fill:#1B2430;font-size:10.5px;font-family:Inter,sans-serif;">${d.ip}</text>`;
+  });
+
+  svg.innerHTML = html;
+}
+
+function sameSubnet(ipA, ipB){
+  // compare first 3 octets (all /24 in this model)
+  return ipA.split(".").slice(0,3).join(".") === ipB.split(".").slice(0,3).join(".");
+}
+
+function sendPacket(){
+  const srcId = document.getElementById("srcSelect").value;
+  const dstId = document.getElementById("dstSelect").value;
+  const log = document.getElementById("flowLog");
+  log.innerHTML = "";
+
+  if(srcId === dstId){
+    log.innerHTML = `<div class="log-line">Source and destination are the same device — pick two different devices.</div>`;
+    return;
+  }
+
+  const src = flowDevices.find(d => d.id === srcId);
+  const dst = flowDevices.find(d => d.id === dstId);
+  const same = sameSubnet(src.ip, dst.ip);
+
+  const lines = [];
+  lines.push(`<b>${src.id}</b> builds a packet addressed to <b>${dst.ip}</b>.`);
+  lines.push(`${src.id} compares its own subnet (${src.subnet}) to the destination's subnet.`);
+
+  let path;
+  if(same){
+    lines.push(`Same network — so ${src.id} sends the packet <b>directly through ${flowSwitches[src.segment].label}</b> to reach ${dst.id}. No router needed.`);
+    path = [src, flowSwitches[src.segment], dst];
+  } else {
+    lines.push(`Different networks — so ${src.id} sends the packet to its <b>default gateway</b>, the router.`);
+    lines.push(`The router checks its routing table, sees ${dst.subnet} lives on ${dst.segment==='A'?'Switch A':'Switch B'}, and forwards the packet there.`);
+    lines.push(`${flowSwitches[dst.segment].label} delivers it to <b>${dst.id}</b>.`);
+    path = [src, flowSwitches[src.segment], routerPos, flowSwitches[dst.segment], dst];
+  }
+
+  renderFlowDiagram(path);
+
+  lines.forEach((l, i) => {
+    setTimeout(() => {
+      const div = document.createElement("div");
+      div.className = "log-line";
+      div.innerHTML = l;
+      log.appendChild(div);
+    }, i * 500);
+  });
+}
+
+// =====================================================================
+// INIT
+// =====================================================================
+buildStepper();
+loadStage();
+initFlowSelectors();
+</script>
+</body>
+</html>
