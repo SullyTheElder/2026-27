@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bulldog Networking — Network Design Sandbox</title>
+<style>
+  :root{
+    --navy:#0B1F3A;
+    --navy-2:#123058;
+    --green:#8FC53E;
+    --green-dark:#6EA22A;
+    --cream:#F4F1E9;
+    --caution:#E8A33D;
+    --error:#C1443C;
+    --ink:#1B2430;
+    --muted:#5B6472;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    background:linear-gradient(180deg,var(--navy) 0%, var(--navy-2) 100%);
+    color:var(--cream);
+    min-height:100vh;
+    padding:20px;
+  }
+  h1,h2,h3{font-family:'Space Grotesk','Inter',sans-serif;margin:0;}
+  .wrap{max-width:1360px;margin:0 auto;}
+  .masthead{margin-bottom:14px;}
+  .kicker{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--green);font-weight:700;}
+  .masthead h1{font-size:24px;margin-top:2px;}
+
+  .layout{
+    display:grid;
+    grid-template-columns:200px 1fr 260px;
+    gap:16px;
+    align-items:start;
+  }
+  @media (max-width:1100px){ .layout{grid-template-columns:1fr;} }
+
+  .panel{
+    background:var(--cream);color:var(--ink);
+    border-radius:14px;padding:14px;
+    box-shadow:0 10px 24px rgba(0,0,0,.25);
+  }
+  .panel h3{font-size:12.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:10px;}
+
+  .tool-btn{
+    display:flex;align-items:center;gap:8px;
+    width:100%;
+    background:#fff;border:1.5px solid #d7d2c2;
+    color:var(--ink);
+    padding:9px 10px;border-radius:8px;
+    font-family:inherit;font-size:13px;font-weight:700;
+    cursor:pointer;margin-bottom:7px;
+    text-align:left;
+  }
+  .tool-btn:hover{background:#f2eee0;}
+  .tool-btn.active{background:var(--green);border-color:var(--green-dark);color:var(--navy);}
+  .tool-btn .swatch{
+    width:14px;height:14px;border-radius:4px;flex-shrink:0;
+  }
+  .tool-btn.danger{color:var(--error);}
+  .tool-btn.danger:hover{background:#fbeaea;}
+  .divider{height:1px;background:#e3ddca;margin:10px 0;}
+
+  .action-btn{
+    display:block;width:100%;
+    background:var(--navy);color:#fff;border:none;
+    padding:9px 10px;border-radius:8px;
+    font-family:inherit;font-size:12.5px;font-weight:700;
+    cursor:pointer;margin-bottom:7px;
+  }
+  .action-btn:hover{background:var(--navy-2);}
+  .action-btn.secondary{background:#eee9dc;color:var(--ink);}
+  .action-btn.secondary:hover{background:#e2ddcc;}
+
+  .canvas-shell{
+    background:var(--cream);border-radius:14px;
+    box-shadow:0 10px 24px rgba(0,0,0,.25);
+    overflow:hidden;
+  }
+  .canvas-hint{
+    padding:8px 14px;font-size:12px;color:var(--muted);
+    border-bottom:1px solid #e3ddca;background:#fff;
+  }
+  #canvas{ width:100%; height:560px; display:block; cursor:default; }
+
+  .node-endpoint{ fill:#fff; stroke:var(--navy); }
+  .node-switch{ fill:var(--navy-2); stroke:#fff; }
+  .node-router{ fill:var(--navy); stroke:#fff; }
+  .node-wap{ fill:var(--green); stroke:var(--navy); }
+  .node-modem{ fill:var(--muted); stroke:#fff; }
+  .node-selected{ stroke:var(--caution) !important; stroke-width:3.5 !important; }
+  .node-link-armed{ stroke:var(--error) !important; stroke-width:3.5 !important; stroke-dasharray:4 3; }
+
+  .link-wired{ stroke:#9aa3ad; stroke-width:3; }
+  .link-wireless{ stroke:var(--green-dark); stroke-width:2.5; stroke-dasharray:6 4; }
+
+  .node-label{ font-size:10.5px; font-weight:700; fill:var(--ink); font-family:'Inter',sans-serif; pointer-events:none; }
+  .node-count{ font-size:9px; fill:var(--muted); font-family:'Inter',sans-serif; pointer-events:none; }
+
+  .props-box{ font-size:12.5px; }
+  .props-box label{ display:block; font-size:11px; font-weight:700; color:var(--muted); margin:8px 0 3px 0; }
+  .props-box input, .props-box select{
+    width:100%; padding:6px 8px; border-radius:6px; border:1.5px solid #d7d2c2;
+    font-family:inherit; font-size:12.5px;
+  }
+  .empty-note{ font-size:12px; color:var(--muted); font-style:italic; }
+  .stat-header{ font-size:11px; font-weight:800; color:var(--navy); text-transform:uppercase; letter-spacing:.04em; margin-bottom:6px; }
+
+  .stat-block{ margin-bottom:14px; }
+  .stat-row{
+    display:flex; justify-content:space-between; align-items:center;
+    padding:6px 8px; border-radius:6px; margin-bottom:5px; font-size:12px;
+    background:#fff;
+  }
+  .stat-tag{ font-size:10px; font-weight:800; padding:2px 7px; border-radius:999px; }
+  .stat-tag.ok{ background:#e2f2cd; color:var(--green-dark); }
+  .stat-tag.watch{ background:#fbe8cc; color:#95611a; }
+  .stat-tag.over{ background:#f7dede; color:var(--error); }
+
+  @media print{
+    body{ background:#fff !important; padding:0; }
+    .panel, .masthead, .canvas-hint{ display:none !important; }
+    .canvas-shell{ box-shadow:none; }
+    #canvas{ height:100vh; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="masthead">
+    <div class="kicker">Bulldog Networking · Topic 3.1</div>
+    <h1>Network Design Sandbox</h1>
+  </div>
+
+  <div class="layout">
+    <!-- LEFT: DEVICE PALETTE -->
+    <div class="panel">
+      <h3>Add a Device</h3>
+      <button class="tool-btn" data-place="modem" onclick="armPlace('modem')"><span class="swatch" style="background:#5B6472;"></span>Internet / Modem</button>
+      <button class="tool-btn" data-place="router" onclick="armPlace('router')"><span class="swatch" style="background:#0B1F3A;"></span>Router</button>
+      <button class="tool-btn" data-place="switch" onclick="armPlace('switch')"><span class="swatch" style="background:#123058;"></span>Switch</button>
+      <button class="tool-btn" data-place="wap" onclick="armPlace('wap')"><span class="swatch" style="background:#8FC53E;"></span>Wireless AP</button>
+      <button class="tool-btn" data-place="endpoint" onclick="armPlace('endpoint')"><span class="swatch" style="background:#ffffff;border:1.5px solid #0B1F3A;"></span>Endpoint / Device</button>
+
+      <div class="divider"></div>
+      <h3>Connect</h3>
+      <button class="tool-btn" id="linkWiredBtn" onclick="armLink('wired')">\u{1F517} Wired Link</button>
+      <button class="tool-btn" id="linkWirelessBtn" onclick="armLink('wireless')">\u{1F4F6} Wireless Link</button>
+
+      <div class="divider"></div>
+      <button class="tool-btn danger" onclick="deleteSelected()">\u{1F5D1} Delete Selected</button>
+    </div>
+
+    <!-- CENTER: CANVAS -->
+    <div class="canvas-shell">
+      <div class="canvas-hint" id="hint">Click a device button, then click the canvas to place it.</div>
+      <svg id="canvas" viewBox="0 0 900 560"></svg>
+    </div>
+
+    <!-- RIGHT: PROPERTIES + STATS + ACTIONS -->
+    <div>
+      <div class="panel" style="margin-bottom:14px;">
+        <h3>Selected Device</h3>
+        <div id="propsPanel"><div class="empty-note">Click a device on the canvas to edit it.</div></div>
+      </div>
+
+      <div class="panel" style="margin-bottom:14px;">
+        <h3>Live Checks</h3>
+        <div id="statsPanel"></div>
+      </div>
+
+      <div class="panel">
+        <h3>Scenario &amp; Export</h3>
+        <button class="action-btn" onclick="loadGameDayRoles()">Load Game Day Roles</button>
+        <button class="action-btn secondary" onclick="exportSummary()">Export Summary (.txt)</button>
+        <button class="action-btn secondary" onclick="window.print()">Print / Save as Image</button>
+        <button class="action-btn secondary" onclick="resetAll()">Reset Canvas</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// =====================================================================
+// STATE
+// =====================================================================
+let nodes = [];   // {id, type, x, y, label, count}
+let links = [];   // {id, a, b, kind}
+let nodeSeq = 1, linkSeq = 1;
+
+let placeMode = null;     // 'modem'|'router'|'switch'|'wap'|'endpoint'|null
+let linkMode = null;      // 'wired'|'wireless'|null
+let linkFirst = null;     // node id armed as first endpoint of a link
+let selectedId = null;    // currently selected node id
+
+const SWITCH_PORTS = 8;
+const WAP_WARN = 30;
+const WAP_MAX = 50;
+
+const TYPE_META = {
+  modem:    { label: "Internet", r: 26, shape: "cloud" },
+  router:   { label: "Router",   r: 24, shape: "diamond" },
+  switch:   { label: "Switch",   r: 20, shape: "rect" },
+  wap:      { label: "WAP",      r: 20, shape: "circle" },
+  endpoint: { label: "Device",   r: 16, shape: "circle" },
+};
+
+const ROLE_PRESETS = [
+  { label: "Ticket Scanning Table", count: 2 },
+  { label: "Concession Stand POS", count: 2 },
+  { label: "Press Box / Scoreboard", count: 1 },
+  { label: "Livestream Broadcast", count: 1 },
+  { label: "Coaching Staff (sideline)", count: 2 },
+  { label: "Guest / Parent Wi-Fi (bleachers)", count: 150 },
+  { label: "Athletic Director / IT", count: 1 },
+];
+
+// =====================================================================
+// TOOLBAR MODE HANDLING
+// =====================================================================
+function clearModes(){
+  placeMode = null; linkMode = null; linkFirst = null;
+  document.querySelectorAll(".tool-btn").forEach(b => b.classList.remove("active"));
+  document.getElementById("hint").textContent = "Click a device button, then click the canvas to place it.";
+}
+
+function armPlace(type){
+  const wasActive = placeMode === type;
+  clearModes();
+  if(!wasActive){
+    placeMode = type;
+    document.querySelector(`[data-place="${type}"]`).classList.add("active");
+    document.getElementById("hint").textContent = `Click anywhere on the canvas to place a ${TYPE_META[type].label}.`;
+  }
+  render();
+}
+
+function armLink(kind){
+  const btn = kind === "wired" ? document.getElementById("linkWiredBtn") : document.getElementById("linkWirelessBtn");
+  const wasActive = linkMode === kind;
+  clearModes();
+  if(!wasActive){
+    linkMode = kind;
+    btn.classList.add("active");
+    document.getElementById("hint").textContent = kind === "wired"
+      ? "Click a device, then click a second device to connect them with a cable."
+      : "Click a Wireless AP, then click a device to connect it wirelessly.";
+  }
+  render();
+}
+
+// =====================================================================
+// CANVAS INTERACTION
+// =====================================================================
+const svg = document.getElementById("canvas");
+
+function svgPoint(evt){
+  const rect = svg.getBoundingClientRect();
+  const vb = svg.viewBox.baseVal;
+  const x = (evt.clientX - rect.left) / rect.width * vb.width;
+  const y = (evt.clientY - rect.top) / rect.height * vb.height;
+  return { x, y };
+}
+
+svg.addEventListener("click", (evt) => {
+  if(evt.target.closest("[data-node]")) return; // handled by node click
+  if(placeMode){
+    const { x, y } = svgPoint(evt);
+    createNode(placeMode, x, y);
+  }
+});
+
+function createNode(type, x, y){
+  const meta = TYPE_META[type];
+  const n = {
+    id: "n" + (nodeSeq++),
+    type, x, y,
+    label: meta.label,
+    count: type === "endpoint" ? 1 : undefined,
+  };
+  nodes.push(n);
+  clearModes();
+  selectedId = n.id;
+  render();
+}
+
+let dragId = null, dragMoved = false, dragStart = null;
+
+function onNodeMouseDown(id, evt){
+  evt.stopPropagation();
+  dragId = id; dragMoved = false;
+  dragStart = svgPoint(evt);
+}
+
+svg.addEventListener("mousemove", (evt) => {
+  if(!dragId) return;
+  const p = svgPoint(evt);
+  if(Math.hypot(p.x - dragStart.x, p.y - dragStart.y) > 4) dragMoved = true;
+  if(dragMoved){
+    const n = nodes.find(n => n.id === dragId);
+    n.x = p.x; n.y = p.y;
+    render();
+  }
+});
+
+window.addEventListener("mouseup", (evt) => {
+  if(!dragId) return;
+  if(!dragMoved){
+    handleNodeClick(dragId);
+  }
+  dragId = null;
+});
+
+function handleNodeClick(id){
+  if(linkMode){
+    const node = nodes.find(n => n.id === id);
+    if(linkMode === "wireless" && !linkFirst && node.type !== "wap"){
+      document.getElementById("hint").textContent = "Start a wireless link from a Wireless AP.";
+      return;
+    }
+    if(!linkFirst){
+      linkFirst = id;
+      render();
+      return;
+    }
+    if(linkFirst === id){ linkFirst = null; render(); return; }
+    links.push({ id: "l" + (linkSeq++), a: linkFirst, b: id, kind: linkMode });
+    linkFirst = null;
+    render();
+    return;
+  }
+  selectedId = id;
+  render();
+}
+
+function deleteSelected(){
+  if(!selectedId) return;
+  nodes = nodes.filter(n => n.id !== selectedId);
+  links = links.filter(l => l.a !== selectedId && l.b !== selectedId);
+  selectedId = null;
+  render();
+}
+
+// =====================================================================
+// GAME DAY PRESET
+// =====================================================================
+function loadGameDayRoles(){
+  let y = 60;
+  ROLE_PRESETS.forEach(role => {
+    nodes.push({ id:"n"+(nodeSeq++), type:"endpoint", x:70, y, label:role.label, count:role.count });
+    y += 62;
+  });
+  render();
+}
+
+function resetAll(){
+  if(!confirm("Clear the whole canvas?")) return;
+  nodes = []; links = []; selectedId = null;
+  clearModes();
+  render();
+}
+
+// =====================================================================
+// RENDER
+// =====================================================================
+function nodeShapeSvg(n, extraClass){
+  const meta = TYPE_META[n.type];
+  const cls = `node-${n.type} ${extraClass||""}`;
+  if(n.type === "switch"){
+    return `<rect x="${n.x-meta.r}" y="${n.y-meta.r*0.65}" width="${meta.r*2}" height="${meta.r*1.3}" rx="6" class="${cls}" stroke-width="2"></rect>`;
+  }
+  if(n.type === "router"){
+    return `<polygon points="${n.x},${n.y-meta.r} ${n.x+meta.r},${n.y} ${n.x},${n.y+meta.r} ${n.x-meta.r},${n.y}" class="${cls}" stroke-width="2"></polygon>`;
+  }
+  if(n.type === "modem"){
+    return `<ellipse cx="${n.x}" cy="${n.y}" rx="${meta.r*1.3}" ry="${meta.r}" class="${cls}" stroke-width="2"></ellipse>`;
+  }
+  return `<circle cx="${n.x}" cy="${n.y}" r="${meta.r}" class="${cls}" stroke-width="2"></circle>`;
+}
+
+function render(){
+  let html = "";
+
+  // links first (under nodes)
+  links.forEach(l => {
+    const a = nodes.find(n => n.id === l.a), b = nodes.find(n => n.id === l.b);
+    if(!a || !b) return;
+    html += `<line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" class="link-${l.kind}"></line>`;
+  });
+
+  // nodes
+  nodes.forEach(n => {
+    const meta = TYPE_META[n.type];
+    let cls = "";
+    if(n.id === selectedId) cls = "node-selected";
+    if(n.id === linkFirst) cls = "node-link-armed";
+    html += `<g data-node="${n.id}" style="cursor:pointer;" onmousedown="onNodeMouseDown('${n.id}', event)">`;
+    html += nodeShapeSvg(n, cls);
+    const labelY = n.y + (n.type === "switch" ? meta.r*0.65 : meta.r) + 13;
+    html += `<text class="node-label" x="${n.x}" y="${labelY}" text-anchor="middle">${escapeXml(n.label)}</text>`;
+    if(n.type === "endpoint" && n.count > 1){
+      html += `<text class="node-count" x="${n.x}" y="${labelY+12}" text-anchor="middle">(${n.count} devices)</text>`;
+    }
+    html += `</g>`;
+  });
+
+  svg.innerHTML = html;
+  renderProps();
+  renderStats();
+}
+
+function escapeXml(s){
+  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+
+// =====================================================================
+// PROPERTIES PANEL
+// =====================================================================
+function renderProps(){
+  const box = document.getElementById("propsPanel");
+  const n = nodes.find(n => n.id === selectedId);
+  if(!n){ box.innerHTML = `<div class="empty-note">Click a device on the canvas to edit it.</div>`; return; }
+  const meta = TYPE_META[n.type];
+  let html = `<div class="props-box"><div style="font-weight:800;color:var(--navy);">${meta.label}</div>`;
+  html += `<label>Label</label><input type="text" value="${escapeXml(n.label)}" oninput="updateNodeLabel('${n.id}', this.value)">`;
+  if(n.type === "endpoint"){
+    html += `<label># of physical devices this represents</label><input type="number" min="1" value="${n.count}" oninput="updateNodeCount('${n.id}', this.value)">`;
+  }
+  html += `</div>`;
+  box.innerHTML = html;
+}
+function updateNodeLabel(id, val){ const n = nodes.find(n=>n.id===id); n.label = val; renderStats(); const t = svg.querySelector(`[data-node="${id}"] .node-label`); if(t) t.textContent = val; }
+function updateNodeCount(id, val){ const n = nodes.find(n=>n.id===id); n.count = Math.max(1, parseInt(val)||1); render(); }
+
+// =====================================================================
+// LIVE CHECKS
+// =====================================================================
+function computeReachability(){
+  const adj = {};
+  nodes.forEach(n => adj[n.id] = []);
+  links.forEach(l => { adj[l.a].push(l.b); adj[l.b].push(l.a); });
+  const sources = nodes.filter(n => n.type === "modem").map(n => n.id);
+  const visited = new Set(sources);
+  const queue = [...sources];
+  while(queue.length){
+    const cur = queue.shift();
+    (adj[cur]||[]).forEach(nb => { if(!visited.has(nb)){ visited.add(nb); queue.push(nb); } });
+  }
+  return visited;
+}
+
+function renderStats(){
+  const box = document.getElementById("statsPanel");
+  let html = "";
+
+  // WAP load
+  const waps = nodes.filter(n => n.type === "wap");
+  html += `<div class="stat-block"><div class="stat-header">Wireless AP Load</div>`;
+  if(waps.length === 0){
+    html += `<div class="empty-note">No Wireless APs placed yet.</div>`;
+  }
+  waps.forEach(w => {
+    const load = links.filter(l => l.kind === "wireless" && (l.a === w.id || l.b === w.id))
+      .reduce((sum, l) => {
+        const otherId = l.a === w.id ? l.b : l.a;
+        const other = nodes.find(n => n.id === otherId);
+        return sum + (other && other.count ? other.count : 1);
+      }, 0);
+    let tag = "ok", tagText = "OK";
+    if(load > WAP_MAX){ tag = "over"; tagText = "Over capacity"; }
+    else if(load > WAP_WARN){ tag = "watch"; tagText = "Near limit"; }
+    html += `<div class="stat-row"><span>${escapeXml(w.label)}: ${load} devices</span><span class="stat-tag ${tag}">${tagText}</span></div>`;
+  });
+  html += `</div>`;
+
+  // Switch port load
+  const switches = nodes.filter(n => n.type === "switch");
+  html += `<div class="stat-block"><div class="stat-header">Switch Port Usage (of ${SWITCH_PORTS})</div>`;
+  if(switches.length === 0){
+    html += `<div class="empty-note">No switches placed yet.</div>`;
+  }
+  switches.forEach(sw => {
+    const used = links.filter(l => l.kind === "wired" && (l.a === sw.id || l.b === sw.id)).length;
+    let tag = "ok", tagText = "OK";
+    if(used > SWITCH_PORTS){ tag = "over"; tagText = "Over capacity"; }
+    else if(used === SWITCH_PORTS){ tag = "watch"; tagText = "Full"; }
+    html += `<div class="stat-row"><span>${escapeXml(sw.label)}: ${used} ports used</span><span class="stat-tag ${tag}">${tagText}</span></div>`;
+  });
+  html += `</div>`;
+
+  // Connectivity check
+  html += `<div class="stat-block"><div class="stat-header">Internet Reachability</div>`;
+  if(nodes.filter(n=>n.type==="modem").length === 0){
+    html += `<div class="empty-note">Add an Internet/Modem node to check connectivity.</div>`;
+  } else {
+    const reachable = computeReachability();
+    const endpoints = nodes.filter(n => n.type === "endpoint");
+    const unreached = endpoints.filter(n => !reachable.has(n.id));
+    if(endpoints.length === 0){
+      html += `<div class="empty-note">No endpoint devices placed yet.</div>`;
+    } else if(unreached.length === 0){
+      html += `<div class="stat-row"><span>All endpoint devices connected</span><span class="stat-tag ok">OK</span></div>`;
+    } else {
+      unreached.forEach(n => {
+        html += `<div class="stat-row"><span>${escapeXml(n.label)}</span><span class="stat-tag over">No path</span></div>`;
+      });
+    }
+  }
+  html += `</div>`;
+
+  box.innerHTML = html;
+}
+
+// =====================================================================
+// EXPORT
+// =====================================================================
+function exportSummary(){
+  let out = "BULLDOG NETWORKING — Network Design Sandbox\n";
+  out += "Game Day Network Design — Summary\n";
+  out += "==================================\n\n";
+
+  out += "DEVICES:\n";
+  nodes.forEach(n => {
+    const extra = n.type === "endpoint" ? ` (${n.count} device${n.count>1?"s":""})` : "";
+    out += `  [${TYPE_META[n.type].label}] ${n.label}${extra}\n`;
+  });
+
+  out += "\nCONNECTIONS:\n";
+  links.forEach(l => {
+    const a = nodes.find(n=>n.id===l.a), b = nodes.find(n=>n.id===l.b);
+    if(!a||!b) return;
+    out += `  ${a.label} \u2194 ${b.label} (${l.kind})\n`;
+  });
+
+  out += "\nWIRELESS AP LOAD:\n";
+  nodes.filter(n=>n.type==="wap").forEach(w => {
+    const load = links.filter(l => l.kind === "wireless" && (l.a === w.id || l.b === w.id))
+      .reduce((sum, l) => {
+        const otherId = l.a === w.id ? l.b : l.a;
+        const other = nodes.find(n => n.id === otherId);
+        return sum + (other && other.count ? other.count : 1);
+      }, 0);
+    out += `  ${w.label}: ${load} devices ${load>WAP_MAX?"(OVER CAPACITY)":load>WAP_WARN?"(near limit)":"(OK)"}\n`;
+  });
+
+  out += "\nSWITCH PORT USAGE:\n";
+  nodes.filter(n=>n.type==="switch").forEach(sw => {
+    const used = links.filter(l => l.kind === "wired" && (l.a === sw.id || l.b === sw.id)).length;
+    out += `  ${sw.label}: ${used} / ${SWITCH_PORTS} ports ${used>SWITCH_PORTS?"(OVER CAPACITY)":""}\n`;
+  });
+
+  out += "\nINTERNET REACHABILITY:\n";
+  if(nodes.filter(n=>n.type==="modem").length === 0){
+    out += "  No Internet/Modem node placed.\n";
+  } else {
+    const reachable = computeReachability();
+    nodes.filter(n=>n.type==="endpoint").forEach(n => {
+      out += `  ${n.label}: ${reachable.has(n.id) ? "connected" : "NO PATH TO INTERNET"}\n`;
+    });
+  }
+
+  const blob = new Blob([out], {type:"text/plain"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = "network_design_summary.txt"; a.click();
+  URL.revokeObjectURL(url);
+}
+
+// =====================================================================
+// INIT
+// =====================================================================
+render();
+</script>
+</body>
+</html>
