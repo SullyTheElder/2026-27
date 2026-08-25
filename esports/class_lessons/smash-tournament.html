@@ -63,26 +63,6 @@
   }
   .empty-state { color: var(--text-dim); text-align: center; padding: 30px 10px; font-size: 0.9rem; }
 
-  .modal-backdrop {
-    position: fixed; inset: 0; background: rgba(0,0,0,0.6);
-    display: none; align-items: center; justify-content: center; padding: 16px; z-index: 10;
-  }
-  .modal-backdrop.open { display: flex; }
-  .modal { background: var(--panel); border-radius: 12px; padding: 20px; width: 100%; max-width: 360px; }
-  .modal h3 { margin-top: 0; }
-  .modal label { display: block; margin: 12px 0 4px; font-size: 0.85rem; color: var(--text-dim); }
-  .modal select, .modal input {
-    width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #3a3f4d;
-    background: var(--panel-alt); color: var(--text); font-size: 0.95rem;
-  }
-  .modal-actions { display: flex; gap: 10px; margin-top: 18px; }
-  .modal-actions button { flex: 1; padding: 10px; border-radius: 6px; border: none; font-weight: 600; cursor: pointer; }
-  .btn-cancel { background: #2f333f; color: var(--text); }
-  .btn-submit { background: var(--accent); color: #1a1a1a; }
-  .msg { font-size: 0.85rem; margin-top: 10px; min-height: 1.2em; }
-  .msg.error { color: var(--accent); }
-  .msg.success { color: var(--win); }
-
   .refresh-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
   .refresh-row button {
     background: none; border: 1px solid #3a3f4d; color: var(--text-dim);
@@ -114,23 +94,12 @@
     <strong>Matches ready to play</strong>
     <button onclick="loadState()">Refresh</button>
   </div>
-  <div id="queueList"></div>
-</div>
-
-<div class="modal-backdrop" id="modalBackdrop">
-  <div class="modal">
-    <h3>Report Result</h3>
-    <div id="modalPlayers"></div>
-    <label for="winnerSelect">Winner</label>
-    <select id="winnerSelect"></select>
-    <label for="scoreInput">Score (optional)</label>
-    <input id="scoreInput" type="text" placeholder="e.g. 3-1">
-    <div class="modal-actions">
-      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
-      <button class="btn-submit" onclick="submitResult()">Submit</button>
-    </div>
-    <div class="msg" id="modalMsg"></div>
+  <div class="subtitle" style="margin-bottom:14px;">
+    Results are reported through the official Google Form (opens in a new tab,
+    signed in with your school account) — not on this page directly. Pick
+    your match below to jump straight to the Form.
   </div>
+  <div id="queueList"></div>
 </div>
 
 <script>
@@ -139,7 +108,7 @@
   // -------------------------
 
   let currentMatches = [];
-  let selectedMatch = null;
+  let resultFormUrl = '';
 
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -158,6 +127,7 @@
       const data = await res.json();
       if (!data.ok) throw new Error(data.error || 'Failed to load');
       currentMatches = data.matches;
+      resultFormUrl = data.config.ResultFormUrl || '';
       renderStatus(data.config);
       renderBracket(data.matches);
       renderQueue(data.matches);
@@ -223,52 +193,17 @@
       item.className = 'queue-item';
       item.innerHTML = '<span>' + m.Player1 + ' <span style="color:var(--text-dim)">vs</span> ' + m.Player2 + '</span>';
       const btn = document.createElement('button');
-      btn.textContent = 'Report Result';
-      btn.onclick = () => openModal(m);
+      btn.textContent = 'Report via Form';
+      btn.onclick = () => {
+        if (resultFormUrl) {
+          window.open(resultFormUrl, '_blank');
+        } else {
+          alert('The results Form link isn\'t configured yet — check the Config tab in the Sheet.');
+        }
+      };
       item.appendChild(btn);
       list.appendChild(item);
     });
-  }
-
-  function openModal(match) {
-    selectedMatch = match;
-    document.getElementById('modalPlayers').textContent = match.Player1 + ' vs ' + match.Player2;
-    const sel = document.getElementById('winnerSelect');
-    sel.innerHTML =
-      '<option value="' + match.Player1 + '">' + match.Player1 + '</option>' +
-      '<option value="' + match.Player2 + '">' + match.Player2 + '</option>';
-    document.getElementById('scoreInput').value = '';
-    document.getElementById('modalMsg').textContent = '';
-    document.getElementById('modalMsg').className = 'msg';
-    document.getElementById('modalBackdrop').classList.add('open');
-  }
-
-  function closeModal() {
-    document.getElementById('modalBackdrop').classList.remove('open');
-    selectedMatch = null;
-  }
-
-  async function submitResult() {
-    const winner = document.getElementById('winnerSelect').value;
-    const score = document.getElementById('scoreInput').value;
-    const msgEl = document.getElementById('modalMsg');
-    msgEl.textContent = 'Submitting…';
-    msgEl.className = 'msg';
-    try {
-      const res = await fetch(WEBAPP_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // avoids CORS preflight against Apps Script
-        body: JSON.stringify({ action: 'reportResult', matchId: selectedMatch.MatchID, winnerGamertag: winner, score })
-      });
-      const data = await res.json();
-      if (!data.ok) throw new Error(data.error || 'Submission failed');
-      msgEl.textContent = 'Result recorded!';
-      msgEl.className = 'msg success';
-      setTimeout(() => { closeModal(); loadState(); }, 900);
-    } catch (err) {
-      msgEl.textContent = err.message;
-      msgEl.className = 'msg error';
-    }
   }
 
   loadState();
