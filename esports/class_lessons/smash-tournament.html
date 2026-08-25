@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smash Tournament Bracket</title>
+<style>
+  :root {
+    --bg: #14161c;
+    --panel: #1d2029;
+    --panel-alt: #262a36;
+    --accent: #ff5f5f;
+    --accent2: #5fb4ff;
+    --text: #eef0f4;
+    --text-dim: #9aa0ac;
+    --win: #4caf7d;
+    --pending: #cfa34d;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    padding: 16px;
+  }
+  h1 { font-size: 1.4rem; margin: 0 0 4px; }
+  .subtitle { color: var(--text-dim); margin-bottom: 20px; font-size: 0.9rem; }
+  .status-banner {
+    padding: 10px 14px; border-radius: 8px; margin-bottom: 20px;
+    background: var(--panel-alt); font-size: 0.9rem;
+  }
+  .tabs { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+  .tab-btn {
+    background: var(--panel); color: var(--text-dim); border: 1px solid #2f333f;
+    border-radius: 20px; padding: 8px 16px; cursor: pointer; font-size: 0.85rem;
+  }
+  .tab-btn.active { background: var(--accent); color: #1a1a1a; border-color: var(--accent); font-weight: 600; }
+  .panel { background: var(--panel); border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+  .bracket-wrap { overflow-x: auto; }
+  .bracket-cols { display: flex; gap: 24px; min-width: max-content; padding-bottom: 8px; }
+  .bcol { display: flex; flex-direction: column; justify-content: space-around; min-width: 180px; }
+  .bcol h3 { font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 10px; }
+  .match-card {
+    background: var(--panel-alt); border-radius: 8px; padding: 8px 10px; margin-bottom: 14px;
+    border: 1px solid #2f333f; font-size: 0.85rem;
+  }
+  .match-card.reported { border-color: var(--win); }
+  .match-card.ready { border-color: var(--pending); }
+  .player-row { display: flex; justify-content: space-between; padding: 3px 0; }
+  .player-row.winner { color: var(--win); font-weight: 600; }
+  .player-row .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 120px; }
+  .tbd { color: var(--text-dim); font-style: italic; }
+  .match-meta { font-size: 0.7rem; color: var(--text-dim); margin-top: 4px; }
+
+  .queue-item {
+    display: flex; justify-content: space-between; align-items: center;
+    background: var(--panel-alt); border-radius: 8px; padding: 12px; margin-bottom: 10px;
+  }
+  .queue-item button {
+    background: var(--accent2); color: #10131a; border: none; border-radius: 6px;
+    padding: 8px 14px; font-weight: 600; cursor: pointer; font-size: 0.85rem;
+  }
+  .empty-state { color: var(--text-dim); text-align: center; padding: 30px 10px; font-size: 0.9rem; }
+
+  .modal-backdrop {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+    display: none; align-items: center; justify-content: center; padding: 16px; z-index: 10;
+  }
+  .modal-backdrop.open { display: flex; }
+  .modal { background: var(--panel); border-radius: 12px; padding: 20px; width: 100%; max-width: 360px; }
+  .modal h3 { margin-top: 0; }
+  .modal label { display: block; margin: 12px 0 4px; font-size: 0.85rem; color: var(--text-dim); }
+  .modal select, .modal input {
+    width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #3a3f4d;
+    background: var(--panel-alt); color: var(--text); font-size: 0.95rem;
+  }
+  .modal-actions { display: flex; gap: 10px; margin-top: 18px; }
+  .modal-actions button { flex: 1; padding: 10px; border-radius: 6px; border: none; font-weight: 600; cursor: pointer; }
+  .btn-cancel { background: #2f333f; color: var(--text); }
+  .btn-submit { background: var(--accent); color: #1a1a1a; }
+  .msg { font-size: 0.85rem; margin-top: 10px; min-height: 1.2em; }
+  .msg.error { color: var(--accent); }
+  .msg.success { color: var(--win); }
+
+  .refresh-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .refresh-row button {
+    background: none; border: 1px solid #3a3f4d; color: var(--text-dim);
+    border-radius: 6px; padding: 6px 12px; cursor: pointer; font-size: 0.8rem;
+  }
+</style>
+</head>
+<body>
+
+<h1 id="title">Smash Tournament Bracket</h1>
+<div class="subtitle">Live results — sign in with your school account to report a match.</div>
+<div class="status-banner" id="statusBanner">Loading tournament data…</div>
+
+<div class="tabs">
+  <button class="tab-btn active" data-tab="bracket">Bracket</button>
+  <button class="tab-btn" data-tab="report">Report a Result</button>
+</div>
+
+<div id="tab-bracket" class="panel">
+  <div class="refresh-row">
+    <strong>Winners &amp; Losers Bracket</strong>
+    <button onclick="loadState()">Refresh</button>
+  </div>
+  <div class="bracket-wrap"><div class="bracket-cols" id="bracketCols"></div></div>
+</div>
+
+<div id="tab-report" class="panel" style="display:none;">
+  <div class="refresh-row">
+    <strong>Matches ready to play</strong>
+    <button onclick="loadState()">Refresh</button>
+  </div>
+  <div id="queueList"></div>
+</div>
+
+<div class="modal-backdrop" id="modalBackdrop">
+  <div class="modal">
+    <h3>Report Result</h3>
+    <div id="modalPlayers"></div>
+    <label for="winnerSelect">Winner</label>
+    <select id="winnerSelect"></select>
+    <label for="scoreInput">Score (optional)</label>
+    <input id="scoreInput" type="text" placeholder="e.g. 3-1">
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-submit" onclick="submitResult()">Submit</button>
+    </div>
+    <div class="msg" id="modalMsg"></div>
+  </div>
+</div>
+
+<script>
+  // ---- CONFIGURE THIS ----
+  const WEBAPP_URL = "https://script.google.com/a/macros/lghs.k12.ca.us/s/AKfycbwh-eAIWSfdh9KAkxwm696urloKOI9gvdNYOyUdzKiMRMm54dZO9qtkcy1QUbQcjg5DKg/exec";
+  // -------------------------
+
+  let currentMatches = [];
+  let selectedMatch = null;
+
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const tab = btn.dataset.tab;
+      document.getElementById('tab-bracket').style.display = tab === 'bracket' ? 'block' : 'none';
+      document.getElementById('tab-report').style.display = tab === 'report' ? 'block' : 'none';
+    });
+  });
+
+  async function loadState() {
+    document.getElementById('statusBanner').textContent = 'Loading tournament data…';
+    try {
+      const res = await fetch(WEBAPP_URL + '?action=state');
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error || 'Failed to load');
+      currentMatches = data.matches;
+      renderStatus(data.config);
+      renderBracket(data.matches);
+      renderQueue(data.matches);
+    } catch (err) {
+      document.getElementById('statusBanner').textContent = 'Could not load tournament data. ' + err.message;
+    }
+  }
+
+  function renderStatus(cfg) {
+    document.getElementById('title').textContent = cfg.TournamentName || 'Smash Tournament Bracket';
+    const statusLabel = {
+      signup: 'Sign-ups open — bracket not generated yet.',
+      in_progress: 'Tournament in progress.',
+      complete: 'Tournament complete! 🏆'
+    }[cfg.Status] || 'Status: ' + cfg.Status;
+    document.getElementById('statusBanner').textContent = statusLabel;
+  }
+
+  function renderBracket(matches) {
+    const wrap = document.getElementById('bracketCols');
+    wrap.innerHTML = '';
+    ['W', 'L', 'GF'].forEach(bracket => {
+      const bracketMatches = matches.filter(m => m.Bracket === bracket && m.Status !== 'void');
+      if (!bracketMatches.length) return;
+      const rounds = [...new Set(bracketMatches.map(m => m.Round))].sort((a, b) => a - b);
+      rounds.forEach(round => {
+        const col = document.createElement('div');
+        col.className = 'bcol';
+        const label = bracket === 'W' ? 'Winners R' + round : bracket === 'L' ? 'Losers R' + round : 'Grand Final' + (round === 2 ? ' (Reset)' : '');
+        col.innerHTML = '<h3>' + label + '</h3>';
+        bracketMatches.filter(m => m.Round === round).forEach(m => {
+          col.appendChild(renderMatchCard(m));
+        });
+        wrap.appendChild(col);
+      });
+    });
+  }
+
+  function renderMatchCard(m) {
+    const card = document.createElement('div');
+    card.className = 'match-card ' + (m.Status === 'reported' || m.Status === 'bye' ? 'reported' : m.Status === 'ready' ? 'ready' : '');
+    const p1 = m.Player1 || 'TBD';
+    const p2 = m.Player2 || 'TBD';
+    const p1Win = m.Winner && m.Winner === m.Player1;
+    const p2Win = m.Winner && m.Winner === m.Player2;
+    card.innerHTML =
+      '<div class="player-row ' + (p1Win ? 'winner' : '') + '"><span class="name ' + (!m.Player1 ? 'tbd' : '') + '">' + p1 + '</span></div>' +
+      '<div class="player-row ' + (p2Win ? 'winner' : '') + '"><span class="name ' + (!m.Player2 ? 'tbd' : '') + '">' + p2 + '</span></div>' +
+      '<div class="match-meta">' + (m.Score || (m.Status === 'bye' ? 'Bye' : m.Status)) + '</div>';
+    return card;
+  }
+
+  function renderQueue(matches) {
+    const list = document.getElementById('queueList');
+    list.innerHTML = '';
+    const ready = matches.filter(m => m.Status === 'ready');
+    if (!ready.length) {
+      list.innerHTML = '<div class="empty-state">No matches are currently ready to be played.</div>';
+      return;
+    }
+    ready.forEach(m => {
+      const item = document.createElement('div');
+      item.className = 'queue-item';
+      item.innerHTML = '<span>' + m.Player1 + ' <span style="color:var(--text-dim)">vs</span> ' + m.Player2 + '</span>';
+      const btn = document.createElement('button');
+      btn.textContent = 'Report Result';
+      btn.onclick = () => openModal(m);
+      item.appendChild(btn);
+      list.appendChild(item);
+    });
+  }
+
+  function openModal(match) {
+    selectedMatch = match;
+    document.getElementById('modalPlayers').textContent = match.Player1 + ' vs ' + match.Player2;
+    const sel = document.getElementById('winnerSelect');
+    sel.innerHTML =
+      '<option value="' + match.Player1 + '">' + match.Player1 + '</option>' +
+      '<option value="' + match.Player2 + '">' + match.Player2 + '</option>';
+    document.getElementById('scoreInput').value = '';
+    document.getElementById('modalMsg').textContent = '';
+    document.getElementById('modalMsg').className = 'msg';
+    document.getElementById('modalBackdrop').classList.add('open');
+  }
+
+  function closeModal() {
+    document.getElementById('modalBackdrop').classList.remove('open');
+    selectedMatch = null;
+  }
+
+  async function submitResult() {
+    const winner = document.getElementById('winnerSelect').value;
+    const score = document.getElementById('scoreInput').value;
+    const msgEl = document.getElementById('modalMsg');
+    msgEl.textContent = 'Submitting…';
+    msgEl.className = 'msg';
+    try {
+      const res = await fetch(WEBAPP_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // avoids CORS preflight against Apps Script
+        body: JSON.stringify({ action: 'reportResult', matchId: selectedMatch.MatchID, winnerGamertag: winner, score })
+      });
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error || 'Submission failed');
+      msgEl.textContent = 'Result recorded!';
+      msgEl.className = 'msg success';
+      setTimeout(() => { closeModal(); loadState(); }, 900);
+    } catch (err) {
+      msgEl.textContent = err.message;
+      msgEl.className = 'msg error';
+    }
+  }
+
+  loadState();
+</script>
+</body>
+</html>
