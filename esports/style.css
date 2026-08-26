@@ -247,3 +247,11 @@ footer, .bd-footer, .site-disclaimer {
   text-align: center;
   padding: 2rem 1rem;
 }
+
+/* p inherits the global "p { max-width: 65ch; }" rule, which caps its
+   width without centering the box itself -- without this, text-align:
+   center only centers text inside an already left-stuck narrow column. */
+footer p, .bd-footer p, .site-disclaimer p {
+  margin-left: auto;
+  margin-right: auto;
+}
