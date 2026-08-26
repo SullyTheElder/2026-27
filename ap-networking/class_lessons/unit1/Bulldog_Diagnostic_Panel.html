@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Bulldog Networking — Diagnostic Panel</title>
+<style>
+  :root{
+    --navy:#0B1F3A;
+    --navy-light:#132a4d;
+    --green:#8FC53E;
+    --green-dark:#6fa02c;
+    --cream:#F4F1E9;
+    --gray:#6E7275;
+    --red:#D6483C;
+    --amber:#E0A93A;
+    --ok:#4FA35A;
+    --white:#FFFFFF;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; font-family:'Segoe UI',Calibri,Arial,sans-serif;
+    background: radial-gradient(circle at top, #12305c 0%, var(--navy) 60%);
+    color:var(--white); min-height:100vh; padding:20px;
+  }
+  .wrap{max-width:1100px;margin:0 auto;}
+  header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:12px;}
+  .brand{display:flex;align-items:center;gap:12px;}
+  .brand-badge{
+    width:44px;height:44px;border-radius:50%;background:var(--green);
+    display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--navy);font-size:20px;
+    box-shadow:0 0 0 3px var(--navy-light);
+  }
+  h1{font-size:20px;margin:0;letter-spacing:0.5px;}
+  h1 span{color:var(--green);}
+  .sub{font-size:12px;color:#b8c4d9;margin-top:2px;}
+
+  .mode-toggle{display:flex;background:var(--navy-light);border-radius:999px;padding:4px;gap:4px;}
+  .mode-toggle button{
+    border:none;background:transparent;color:#b8c4d9;padding:8px 16px;border-radius:999px;
+    font-weight:700;font-size:13px;cursor:pointer;transition:.15s;
+  }
+  .mode-toggle button.active{background:var(--green);color:var(--navy);}
+
+  .preset-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;}
+  .preset-btn{
+    background:var(--navy-light);border:2px solid transparent;color:var(--white);
+    padding:10px 16px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;
+    transition:.15s;
+  }
+  .preset-btn:hover{border-color:var(--green);}
+  .preset-btn.active{background:var(--green);color:var(--navy);border-color:var(--green);}
+
+  .panel{
+    background:var(--white);color:var(--navy);border-radius:16px;padding:26px;
+    box-shadow:0 10px 40px rgba(0,0,0,0.35);
+  }
+  .device-name{font-size:22px;font-weight:800;margin:0 0 4px;}
+  .device-tag{font-size:13px;color:var(--gray);margin-bottom:20px;}
+
+  .metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:20px;}
+  .metric{
+    background:var(--cream);border-radius:12px;padding:16px;position:relative;
+  }
+  .metric-label{font-size:12px;font-weight:800;letter-spacing:0.5px;color:var(--gray);text-transform:uppercase;margin-bottom:8px;display:flex;justify-content:space-between;}
+  .metric-value{font-size:28px;font-weight:800;}
+  .bar-track{height:10px;border-radius:6px;background:#ddd8c8;margin-top:10px;overflow:hidden;}
+  .bar-fill{height:100%;border-radius:6px;transition:width .4s;}
+  .status-dot{width:10px;height:10px;border-radius:50%;display:inline-block;margin-left:6px;}
+
+  .wifi-bars{display:flex;gap:3px;align-items:flex-end;height:24px;margin-top:6px;}
+  .wifi-bars .bar{width:8px;border-radius:2px;background:#ddd8c8;}
+  .wifi-bars .bar.on{background:var(--navy);}
+
+  .reveal-box{
+    background:#fff8e6;border:1px solid #f0dca0;border-radius:10px;padding:14px 16px;margin-top:6px;
+    font-size:13px;color:#4a3b10;display:none;
+  }
+  .reveal-box.show{display:block;}
+  .reveal-box b{color:var(--navy);}
+
+  .notes{margin-top:22px;}
+  .notes label{font-size:13px;font-weight:700;color:var(--gray);display:block;margin-bottom:6px;}
+  .notes textarea{
+    width:100%;min-height:80px;border-radius:10px;border:1px solid #ccc;padding:10px;
+    font-family:inherit;font-size:14px;resize:vertical;
+  }
+
+  .namebar{
+    display:flex;align-items:center;gap:12px;margin-bottom:16px;background:var(--navy-light);
+    border-radius:12px;padding:12px 16px;flex-wrap:wrap;
+  }
+  .namebar label{font-size:13px;font-weight:700;color:#b8c4d9;}
+  .namebar input{
+    flex:1;min-width:180px;border:none;border-radius:8px;padding:8px 12px;font-size:14px;
+    font-family:inherit;
+  }
+  .export-btn{
+    background:var(--green);color:var(--navy);border:none;border-radius:8px;padding:10px 18px;
+    font-weight:800;font-size:13px;cursor:pointer;white-space:nowrap;
+  }
+  .export-btn:hover{background:var(--green-dark);color:var(--white);}
+  .save-hint{font-size:11px;color:var(--gray);margin-top:6px;}
+  .progress-dot{
+    width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px;background:#ccc;
+  }
+  .progress-dot.done{background:var(--ok);}
+
+  footer{text-align:center;color:#8ea0bf;font-size:12px;margin-top:18px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <div class="brand-badge">B</div>
+      <div>
+        <h1>Bulldog <span>Diagnostic Panel</span></h1>
+        <div class="sub">Topic 1.1 &middot; Investigate the Sluggish Device</div>
+      </div>
+    </div>
+    <div class="mode-toggle">
+      <button id="btnInvestigate" class="active">Investigate Mode</button>
+      <button id="btnDiagnose">Diagnose Mode</button>
+    </div>
+  </header>
+
+  <div class="namebar">
+    <label for="studentName">Name:</label>
+    <input type="text" id="studentName" placeholder="Type your name here">
+    <button class="export-btn" id="exportBtn">⬇ Export My Notes</button>
+  </div>
+
+  <div class="preset-row" id="presetRow"></div>
+
+  <div class="panel">
+    <p class="device-name" id="deviceName">Device Alpha</p>
+    <p class="device-tag" id="deviceTag">A classmate's laptop, mid-afternoon on a school Wi-Fi network.</p>
+
+    <div class="metrics" id="metrics"></div>
+
+    <div class="notes">
+      <label for="notesArea">Your Notes — What do you notice? What do you think is causing it? What would you try first?</label>
+      <textarea id="notesArea" placeholder="Type your observations here..."></textarea>
+      <div class="save-hint" id="saveHint">Notes for this device are kept while the tab stays open. Click "Export My Notes" when you're done to download everything as a file.</div>
+    </div>
+  </div>
+
+  <div style="margin-top:14px;font-size:12px;color:#b8c4d9;" id="progressLine"></div>
+
+  <footer>Bulldog Networking &middot; AP Networking &middot; For classroom use only — all readings are simulated.</footer>
+</div>
+
+<script>
+const presets = [
+  {
+    id:'alpha', name:'Device Alpha', tag:"A classmate's laptop, mid-afternoon on a school Wi-Fi network.",
+    cpu:93, ram:52, storageFree:64, wifi:4, temp:41,
+    cause:"High CPU usage (sustained above 90%) is overloading the processor.",
+    fix:"End the high-usage or unresponsive task/process first — that's the simplest, cheapest fix before anything else."
+  },
+  {
+    id:'bravo', name:'Device Bravo', tag:"A shared Chromebook that's been open with many tabs all day.",
+    cpu:38, ram:89, storageFree:58, wifi:4, temp:37,
+    cause:"High RAM usage (sustained above 80–90%) means the system is nearly out of short-term memory.",
+    fix:"Delete temporary files / close unused apps first; only add more RAM if this keeps happening."
+  },
+  {
+    id:'charlie', name:'Device Charlie', tag:"An older laptop that's been used for years without a cleanup.",
+    cpu:29, ram:44, storageFree:4, wifi:4, temp:36,
+    cause:"Storage is critically low (below ~10% free), which degrades file access and app performance.",
+    fix:"Delete unused files/apps or move them to cloud/external storage; add storage only if the problem persists."
+  },
+  {
+    id:'delta', name:'Device Delta', tag:"A tablet being used in the far corner of a classroom.",
+    cpu:22, ram:35, storageFree:71, wifi:1, temp:35,
+    cause:"Weak Wi-Fi signal or a dropped connection to the access point is causing failed/slow loading.",
+    fix:"Verify the network name and password, then move closer to the wireless access point."
+  },
+  {
+    id:'echo', name:'Device Echo', tag:"A gaming laptop that's been running a demanding app in direct sunlight.",
+    cpu:81, ram:60, storageFree:55, wifi:3, temp:78,
+    cause:"Overheating — the device is throttling performance or may shut down to protect itself.",
+    fix:"Check ventilation, end high-usage tasks, and move the device to a cooler spot out of direct sunlight."
+  },
+  {
+    id:'foxtrot', name:'Device Foxtrot', tag:"A desktop that multiple students have been using for video editing all day.",
+    cpu:95, ram:91, storageFree:8, wifi:4, temp:83,
+    cause:"Multiple issues at once — CPU, RAM, storage, and heat are all in trouble together.",
+    fix:"Work through the process one root cause at a time — cheapest/simplest fix first for each — then re-verify after every step."
+  },
+  {
+    id:'healthy', name:'Baseline Healthy Device', tag:"A freshly restarted laptop, for comparison.",
+    cpu:14, ram:31, storageFree:68, wifi:4, temp:34,
+    cause:"Nothing — this device is healthy. Use it as your point of comparison.",
+    fix:"No fix needed. This is what 'normal' looks like."
+  },
+];
+
+let mode = 'investigate';
+let current = presets[0];
+const notesStore = {}; // presetId -> note text
+presets.forEach(p => notesStore[p.id] = '');
+
+function thresholdColor(kind, value){
+  if(mode==='investigate') return '#0B1F3A';
+  if(kind==='cpu' || kind==='ram'){
+    if(value>=80) return '#D6483C';
+    if(value>=60) return '#E0A93A';
+    return '#4FA35A';
+  }
+  if(kind==='storageFree'){
+    if(value<10) return '#D6483C';
+    if(value<25) return '#E0A93A';
+    return '#4FA35A';
+  }
+  if(kind==='temp'){
+    if(value>=70) return '#D6483C';
+    if(value>=55) return '#E0A93A';
+    return '#4FA35A';
+  }
+  if(kind==='wifi'){
+    if(value<=1) return '#D6483C';
+    if(value===2) return '#E0A93A';
+    return '#4FA35A';
+  }
+  return '#0B1F3A';
+}
+
+function renderPresetButtons(){
+  const row = document.getElementById('presetRow');
+  row.innerHTML='';
+  presets.forEach(p=>{
+    const b = document.createElement('button');
+    b.className='preset-btn' + (p.id===current.id?' active':'');
+    b.textContent = mode==='investigate' ? p.name : p.name + ' — ' + guessLabel(p);
+    b.onclick=()=>{
+      notesStore[current.id] = document.getElementById('notesArea').value;
+      current=p;
+      render();
+    };
+    row.appendChild(b);
+  });
+}
+
+function guessLabel(p){
+  if(p.id==='healthy') return 'Healthy';
+  if(p.id==='foxtrot') return 'Multiple Issues';
+  if(p.cpu>=80) return 'CPU';
+  if(p.ram>=80) return 'RAM';
+  if(p.storageFree<10) return 'Storage';
+  if(p.wifi<=1) return 'Wi-Fi';
+  if(p.temp>=70) return 'Thermal';
+  return '';
+}
+
+function metricBlock(label, value, unit, kind, barPct){
+  const color = thresholdColor(kind, value);
+  return `<div class="metric">
+    <div class="metric-label">${label}<span class="status-dot" style="background:${color}"></span></div>
+    <div class="metric-value" style="color:${color}">${value}${unit}</div>
+    <div class="bar-track"><div class="bar-fill" style="width:${barPct}%;background:${color}"></div></div>
+  </div>`;
+}
+
+function wifiBlock(bars){
+  const color = thresholdColor('wifi', bars);
+  let html = `<div class="metric"><div class="metric-label">Wi-Fi Signal<span class="status-dot" style="background:${color}"></span></div>`;
+  html += `<div class="wifi-bars">`;
+  for(let i=1;i<=4;i++){
+    const h = 6+i*5;
+    html += `<div class="bar ${i<=bars?'on':''}" style="height:${h}px;${i<=bars?`background:${color}`:''}"></div>`;
+  }
+  html += `</div></div>`;
+  return html;
+}
+
+function render(){
+  document.getElementById('deviceName').textContent = current.name;
+  document.getElementById('deviceTag').textContent = current.tag;
+
+  let html = '';
+  html += metricBlock('CPU Usage', current.cpu, '%', 'cpu', current.cpu);
+  html += metricBlock('RAM Usage', current.ram, '%', 'ram', current.ram);
+  html += metricBlock('Storage Free', current.storageFree, '%', 'storageFree', current.storageFree);
+  html += wifiBlock(current.wifi);
+  html += metricBlock('Temperature', current.temp, '°C', 'temp', Math.min(100, current.temp));
+  document.getElementById('metrics').innerHTML = html;
+
+  let reveal = document.getElementById('revealBox');
+  if(reveal) reveal.remove();
+  if(mode==='diagnose'){
+    const box = document.createElement('div');
+    box.id='revealBox';
+    box.className='reveal-box show';
+    box.innerHTML = `<b>Likely root cause:</b> ${current.cause}<br><br><b>Suggested first fix:</b> ${current.fix}`;
+    document.querySelector('.panel').appendChild(box);
+  }
+
+  document.getElementById('notesArea').value = notesStore[current.id] || '';
+
+  renderPresetButtons();
+  renderProgress();
+}
+
+function renderProgress(){
+  const done = presets.filter(p => (notesStore[p.id] || '').trim().length > 0).length;
+  document.getElementById('progressLine').innerHTML =
+    presets.map(p => `<span class="progress-dot ${notesStore[p.id] && notesStore[p.id].trim() ? 'done':''}"></span>`).join('') +
+    ` ${done} of ${presets.length} devices have notes`;
+}
+
+function exportNotes(){
+  notesStore[current.id] = document.getElementById('notesArea').value;
+  const name = document.getElementById('studentName').value.trim() || 'Unnamed Student';
+  const now = new Date();
+  const stamp = now.toLocaleString();
+
+  let out = `BULLDOG NETWORKING — DIAGNOSTIC PANEL NOTES\n`;
+  out += `Student: ${name}\n`;
+  out += `Exported: ${stamp}\n`;
+  out += `${'='.repeat(50)}\n\n`;
+
+  presets.forEach(p => {
+    out += `DEVICE: ${p.name}\n`;
+    out += `Setup: ${p.tag}\n`;
+    const note = (notesStore[p.id] || '').trim();
+    out += `Notes: ${note ? note : '(no notes recorded)'}\n`;
+    out += `\n${'-'.repeat(50)}\n\n`;
+  });
+
+  const blob = new Blob([out], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const safeName = name.replace(/[^a-z0-9]+/gi, '_');
+  a.href = url;
+  a.download = `Diagnostic-Notes-${safeName}.txt`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+document.getElementById('btnInvestigate').onclick = ()=>{
+  mode='investigate';
+  document.getElementById('btnInvestigate').classList.add('active');
+  document.getElementById('btnDiagnose').classList.remove('active');
+  render();
+};
+document.getElementById('btnDiagnose').onclick = ()=>{
+  mode='diagnose';
+  document.getElementById('btnDiagnose').classList.add('active');
+  document.getElementById('btnInvestigate').classList.remove('active');
+  render();
+};
+
+document.getElementById('notesArea').addEventListener('input', (e)=>{
+  notesStore[current.id] = e.target.value;
+  renderProgress();
+});
+
+document.getElementById('exportBtn').addEventListener('click', exportNotes);
+
+render();
+</script>
+</body>
+</html>
