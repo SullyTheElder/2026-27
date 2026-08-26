@@ -140,3 +140,16 @@ h1{
 .list .card h2{ font-size: 16px; margin: 0; }
 
 .arrow{ color: var(--accent); font-weight: 700; }
+
+/* Disclaimer footer, auto-injected by scripts/build.py on every portal
+   page. Deliberately quiet -- present, not prominent. */
+.site-disclaimer{
+  max-width: 900px;
+  margin: 32px auto 0;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ink-dimmer);
+}
+.site-disclaimer p{ margin: 0; }
