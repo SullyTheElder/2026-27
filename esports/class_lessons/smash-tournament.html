@@ -9,7 +9,273 @@
  *   (Public, but READ-ONLY — see doPost, which refuses all write actions.
  *    This is required because domain-restricted deployments do not send
  *    CORS headers and cannot be called via fetch() from an external site.)
- *
+ *<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smash Tournament Bracket</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders:wght@700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --forest: #2E6822;   /* jersey shoulders/sides, wordmark "LE GRAND" */
+    --deep: #123816;     /* tonal halftone fade */
+    --gold: #E8C838;     /* primary accent — cuffs, nameplate */
+    --orange: #F89800;   /* reserved for logo reproductions only */
+    --ink: #0A0A0A;      /* jersey body / background */
+    --paper: #FFFFFF;
+    --slate: #386860;
+    --panel: #111311;
+    --panel-line: #2a2f28;
+    --text: #F2F3EE;
+    --text-dim: #9aa89a;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--ink);
+    color: var(--text);
+    padding: 16px;
+  }
+  .display-font { font-family: 'Big Shoulders', -apple-system, sans-serif; }
+
+  .brand-bar {
+    font-family: 'Big Shoulders', sans-serif;
+    font-weight: 800;
+    font-size: 1.4rem;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    padding: 6px 2px 0;
+  }
+  .brand-bar .g { color: var(--forest); }
+  .brand-bar .go { color: var(--gold); }
+  .brand-bar .w { color: var(--paper); }
+
+  .halftone-strip {
+    height: 10px;
+    margin: 8px 0 18px;
+    background-image: radial-gradient(circle, var(--deep) 1.4px, transparent 1.6px);
+    background-size: 7px 7px;
+    -webkit-mask-image: linear-gradient(to right, black 0%, transparent 85%);
+            mask-image: linear-gradient(to right, black 0%, transparent 85%);
+  }
+
+  h1 {
+    font-family: 'Big Shoulders', sans-serif;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    font-size: 1.5rem;
+    margin: 0 0 4px;
+    color: var(--paper);
+  }
+  .subtitle { color: var(--text-dim); margin-bottom: 20px; font-size: 0.9rem; }
+  .status-banner {
+    padding: 10px 14px 10px 18px; margin-bottom: 20px;
+    background: var(--panel); border-left: 4px solid var(--gold);
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 10px 100%);
+    font-size: 0.9rem;
+  }
+  .tabs { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+  .tab-btn {
+    font-family: 'Big Shoulders', sans-serif; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.03em;
+    background: var(--panel); color: var(--text-dim); border: 2px solid var(--panel-line);
+    clip-path: polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%);
+    padding: 8px 22px; cursor: pointer; font-size: 0.9rem;
+  }
+  .tab-btn.active { background: var(--gold); color: var(--ink); border-color: var(--gold); }
+  .panel { background: var(--panel); border: 1px solid var(--panel-line); border-radius: 2px; padding: 16px; margin-bottom: 16px; }
+  .bracket-wrap { overflow-x: auto; }
+  .bracket-cols { display: flex; gap: 24px; min-width: max-content; padding-bottom: 8px; }
+  .bcol { display: flex; flex-direction: column; justify-content: space-around; min-width: 180px; }
+  .bcol h3 {
+    font-family: 'Big Shoulders', sans-serif; font-weight: 700;
+    font-size: 0.8rem; color: var(--gold); text-transform: uppercase; letter-spacing: 0.08em;
+    margin: 0 0 10px; border-bottom: 2px solid var(--panel-line); padding-bottom: 4px;
+  }
+  .match-card {
+    background: var(--ink); border-radius: 2px; padding: 8px 10px; margin-bottom: 14px;
+    border: 2px solid var(--panel-line); font-size: 0.85rem;
+  }
+  .match-card.reported { border-color: var(--forest); }
+  .match-card.ready { border-color: var(--gold); }
+  .player-row { display: flex; justify-content: space-between; padding: 3px 0; }
+  .player-row.winner { color: var(--gold); font-weight: 700; }
+  .player-row .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 120px; }
+  .tbd { color: var(--text-dim); font-style: italic; }
+  .match-meta { font-size: 0.7rem; color: var(--text-dim); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.03em; }
+
+  .queue-item {
+    display: flex; justify-content: space-between; align-items: center;
+    background: var(--ink); border: 2px solid var(--panel-line); border-radius: 2px; padding: 12px; margin-bottom: 10px;
+  }
+  .queue-item button {
+    font-family: 'Big Shoulders', sans-serif; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.03em;
+    background: var(--gold); color: var(--ink); border: none;
+    clip-path: polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%);
+    padding: 8px 18px; cursor: pointer; font-size: 0.85rem;
+  }
+  .empty-state { color: var(--text-dim); text-align: center; padding: 30px 10px; font-size: 0.9rem; }
+
+  .refresh-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .refresh-row strong {
+    font-family: 'Big Shoulders', sans-serif; text-transform: uppercase; letter-spacing: 0.03em; font-size: 1rem;
+  }
+  .refresh-row button {
+    background: none; border: 2px solid var(--panel-line); color: var(--text-dim);
+    border-radius: 2px; padding: 6px 14px; cursor: pointer; font-size: 0.8rem;
+    font-family: 'Big Shoulders', sans-serif; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em;
+  }
+</style>
+</head>
+<body>
+
+<div class="brand-bar"><span class="g">LE GRAND</span> <span class="go">BULLDOG</span> <span class="w">ESPORTS</span></div>
+<div class="halftone-strip"></div>
+
+<h1 id="title">Smash Tournament Bracket</h1>
+<div class="subtitle">Live results — sign in with your school account to report a match.</div>
+<div class="status-banner" id="statusBanner">Loading tournament data…</div>
+
+<div class="tabs">
+  <button class="tab-btn active" data-tab="bracket">Bracket</button>
+  <button class="tab-btn" data-tab="report">Report a Result</button>
+</div>
+
+<div id="tab-bracket" class="panel">
+  <div class="refresh-row">
+    <strong>Winners &amp; Losers Bracket</strong>
+    <button onclick="loadState()">Refresh</button>
+  </div>
+  <div class="bracket-wrap"><div class="bracket-cols" id="bracketCols"></div></div>
+</div>
+
+<div id="tab-report" class="panel" style="display:none;">
+  <div class="refresh-row">
+    <strong>Matches ready to play</strong>
+    <button onclick="loadState()">Refresh</button>
+  </div>
+  <div class="subtitle" style="margin-bottom:14px;">
+    Results are reported through the official Google Form (opens in a new tab,
+    signed in with your school account) — not on this page directly. Pick
+    your match below to jump straight to the Form.
+  </div>
+  <div id="queueList"></div>
+</div>
+
+<script>
+  // ---- CONFIGURE THIS ----
+  const WEBAPP_URL = "PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE";
+  // -------------------------
+
+  let currentMatches = [];
+  let resultFormUrl = '';
+
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const tab = btn.dataset.tab;
+      document.getElementById('tab-bracket').style.display = tab === 'bracket' ? 'block' : 'none';
+      document.getElementById('tab-report').style.display = tab === 'report' ? 'block' : 'none';
+    });
+  });
+
+  async function loadState() {
+    document.getElementById('statusBanner').textContent = 'Loading tournament data…';
+    try {
+      const res = await fetch(WEBAPP_URL + '?action=state');
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error || 'Failed to load');
+      currentMatches = data.matches;
+      resultFormUrl = data.config.ResultFormUrl || '';
+      renderStatus(data.config);
+      renderBracket(data.matches);
+      renderQueue(data.matches);
+    } catch (err) {
+      document.getElementById('statusBanner').textContent = 'Could not load tournament data. ' + err.message;
+    }
+  }
+
+  function renderStatus(cfg) {
+    document.getElementById('title').textContent = cfg.TournamentName || 'Smash Tournament Bracket';
+    const statusLabel = {
+      signup: 'Sign-ups open — bracket not generated yet.',
+      in_progress: 'Tournament in progress.',
+      complete: 'Tournament complete! 🏆'
+    }[cfg.Status] || 'Status: ' + cfg.Status;
+    document.getElementById('statusBanner').textContent = statusLabel;
+  }
+
+  function renderBracket(matches) {
+    const wrap = document.getElementById('bracketCols');
+    wrap.innerHTML = '';
+    ['W', 'L', 'GF'].forEach(bracket => {
+      const bracketMatches = matches.filter(m => m.Bracket === bracket && m.Status !== 'void');
+      if (!bracketMatches.length) return;
+      const rounds = [...new Set(bracketMatches.map(m => m.Round))].sort((a, b) => a - b);
+      rounds.forEach(round => {
+        const col = document.createElement('div');
+        col.className = 'bcol';
+        const label = bracket === 'W' ? 'Winners R' + round : bracket === 'L' ? 'Losers R' + round : 'Grand Final' + (round === 2 ? ' (Reset)' : '');
+        col.innerHTML = '<h3>' + label + '</h3>';
+        bracketMatches.filter(m => m.Round === round).forEach(m => {
+          col.appendChild(renderMatchCard(m));
+        });
+        wrap.appendChild(col);
+      });
+    });
+  }
+
+  function renderMatchCard(m) {
+    const card = document.createElement('div');
+    card.className = 'match-card ' + (m.Status === 'reported' || m.Status === 'bye' ? 'reported' : m.Status === 'ready' ? 'ready' : '');
+    const p1 = m.Player1 || 'TBD';
+    const p2 = m.Player2 || 'TBD';
+    const p1Win = m.Winner && m.Winner === m.Player1;
+    const p2Win = m.Winner && m.Winner === m.Player2;
+    card.innerHTML =
+      '<div class="player-row ' + (p1Win ? 'winner' : '') + '"><span class="name ' + (!m.Player1 ? 'tbd' : '') + '">' + p1 + '</span></div>' +
+      '<div class="player-row ' + (p2Win ? 'winner' : '') + '"><span class="name ' + (!m.Player2 ? 'tbd' : '') + '">' + p2 + '</span></div>' +
+      '<div class="match-meta">' + (m.Score || (m.Status === 'bye' ? 'Bye' : m.Status)) + '</div>';
+    return card;
+  }
+
+  function renderQueue(matches) {
+    const list = document.getElementById('queueList');
+    list.innerHTML = '';
+    const ready = matches.filter(m => m.Status === 'ready');
+    if (!ready.length) {
+      list.innerHTML = '<div class="empty-state">No matches are currently ready to be played.</div>';
+      return;
+    }
+    ready.forEach(m => {
+      const item = document.createElement('div');
+      item.className = 'queue-item';
+      item.innerHTML = '<span>' + m.Player1 + ' <span style="color:var(--text-dim)">vs</span> ' + m.Player2 + '</span>';
+      const btn = document.createElement('button');
+      btn.textContent = 'Report via Form';
+      btn.onclick = () => {
+        if (resultFormUrl) {
+          window.open(resultFormUrl, '_blank');
+        } else {
+          alert('The results Form link isn\'t configured yet — check the Config tab in the Sheet.');
+        }
+      };
+      item.appendChild(btn);
+      list.appendChild(item);
+    });
+  }
+
+  loadState();
+</script>
+</body>
+</html>
+
  * RESULT REPORTING happens via a separate Google Form (domain-restricted,
  * "Collect email addresses" on) whose submissions are processed by
  * handleResultFormSubmission() below via an installable "On form submit"
