@@ -1,212 +1,498 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Smash Tournament Bracket</title>
-<style>
-  :root {
-    --bg: #14161c;
-    --panel: #1d2029;
-    --panel-alt: #262a36;
-    --accent: #ff5f5f;
-    --accent2: #5fb4ff;
-    --text: #eef0f4;
-    --text-dim: #9aa0ac;
-    --win: #4caf7d;
-    --pending: #cfa34d;
+/**
+ * SMASH TOURNAMENT TRACKER — Apps Script backend (v2)
+ * ------------------------------------------------------
+ * Bound to a Google Sheet with tabs: Config, Signups, Matches
+ *
+ * WEB APP DEPLOYMENT (for reading the live bracket from the static site):
+ *   Execute as: Me
+ *   Who has access: Anyone
+ *   (Public, but READ-ONLY — see doPost, which refuses all write actions.
+ *    This is required because domain-restricted deployments do not send
+ *    CORS headers and cannot be called via fetch() from an external site.)
+ *
+ * RESULT REPORTING happens via a separate Google Form (domain-restricted,
+ * "Collect email addresses" on) whose submissions are processed by
+ * handleResultFormSubmission() below via an installable "On form submit"
+ * trigger. This keeps identity verification real (Google-authenticated)
+ * without needing fetch() to a restricted endpoint.
+ *
+ * See SETUP.md for full instructions.
+ */
+
+const SHEET_CONFIG = 'Config';
+const SHEET_SIGNUPS = 'Signups';
+const SHEET_MATCHES = 'Matches';
+const BYE = 'BYE';
+const RESULT_QUESTION_TITLE = 'Which result are you reporting?';
+const SCORE_QUESTION_TITLE = 'Score (optional)';
+const RESULT_SEPARATOR = ' defeats '; // used to both build and parse the dropdown choice text
+
+// ---------- Small helpers ----------
+
+function getSS() {
+  return SpreadsheetApp.getActiveSpreadsheet();
+}
+
+function readConfig() {
+  const sh = getSS().getSheetByName(SHEET_CONFIG);
+  const data = sh.getDataRange().getValues();
+  const cfg = {};
+  for (let i = 1; i < data.length; i++) {
+    const [key, value] = data[i];
+    if (key) cfg[key] = value;
   }
-  * { box-sizing: border-box; }
-  body {
-    margin: 0;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    padding: 16px;
-  }
-  h1 { font-size: 1.4rem; margin: 0 0 4px; }
-  .subtitle { color: var(--text-dim); margin-bottom: 20px; font-size: 0.9rem; }
-  .status-banner {
-    padding: 10px 14px; border-radius: 8px; margin-bottom: 20px;
-    background: var(--panel-alt); font-size: 0.9rem;
-  }
-  .tabs { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
-  .tab-btn {
-    background: var(--panel); color: var(--text-dim); border: 1px solid #2f333f;
-    border-radius: 20px; padding: 8px 16px; cursor: pointer; font-size: 0.85rem;
-  }
-  .tab-btn.active { background: var(--accent); color: #1a1a1a; border-color: var(--accent); font-weight: 600; }
-  .panel { background: var(--panel); border-radius: 12px; padding: 16px; margin-bottom: 16px; }
-  .bracket-wrap { overflow-x: auto; }
-  .bracket-cols { display: flex; gap: 24px; min-width: max-content; padding-bottom: 8px; }
-  .bcol { display: flex; flex-direction: column; justify-content: space-around; min-width: 180px; }
-  .bcol h3 { font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 10px; }
-  .match-card {
-    background: var(--panel-alt); border-radius: 8px; padding: 8px 10px; margin-bottom: 14px;
-    border: 1px solid #2f333f; font-size: 0.85rem;
-  }
-  .match-card.reported { border-color: var(--win); }
-  .match-card.ready { border-color: var(--pending); }
-  .player-row { display: flex; justify-content: space-between; padding: 3px 0; }
-  .player-row.winner { color: var(--win); font-weight: 600; }
-  .player-row .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 120px; }
-  .tbd { color: var(--text-dim); font-style: italic; }
-  .match-meta { font-size: 0.7rem; color: var(--text-dim); margin-top: 4px; }
+  return cfg;
+}
 
-  .queue-item {
-    display: flex; justify-content: space-between; align-items: center;
-    background: var(--panel-alt); border-radius: 8px; padding: 12px; margin-bottom: 10px;
-  }
-  .queue-item button {
-    background: var(--accent2); color: #10131a; border: none; border-radius: 6px;
-    padding: 8px 14px; font-weight: 600; cursor: pointer; font-size: 0.85rem;
-  }
-  .empty-state { color: var(--text-dim); text-align: center; padding: 30px 10px; font-size: 0.9rem; }
-
-  .refresh-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-  .refresh-row button {
-    background: none; border: 1px solid #3a3f4d; color: var(--text-dim);
-    border-radius: 6px; padding: 6px 12px; cursor: pointer; font-size: 0.8rem;
-  }
-</style>
-</head>
-<body>
-
-<h1 id="title">Smash Tournament Bracket</h1>
-<div class="subtitle">Live results — sign in with your school account to report a match.</div>
-<div class="status-banner" id="statusBanner">Loading tournament data…</div>
-
-<div class="tabs">
-  <button class="tab-btn active" data-tab="bracket">Bracket</button>
-  <button class="tab-btn" data-tab="report">Report a Result</button>
-</div>
-
-<div id="tab-bracket" class="panel">
-  <div class="refresh-row">
-    <strong>Winners &amp; Losers Bracket</strong>
-    <button onclick="loadState()">Refresh</button>
-  </div>
-  <div class="bracket-wrap"><div class="bracket-cols" id="bracketCols"></div></div>
-</div>
-
-<div id="tab-report" class="panel" style="display:none;">
-  <div class="refresh-row">
-    <strong>Matches ready to play</strong>
-    <button onclick="loadState()">Refresh</button>
-  </div>
-  <div class="subtitle" style="margin-bottom:14px;">
-    Results are reported through the official Google Form (opens in a new tab,
-    signed in with your school account) — not on this page directly. Pick
-    your match below to jump straight to the Form.
-  </div>
-  <div id="queueList"></div>
-</div>
-
-<script>
-  // ---- CONFIGURE THIS ----
-  const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbyx9qTRbfc_-r20NMQnQl5erjDoSe-h3bQvMtsKK5uyXMJJpLIZtiSRzHhVkNcsRMFLsA/exec";
-  // -------------------------
-
-  let currentMatches = [];
-  let resultFormUrl = '';
-
-  document.querySelectorAll('.tab-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      const tab = btn.dataset.tab;
-      document.getElementById('tab-bracket').style.display = tab === 'bracket' ? 'block' : 'none';
-      document.getElementById('tab-report').style.display = tab === 'report' ? 'block' : 'none';
-    });
-  });
-
-  async function loadState() {
-    document.getElementById('statusBanner').textContent = 'Loading tournament data…';
-    try {
-      const res = await fetch(WEBAPP_URL + '?action=state');
-      const data = await res.json();
-      if (!data.ok) throw new Error(data.error || 'Failed to load');
-      currentMatches = data.matches;
-      resultFormUrl = data.config.ResultFormUrl || '';
-      renderStatus(data.config);
-      renderBracket(data.matches);
-      renderQueue(data.matches);
-    } catch (err) {
-      document.getElementById('statusBanner').textContent = 'Could not load tournament data. ' + err.message;
-    }
-  }
-
-  function renderStatus(cfg) {
-    document.getElementById('title').textContent = cfg.TournamentName || 'Smash Tournament Bracket';
-    const statusLabel = {
-      signup: 'Sign-ups open — bracket not generated yet.',
-      in_progress: 'Tournament in progress.',
-      complete: 'Tournament complete! 🏆'
-    }[cfg.Status] || 'Status: ' + cfg.Status;
-    document.getElementById('statusBanner').textContent = statusLabel;
-  }
-
-  function renderBracket(matches) {
-    const wrap = document.getElementById('bracketCols');
-    wrap.innerHTML = '';
-    ['W', 'L', 'GF'].forEach(bracket => {
-      const bracketMatches = matches.filter(m => m.Bracket === bracket && m.Status !== 'void');
-      if (!bracketMatches.length) return;
-      const rounds = [...new Set(bracketMatches.map(m => m.Round))].sort((a, b) => a - b);
-      rounds.forEach(round => {
-        const col = document.createElement('div');
-        col.className = 'bcol';
-        const label = bracket === 'W' ? 'Winners R' + round : bracket === 'L' ? 'Losers R' + round : 'Grand Final' + (round === 2 ? ' (Reset)' : '');
-        col.innerHTML = '<h3>' + label + '</h3>';
-        bracketMatches.filter(m => m.Round === round).forEach(m => {
-          col.appendChild(renderMatchCard(m));
-        });
-        wrap.appendChild(col);
-      });
-    });
-  }
-
-  function renderMatchCard(m) {
-    const card = document.createElement('div');
-    card.className = 'match-card ' + (m.Status === 'reported' || m.Status === 'bye' ? 'reported' : m.Status === 'ready' ? 'ready' : '');
-    const p1 = m.Player1 || 'TBD';
-    const p2 = m.Player2 || 'TBD';
-    const p1Win = m.Winner && m.Winner === m.Player1;
-    const p2Win = m.Winner && m.Winner === m.Player2;
-    card.innerHTML =
-      '<div class="player-row ' + (p1Win ? 'winner' : '') + '"><span class="name ' + (!m.Player1 ? 'tbd' : '') + '">' + p1 + '</span></div>' +
-      '<div class="player-row ' + (p2Win ? 'winner' : '') + '"><span class="name ' + (!m.Player2 ? 'tbd' : '') + '">' + p2 + '</span></div>' +
-      '<div class="match-meta">' + (m.Score || (m.Status === 'bye' ? 'Bye' : m.Status)) + '</div>';
-    return card;
-  }
-
-  function renderQueue(matches) {
-    const list = document.getElementById('queueList');
-    list.innerHTML = '';
-    const ready = matches.filter(m => m.Status === 'ready');
-    if (!ready.length) {
-      list.innerHTML = '<div class="empty-state">No matches are currently ready to be played.</div>';
+function writeConfig(key, value) {
+  const sh = getSS().getSheetByName(SHEET_CONFIG);
+  const data = sh.getDataRange().getValues();
+  for (let i = 1; i < data.length; i++) {
+    if (data[i][0] === key) {
+      sh.getRange(i + 1, 2).setValue(value);
       return;
     }
-    ready.forEach(m => {
-      const item = document.createElement('div');
-      item.className = 'queue-item';
-      item.innerHTML = '<span>' + m.Player1 + ' <span style="color:var(--text-dim)">vs</span> ' + m.Player2 + '</span>';
-      const btn = document.createElement('button');
-      btn.textContent = 'Report via Form';
-      btn.onclick = () => {
-        if (resultFormUrl) {
-          window.open(resultFormUrl, '_blank');
-        } else {
-          alert('The results Form link isn\'t configured yet — check the Config tab in the Sheet.');
-        }
-      };
-      item.appendChild(btn);
-      list.appendChild(item);
+  }
+  sh.appendRow([key, value]);
+}
+
+function isAdmin(email) {
+  const cfg = readConfig();
+  const admins = String(cfg.AdminEmails || '')
+    .split(',')
+    .map(s => s.trim().toLowerCase())
+    .filter(Boolean);
+  return admins.indexOf(String(email || '').toLowerCase()) !== -1;
+}
+
+function getSignups() {
+  const sh = getSS().getSheetByName(SHEET_SIGNUPS);
+  const data = sh.getDataRange().getValues();
+  const header = data[0].map(h => String(h).toLowerCase());
+  const emailCol = header.indexOf('email');
+  const gamertagCol = header.indexOf('gamertag');
+  const byGamertag = {}; // dedupe case/whitespace-insensitively — keeps the most recent entry
+  for (let i = 1; i < data.length; i++) {
+    const email = data[i][emailCol];
+    const gamertagRaw = data[i][gamertagCol];
+    if (!email || !gamertagRaw) continue;
+    const gamertag = String(gamertagRaw).trim();
+    const key = gamertag.toLowerCase();
+    if (byGamertag[key]) {
+      Logger.log('Duplicate gamertag "' + gamertag + '" found in Signups — keeping the most recent entry (' + email + ').');
+    }
+    byGamertag[key] = { email: String(email).trim(), gamertag };
+  }
+  return Object.values(byGamertag);
+}
+
+function gamertagForEmail(email) {
+  const signups = getSignups();
+  const hit = signups.find(s => s.email.toLowerCase() === String(email || '').toLowerCase());
+  return hit ? hit.gamertag : null;
+}
+
+// ---------- Matches sheet I/O ----------
+
+const MATCH_HEADERS = [
+  'MatchID', 'Bracket', 'Round', 'Slot',
+  'Player1', 'Player2',
+  'Player1Source', 'Player2Source',
+  'WinnerTo', 'LoserTo',
+  'Winner', 'Loser', 'Score',
+  'Status', // pending | ready | bye | reported | void
+  'ReportedBy', 'ReportedAt'
+];
+
+function readMatches() {
+  const sh = getSS().getSheetByName(SHEET_MATCHES);
+  const data = sh.getDataRange().getValues();
+  if (data.length < 2) return [];
+  const rows = data.slice(1);
+  return rows.map((r, i) => {
+    const m = {};
+    MATCH_HEADERS.forEach((h, idx) => { m[h] = r[idx]; });
+    m._row = i + 2;
+    return m;
+  }).filter(m => m.MatchID);
+}
+
+function writeAllMatches(matches) {
+  const sh = getSS().getSheetByName(SHEET_MATCHES);
+  sh.clearContents();
+  sh.appendRow(MATCH_HEADERS);
+  const rows = matches.map(m => MATCH_HEADERS.map(h => m[h] !== undefined ? m[h] : ''));
+  if (rows.length) {
+    sh.getRange(2, 1, rows.length, MATCH_HEADERS.length).setValues(rows);
+  }
+}
+
+function updateMatchRow(match) {
+  const sh = getSS().getSheetByName(SHEET_MATCHES);
+  const rowVals = MATCH_HEADERS.map(h => match[h] !== undefined ? match[h] : '');
+  sh.getRange(match._row, 1, 1, MATCH_HEADERS.length).setValues([rowVals]);
+}
+
+// ---------- Bracket generation ----------
+
+function seedOrder(n) {
+  if (n === 1) return [1];
+  if (n === 2) return [1, 2];
+  const half = seedOrder(n / 2);
+  const out = [];
+  half.forEach(s => { out.push(s); out.push(n + 1 - s); });
+  return out;
+}
+
+function nextPow2(n) {
+  let p = 1;
+  while (p < n) p *= 2;
+  return p;
+}
+
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+/**
+ * Builds the full double-elimination bracket for the current signup list
+ * and writes it to the Matches sheet. Destructive — overwrites Matches.
+ */
+function generateBracket() {
+  const signups = getSignups();
+  const gamertags = shuffle(signups.map(s => s.gamertag));
+  const numPlayers = gamertags.length;
+  if (numPlayers < 2) throw new Error('Need at least 2 signed-up players to generate a bracket.');
+
+  const size = nextPow2(numPlayers);
+  const k = Math.log2(size);
+  const order = seedOrder(size);
+  const bySeed = {};
+  for (let s = 1; s <= size; s++) {
+    bySeed[s] = s <= numPlayers ? gamertags[s - 1] : BYE;
+  }
+
+  let idCounter = 1;
+  const nextId = () => 'M' + (idCounter++);
+  const matches = [];
+
+  const wbRounds = [];
+  for (let r = 1; r <= k; r++) {
+    const numMatches = size / Math.pow(2, r);
+    const round = [];
+    for (let s = 0; s < numMatches; s++) {
+      round.push({
+        MatchID: nextId(), Bracket: 'W', Round: r, Slot: s,
+        Player1: '', Player2: '', Player1Source: '', Player2Source: '',
+        WinnerTo: '', LoserTo: '', Winner: '', Loser: '', Score: '',
+        Status: 'pending', ReportedBy: '', ReportedAt: ''
+      });
+    }
+    wbRounds.push(round);
+    matches.push(...round);
+  }
+
+  wbRounds[0].forEach((m, i) => {
+    const seedA = order[2 * i];
+    const seedB = order[2 * i + 1];
+    const pA = bySeed[seedA];
+    const pB = bySeed[seedB];
+    m.Player1 = pA; m.Player1Source = 'seed:' + seedA;
+    m.Player2 = pB; m.Player2Source = 'seed:' + seedB;
+    if (pA === BYE || pB === BYE) {
+      const winner = pA === BYE ? pB : pA;
+      m.Winner = winner;
+      m.Status = 'bye';
+    } else {
+      m.Status = 'ready';
+    }
+  });
+
+  for (let r = 0; r < wbRounds.length - 1; r++) {
+    wbRounds[r].forEach((m, s) => { m.WinnerTo = wbRounds[r + 1][Math.floor(s / 2)].MatchID; });
+  }
+
+  const lbRounds = [];
+  if (k >= 2) {
+    let numMatches = size / 4;
+    for (let lr = 1; lr <= 2 * (k - 1); lr++) {
+      const round = [];
+      for (let s = 0; s < numMatches; s++) {
+        round.push({
+          MatchID: nextId(), Bracket: 'L', Round: lr, Slot: s,
+          Player1: '', Player2: '', Player1Source: '', Player2Source: '',
+          WinnerTo: '', LoserTo: '', Winner: '', Loser: '', Score: '',
+          Status: 'pending', ReportedBy: '', ReportedAt: ''
+        });
+      }
+      lbRounds.push(round);
+      matches.push(...round);
+      if (lr % 2 === 0) numMatches = numMatches / 2;
+    }
+  }
+
+  for (let i = 0; i < lbRounds.length - 1; i++) {
+    const cur = lbRounds[i];
+    const nxt = lbRounds[i + 1];
+    if (nxt.length === cur.length) {
+      cur.forEach((m, s) => { m.WinnerTo = nxt[s].MatchID; });
+    } else {
+      cur.forEach((m, s) => { m.WinnerTo = nxt[Math.floor(s / 2)].MatchID; });
+    }
+  }
+
+  if (lbRounds.length > 0) {
+    wbRounds[0].forEach((m, i) => {
+      const lr1MatchIndex = Math.floor(i / 2);
+      m.LoserTo = lbRounds[0][lr1MatchIndex].MatchID;
+    });
+  }
+  for (let r = 2; r <= k; r++) {
+    const dropInRoundIdx = 2 * (r - 1) - 1;
+    const round = lbRounds[dropInRoundIdx] || lbRounds[lbRounds.length - 1];
+    wbRounds[r - 1].forEach((m, i) => {
+      const target = round[i] || round[round.length - 1];
+      m.LoserTo = target.MatchID;
     });
   }
 
-  loadState();
-</script>
-</body>
-</html>
+  const gf1 = {
+    MatchID: nextId(), Bracket: 'GF', Round: 1, Slot: 0,
+    Player1: '', Player2: '', Player1Source: '', Player2Source: '',
+    WinnerTo: '', LoserTo: '', Winner: '', Loser: '', Score: '',
+    Status: 'pending', ReportedBy: '', ReportedAt: ''
+  };
+  const gf2 = {
+    MatchID: nextId(), Bracket: 'GF', Round: 2, Slot: 0,
+    Player1: '', Player2: '', Player1Source: '', Player2Source: '',
+    WinnerTo: '', LoserTo: '', Winner: '', Loser: '', Score: '',
+    Status: 'void', ReportedBy: '', ReportedAt: ''
+  };
+  matches.push(gf1, gf2);
+  const wbFinal = wbRounds[wbRounds.length - 1][0];
+  wbFinal.WinnerTo = gf1.MatchID;
+  gf1.Player1Source = 'winner:' + wbFinal.MatchID;
+  if (lbRounds.length > 0) {
+    const lbFinal = lbRounds[lbRounds.length - 1][0];
+    lbFinal.WinnerTo = gf1.MatchID;
+    gf1.Player2Source = 'winner:' + lbFinal.MatchID;
+    wbFinal.LoserTo = lbFinal.MatchID;
+  }
+
+  writeAllMatches(matches);
+  matches.filter(m => m.Status === 'bye' && m.Winner).forEach(m => propagateResult(m, matches));
+  writeAllMatches(matches);
+
+  writeConfig('Status', 'in_progress');
+  writeConfig('GeneratedAt', new Date().toISOString());
+  refreshResultFormChoices();
+  return { size, numPlayers, totalMatches: matches.length };
+}
+
+function propagateResult(match, allMatches) {
+  const byId = {};
+  allMatches.forEach(m => { byId[m.MatchID] = m; });
+
+  if (match.Winner && match.WinnerTo) {
+    const target = byId[match.WinnerTo];
+    if (target) {
+      if (!target.Player1) { target.Player1 = match.Winner; target.Player1Source = 'winner:' + match.MatchID; }
+      else if (!target.Player2) { target.Player2 = match.Winner; target.Player2Source = 'winner:' + match.MatchID; }
+      maybeActivate(target);
+    }
+  }
+  if (match.Loser && match.LoserTo && match.Bracket !== 'L') {
+    const target = byId[match.LoserTo];
+    if (target) {
+      if (!target.Player1) { target.Player1 = match.Loser; target.Player1Source = 'loser:' + match.MatchID; }
+      else if (!target.Player2) { target.Player2 = match.Loser; target.Player2Source = 'loser:' + match.MatchID; }
+      maybeActivate(target);
+    }
+  }
+  if (match.Bracket === 'GF' && match.Round === 1 && match.Winner) {
+    const gf2 = allMatches.find(m => m.Bracket === 'GF' && m.Round === 2);
+    const lbSideFinalist = match.Player2;
+    if (gf2 && match.Winner === lbSideFinalist) {
+      gf2.Player1 = match.Player1; gf2.Player2 = match.Player2;
+      gf2.Status = 'ready';
+    } else if (gf2) {
+      gf2.Status = 'void';
+      writeConfig('Status', 'complete');
+    }
+  }
+  if (match.Bracket === 'GF' && match.Round === 2 && match.Winner) {
+    writeConfig('Status', 'complete');
+  }
+}
+
+function maybeActivate(m) {
+  if (m.Status === 'pending' && m.Player1 && m.Player2) m.Status = 'ready';
+}
+
+// ---------- Result application (shared by the Form trigger) ----------
+
+function applyResult(matchId, winnerGamertag, score, requesterEmail) {
+  if (!matchId || !winnerGamertag) throw new Error('Missing matchId or winnerGamertag.');
+
+  const matches = readMatches();
+  const match = matches.find(m => m.MatchID === matchId);
+  if (!match) throw new Error('Match not found: ' + matchId);
+  if (match.Status !== 'ready') throw new Error('Match ' + matchId + ' is not ready to report (status: ' + match.Status + ').');
+
+  const admin = isAdmin(requesterEmail);
+  if (!admin) {
+    const requesterGamertag = gamertagForEmail(requesterEmail);
+    if (!requesterGamertag || (requesterGamertag !== match.Player1 && requesterGamertag !== match.Player2)) {
+      throw new Error('Rejected: ' + requesterEmail + ' is not a participant in match ' + matchId + '.');
+    }
+  }
+  if (winnerGamertag !== match.Player1 && winnerGamertag !== match.Player2) {
+    throw new Error('Winner "' + winnerGamertag + '" is not one of the two players in match ' + matchId + '.');
+  }
+
+  match.Winner = winnerGamertag;
+  match.Loser = winnerGamertag === match.Player1 ? match.Player2 : match.Player1;
+  match.Score = score || '';
+  match.Status = 'reported';
+  match.ReportedBy = requesterEmail;
+  match.ReportedAt = new Date().toISOString();
+
+  propagateResult(match, matches);
+  matches.forEach(m => updateMatchRow(m));
+  return { matchId, winner: winnerGamertag };
+}
+
+// ---------- Result reporting Form ----------
+
+/**
+ * Rebuilds the "Which result are you reporting?" dropdown to list every
+ * currently-reportable outcome. Call this after generating a bracket or
+ * applying a result — anywhere match statuses change.
+ */
+function refreshResultFormChoices() {
+  const cfg = readConfig();
+  const formUrl = cfg.ResultFormUrl;
+  if (!formUrl) return; // Form not set up yet — nothing to refresh
+  const form = FormApp.openByUrl(formUrl);
+  const item = form.getItems(FormApp.ItemType.LIST)
+    .find(i => i.getTitle().trim() === RESULT_QUESTION_TITLE);
+  if (!item) throw new Error('Could not find a Dropdown question titled "' + RESULT_QUESTION_TITLE + '" on the Form.');
+
+  const listItem = item.asListItem();
+  const ready = readMatches().filter(m => m.Status === 'ready');
+  if (!ready.length) {
+    listItem.setChoiceValues(['No matches currently ready']);
+    return;
+  }
+  const choices = [];
+  ready.forEach(m => {
+    choices.push(listItem.createChoice(m.Player1 + RESULT_SEPARATOR + m.Player2));
+    choices.push(listItem.createChoice(m.Player2 + RESULT_SEPARATOR + m.Player1));
+  });
+  listItem.setChoices(choices);
+}
+
+/**
+ * Installable trigger target: Apps Script editor → Triggers → Add Trigger
+ *   Function: handleResultFormSubmission
+ *   Event source: From spreadsheet
+ *   Event type: On form submit
+ */
+function handleResultFormSubmission(e) {
+  try {
+    const nv = e.namedValues; // { 'Question title': ['answer'], ... }
+    const emailKey = Object.keys(nv).find(k => k.toLowerCase().indexOf('email') !== -1);
+    const requesterEmail = emailKey ? nv[emailKey][0] : '';
+
+    const answerKey = Object.keys(nv).find(k => k.trim() === RESULT_QUESTION_TITLE);
+    const answer = answerKey ? nv[answerKey][0] : '';
+
+    const scoreKey = Object.keys(nv).find(k => k.trim() === SCORE_QUESTION_TITLE);
+    const score = scoreKey ? nv[scoreKey][0] : '';
+
+    if (!answer || answer.indexOf(RESULT_SEPARATOR) === -1) {
+      throw new Error('Could not parse the selected answer: "' + answer + '"');
+    }
+    const [winner, loser] = answer.split(RESULT_SEPARATOR).map(s => s.trim());
+
+    const matches = readMatches();
+    const match = matches.find(m => m.Status === 'ready' &&
+      ((m.Player1 === winner && m.Player2 === loser) || (m.Player1 === loser && m.Player2 === winner)));
+    if (!match) {
+      throw new Error('No ready match found for "' + winner + '" vs "' + loser + '" — it may already be reported, or the bracket changed since the Form was last refreshed.');
+    }
+
+    applyResult(match.MatchID, winner, score, requesterEmail);
+    refreshResultFormChoices();
+  } catch (err) {
+    // Visible in Apps Script → Executions, so admin can spot rejected/bad submissions.
+    Logger.log('Form submission processing failed: ' + err);
+  }
+}
+
+// ---------- Web app entry points (READ-ONLY, public) ----------
+
+function doGet(e) {
+  const action = (e.parameter.action || 'state');
+  let result;
+  try {
+    if (action === 'state') {
+      const cfg = readConfig();
+      const matches = readMatches().map(m => {
+        const copy = Object.assign({}, m);
+        delete copy._row;
+        return copy;
+      });
+      result = {
+        ok: true,
+        config: {
+          TournamentName: cfg.TournamentName || '',
+          Status: cfg.Status || '',
+          ResultFormUrl: cfg.ResultFormUrl || ''
+        },
+        matches
+      };
+    } else {
+      result = { ok: false, error: 'Unknown action' };
+    }
+  } catch (err) {
+    result = { ok: false, error: String(err) };
+  }
+  return ContentService.createTextOutput(JSON.stringify(result))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+/** Writes are disabled on the public web app — reporting happens via the Form. */
+function doPost(e) {
+  const result = { ok: false, error: 'Direct submission is disabled. Please report results through the official Google Form.' };
+  return ContentService.createTextOutput(JSON.stringify(result))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+/** Run manually from the Apps Script editor to build the bracket. */
+function adminGenerateBracketManually() {
+  const out = generateBracket();
+  Logger.log(out);
+}
+
+/** Run manually if you ever need to force-refresh the Form's choices. */
+function adminRefreshFormManually() {
+  refreshResultFormChoices();
+  Logger.log('Form choices refreshed.');
+}
+
+/** TEMPORARY DIAGNOSTIC — run this, share the log output, then delete it. */
+function debugListFormItems() {
+  const cfg = readConfig();
+  Logger.log('ResultFormUrl in Config: ' + cfg.ResultFormUrl);
+  const form = FormApp.openByUrl(cfg.ResultFormUrl);
+  Logger.log('Form title: ' + form.getTitle());
+  form.getItems().forEach(i => {
+    Logger.log('ITEM  title="' + i.getTitle() + '"  type=' + i.getType() + '  id=' + i.getId());
+  });
+}
