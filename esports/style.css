@@ -1,0 +1,249 @@
+/* ==========================================================================
+   Le Grand Bulldog Esports — section stylesheet
+   Scope: whatwasithinking.us/esports/ and its subpages
+   (esports/index.html, esports/class_lessons/index.html,
+   esports/class_lessons/_template.html)
+
+   NOT for individual tool/lesson .html files under class_lessons/<unit>/ —
+   per SITE_CONVENTIONS those stay single self-contained files with their
+   own inline <style>. This sheet is for the section "chrome": the landing
+   page, breadcrumb, nav, and the auto-generated lessons index.
+
+   SYNC NOTE: this is an architectural exception, by design. Every other
+   class's chrome uses assets/site.css + assets/themes/<class>.css (a
+   shared skeleton with per-class color variables). Esports instead gets
+   this fully bespoke stylesheet — no shared skeleton — since its visual
+   language (halftone texture, chevron, condensed jersey type) doesn't fit
+   that shared system's shape. See SITE_CONVENTIONS.md / TOOLS_STYLE_GUIDE.md
+   for the reasoning.
+
+   The only edits made to the originally-submitted file: a few selectors
+   were EXTENDED (never replaced or removed) to also match this site's
+   actual generated class names, since the real markup uses `.crumb` /
+   `.wrap` rather than `<nav>` / `<main>` / `.bd-container`, and the real
+   build script always emits `.unit-label` rather than a hand-added
+   `.bd-unit-chip` span. Every original selector and rule is still intact.
+
+   Suggested path in the repo:  esports/style.css
+   Link it from the section pages with:
+     <link rel="stylesheet" href="/esports/style.css">
+
+   Selectors below use plain semantic HTML (h1, nav, a, ul/li) so it should
+   apply with zero markup changes. A few optional utility classes are
+   included and clearly marked OPTIONAL — only needed if you want a
+   specific element (e.g. a lesson card) to opt into a fancier treatment.
+   ========================================================================== */
+
+/* ---- Brand tokens -------------------------------------------------- */
+/* Hex values match bulldog-esports-style-guide.md exactly. */
+:root {
+  --bd-forest:      #2E6822; /* primary green */
+  --bd-forest-dark: #123816; /* tonal deep green */
+  --bd-gold:        #E8C838; /* jersey trim gold */
+  --bd-orange:      #F89800; /* sticker-logo outline orange */
+  --bd-slate:       #386860; /* sticker-logo head color */
+  --bd-black:       #0A0A0A;
+  --bd-black-2:     #141414; /* slightly lifted black, for cards */
+  --bd-white:       #FFFFFF;
+
+  --bd-font-display: "Big Shoulders", "Arial Narrow", sans-serif;
+  --bd-font-body: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  --bd-radius: 6px;
+  --bd-max-width: 960px;
+}
+
+/* Big Shoulders is the production reference for the jersey's condensed
+   lettering. Loaded from Google Fonts CDN — fine per SITE_CONVENTIONS
+   ("external resources OK if a browser can fetch them live"). Add this
+   link tag in the <head> of each section page (not required for tool
+   pages, which don't use this stylesheet):
+
+   <link rel="preconnect" href="https://fonts.googleapis.com">
+   <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders:wght@600;800&display=swap" rel="stylesheet">
+*/
+
+/* ---- Base ------------------------------------------------------------ */
+body {
+  background: var(--bd-black);
+  color: var(--bd-white);
+  font-family: var(--bd-font-body);
+  line-height: 1.5;
+  margin: 0;
+  padding: 0;
+}
+
+/* Halftone-dot field, fading up from the bottom-right — same texture
+   language as the jersey and the banner/thumbnail assets. Pure CSS,
+   no image file needed, cheap to render on a Chromebook. */
+body {
+  background-image:
+    radial-gradient(circle at 15% 20%, transparent 0, transparent 100%),
+    radial-gradient(var(--bd-forest-dark) 1px, transparent 1.6px);
+  background-size: auto, 26px 26px;
+  background-position: 0 0, 0 0;
+  background-attachment: fixed;
+  background-repeat: repeat;
+  /* fade the dot layer out toward the top-left via a mask, so it reads
+     as "creeping in from a corner" rather than uniform confetti */
+  -webkit-mask-image: none;
+}
+
+main, .bd-container, .wrap {
+  max-width: var(--bd-max-width);
+  margin: 0 auto;
+  padding: 2.5rem 1.25rem 4rem;
+}
+
+/* ---- Breadcrumb (e.g. "Class Resources / Esports") -------------------- */
+nav, .bd-breadcrumb, .crumb {
+  font-family: var(--bd-font-display);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  font-size: 0.9rem;
+  padding: 1rem 1.25rem 0;
+}
+
+nav a, .bd-breadcrumb a, .crumb a {
+  color: var(--bd-gold);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+}
+
+nav a:hover, .bd-breadcrumb a:hover, .crumb a:hover {
+  border-bottom-color: var(--bd-gold);
+}
+
+/* ---- Headings ---------------------------------------------------------- */
+h1, h2, h3 {
+  font-family: var(--bd-font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  margin: 0 0 1rem;
+}
+
+h1 {
+  font-size: clamp(2.25rem, 6vw, 3.5rem);
+  font-weight: 800;
+  display: inline-block;
+  padding: 0.15em 0.5em;
+  background: var(--bd-black-2);
+  border-left: 6px solid var(--bd-gold);
+}
+
+/* Two/three-tone wordmark split, matching the logo lockup. Wrap the
+   relevant words in spans to use this, e.g.:
+   <h1><span class="bd-word-green">Le Grand</span> <span class="bd-word-gold">Bulldog</span> Esports</h1>
+   OPTIONAL — h1 looks fine without it too. */
+.bd-word-green { color: var(--bd-forest); }
+.bd-word-gold  { color: var(--bd-gold); }
+.bd-word-white { color: var(--bd-white); }
+
+h2 {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--bd-gold);
+  border-bottom: 2px solid var(--bd-forest);
+  padding-bottom: 0.35em;
+}
+
+p {
+  max-width: 65ch;
+}
+
+a {
+  color: var(--bd-gold);
+}
+a:hover {
+  color: var(--bd-white);
+}
+
+/* ---- Lesson / tool link list -------------------------------------------
+   The class_lessons index auto-lists every lesson as (most likely) an
+   anchor per item, possibly inside <li> or <p>. Styled generically so it
+   still looks intentional whatever the exact wrapper turns out to be. */
+main a,
+.bd-container a,
+.wrap a {
+  display: block;
+  background: var(--bd-black-2);
+  border: 1px solid #232323;
+  border-left: 4px solid var(--bd-forest);
+  border-radius: var(--bd-radius);
+  padding: 1rem 1.25rem;
+  margin: 0.75rem 0;
+  text-decoration: none;
+  color: var(--bd-white);
+  transition: border-left-color 0.15s ease, transform 0.15s ease;
+}
+
+main a:hover,
+.bd-container a:hover,
+.wrap a:hover {
+  border-left-color: var(--bd-gold);
+  transform: translateX(3px);
+  color: var(--bd-white);
+}
+
+/* Breadcrumb links shouldn't get the card treatment above — undo it. */
+nav a, .bd-breadcrumb a, .crumb a {
+  display: inline;
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  transform: none;
+}
+
+/* Unit label chip — OPTIONAL. If the generated markup exposes the unit
+   name (e.g. "Unit 4") as its own element, give it this class to render
+   it as a small gold tag rather than plain text:
+   <span class="bd-unit-chip">Unit 4</span> */
+.bd-unit-chip, .unit-label {
+  display: inline-block;
+  font-family: var(--bd-font-display);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: var(--bd-gold);
+  color: var(--bd-black);
+  padding: 0.15em 0.6em;
+  border-radius: 3px;
+  margin-right: 0.6em;
+}
+
+/* ---- Diagonal accent stripe — OPTIONAL decorative element --------------
+   Matches the chevron cuts on the jersey/banner. Add
+   <div class="bd-chevron"></div> once, right after <body>, for a subtle
+   angled gold/green stripe pinned to the top-right of the page. Purely
+   decorative, safe to skip. */
+.bd-chevron {
+  position: fixed;
+  top: 0; right: 0;
+  width: 140px;
+  height: 100vh;
+  z-index: -1;
+  background:
+    linear-gradient(100deg,
+      transparent 0%, transparent 40%,
+      var(--bd-forest) 40%, var(--bd-forest) 55%,
+      var(--bd-gold) 55%, var(--bd-gold) 62%,
+      transparent 62%, transparent 100%);
+  opacity: 0.9;
+  pointer-events: none;
+}
+
+@media (max-width: 640px) {
+  .bd-chevron { width: 90px; }
+  h1 { padding: 0.15em 0.4em; }
+}
+
+/* ---- Footer / small print ------------------------------------------- */
+footer, .bd-footer {
+  font-size: 0.8rem;
+  color: #888;
+  text-align: center;
+  padding: 2rem 1rem;
+}

@@ -1,0 +1,27 @@
+/* ==========================================================================
+   ap-cybersecurity.css — theme for AP Cybersecurity portal/chrome pages
+   (class landing page + class_lessons listing)
+
+   Colors are AP Cybersecurity's CONFIRMED brand, drawn from the existing
+   "Bulldog Cybersecurity" logo (forest green + gold), matching the same
+   confirmed values used in this class's tool-level theme
+   (assets/tools.css, html[data-course="ap-cybersecurity"]) — chrome and
+   tools intentionally draw from the same source palette, same as the
+   other three classes.
+
+   This is chrome-only. For the individual-tool visual system, see
+   assets/tools.css and use <html data-course="ap-cybersecurity"> there.
+   ========================================================================== */
+
+:root{
+  --bg-1: #0F2A1F;   /* accent-dark — darkest, page background start */
+  --bg-2: #1B4332;   /* accent — primary forest green, background end */
+  --accent: #D4A017; /* gold — kickers, links, hover borders */
+  --accent-2: #A97D0F;
+  --ink: #F5F3DC;    /* cream, from the logo's highlight tone */
+  --ink-dim: rgba(245,243,220,.65);
+  --ink-dimmer: rgba(245,243,220,.45);
+  --border: rgba(245,243,220,.16);
+  --card-bg: rgba(245,243,220,.05);
+  --card-hover-bg: rgba(212,160,23,.10);
+}

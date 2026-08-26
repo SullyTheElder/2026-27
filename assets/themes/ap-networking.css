@@ -1,0 +1,27 @@
+/* ==========================================================================
+   ap-networking.css — theme for AP Networking portal/chrome pages
+   (class landing page + class_lessons listing)
+
+   Colors are AP Networking's CONFIRMED brand (Bulldog Networking navy +
+   green), per assets/TOOLS_STYLE_GUIDE.md §1. This happens to closely
+   match the original placeholder scheme the whole site launched with,
+   which is a coincidence, not a coordination — kept here explicitly as
+   this class's confirmed identity rather than a leftover default.
+
+   This is chrome-only. For the individual-tool visual system (different
+   scope — simulators/interactive tools), see assets/tools.css and use
+   <html data-course="networking"> there instead.
+   ========================================================================== */
+
+:root{
+  --bg-1: #0B1F3A;   /* navy */
+  --bg-2: #123058;   /* lighter navy */
+  --accent: #8FC53E; /* green */
+  --accent-2: #6EA22A;
+  --ink: #F4F1E9;
+  --ink-dim: rgba(244,241,233,.65);
+  --ink-dimmer: rgba(244,241,233,.45);
+  --border: rgba(244,241,233,.14);
+  --card-bg: rgba(244,241,233,.04);
+  --card-hover-bg: rgba(143,197,62,.08);
+}

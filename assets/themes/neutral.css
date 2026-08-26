@@ -1,0 +1,23 @@
+/* ==========================================================================
+   neutral.css — theme for pages not tied to a specific class
+   (currently: the root landing page only)
+
+   Colors approximate Le Grand High School's "Kelly Green and Gold" —
+   these are best-guess standard values, NOT confirmed against an official
+   brand/style guide. Swap the hex values below if you get exact ones from
+   an official source (athletics dept, spirit-wear vendor asset, district
+   branding guide). Nothing else needs to change if you do.
+   ========================================================================== */
+
+:root{
+  --bg-1: #0F3D1F;   /* deep kelly green, page background start */
+  --bg-2: #163F26;   /* slightly lighter green, background end */
+  --accent: #FFC72C; /* gold — kickers, links, hover borders */
+  --accent-2: #FFD65C;
+  --ink: #F5F3EC;    /* warm off-white for body text */
+  --ink-dim: rgba(245,243,236,.65);
+  --ink-dimmer: rgba(245,243,236,.45);
+  --border: rgba(245,243,236,.16);
+  --card-bg: rgba(245,243,236,.05);
+  --card-hover-bg: rgba(255,199,44,.10);
+}

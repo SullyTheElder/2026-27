@@ -32,19 +32,32 @@ stays consistent as you add classes later.
 
 ## Adding a new lesson/tool
 
-1. Drop the new folder (e.g. `unit3/`) with its HTML file(s) inside the
-   right class's `class_lessons/` folder.
-2. Open that class's `class_lessons/index.html` and add one line to the
-   `LESSONS` array near the bottom of the file, e.g.:
+Just drop the file in and push — the lesson list rebuilds itself, no
+editing required.
 
-   ```js
-   const LESSONS = [
-     { unit: 'Unit 2', title: 'Network Topology Explorer', path: 'unit2/topology_explorer.html' },
-     { unit: 'Unit 3', title: 'Subnetting Practice', path: 'unit3/subnetting.html' },
-   ];
-   ```
+1. Add your new HTML file inside the right class's `class_lessons/`
+   folder. Put it in a unit subfolder if you want it grouped (e.g.
+   `unit3/subnetting-practice.html`), or straight in `class_lessons/` if
+   it doesn't belong to a unit (it'll show under "Lessons").
+2. Push to GitHub.
 
-No other files need to change.
+That's it. A GitHub Actions workflow (`.github/workflows/deploy.yml`)
+runs automatically on every push: it scans each `class_lessons/` folder,
+builds the lesson list from whatever files it finds, and republishes the
+site — usually live within a minute. Naming conventions it uses:
+
+- **Unit label**: the immediate subfolder name, e.g. `unit2` becomes
+  "Unit 2", `lab-week1` becomes "Lab Week1". Rename the folder if you
+  want a different label.
+- **Lesson title**: the filename, e.g. `subnetting-practice.html`
+  becomes "Subnetting Practice". Rename the file if you want a
+  different title.
+
+Note: `class_lessons/index.html` is no longer a file you edit directly —
+it's generated automatically from `class_lessons/_template.html`. If you
+want to change the page's look (colors, intro text, layout), edit
+`_template.html`, not `index.html` (which won't exist in the repo until
+the Actions build creates it in the published output).
 
 ## Publishing with GitHub Pages
 
@@ -52,12 +65,22 @@ No other files need to change.
    e.g. `class-resources`.
 2. Upload everything in this folder to the repo (drag-and-drop works fine
    in the GitHub web UI, or `git push` if you're comfortable with git).
-3. In the repo: **Settings → Pages → Source: Deploy from a branch → main
-   → / (root)** → Save.
-4. After a minute or two, your site is live at:
-   `https://<your-username>.github.io/class-resources/`
+   Make sure the `.github/` folder comes along — GitHub's web upload UI
+   hides dotfiles/dotfolders from you sometimes, so if using drag-and-drop,
+   double check `.github/workflows/deploy.yml` actually made it into the
+   repo (look under the repo's "Actions" tab — if the workflow doesn't
+   appear there, it didn't upload).
+3. In the repo: **Settings → Pages → Source: GitHub Actions** (not
+   "Deploy from a branch" — the workflow handles the build itself).
+4. Push (or the initial upload) will trigger the workflow automatically.
+   Watch it run under the **Actions** tab. Once it's green, your site is
+   live at:
+
+   `https://SullyTheElder.github.io/2026-27/`
+
    and each class at, e.g.:
-   `https://<your-username>.github.io/class-resources/ap-networking/`
+
+   `https://SullyTheElder.github.io/2026-27/ap-networking/`
 
 Everything here is plain HTML/CSS/JS with no build step, so GitHub Pages
 serves it exactly as-is — no download prompt for students, just a normal

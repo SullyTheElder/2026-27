@@ -1,0 +1,30 @@
+/* ==========================================================================
+   it-foundations.css — theme for IT Foundations portal/chrome pages
+   (root class landing page + class_lessons listing)
+
+   Derived from IT Foundations' existing STYLE_GUIDE.md / styles.css design
+   system (navy / teal / mint), already in use in slide decks, exit tickets,
+   and tools like Network Relay. This file maps those tokens onto the
+   variable names the shared skeleton (assets/site.css) expects.
+
+   The full component library (buttons, nodes, status states, bilingual
+   pattern, etc.) lives in it-foundations/styles-reference.css — that's
+   for individual lesson tools to copy variables/patterns from, since tools
+   stay self-contained single files. This theme file is chrome-only.
+   ========================================================================== */
+
+:root{
+  --bg-1: #0B1830;   /* navy-deep */
+  --bg-2: #132340;   /* navy */
+  --accent: #1FA98F; /* teal */
+  --accent-2: #5EEAD4; /* mint */
+  --ink: #FFFFFF;
+  --ink-dim: rgba(255,255,255,.65);
+  --ink-dimmer: rgba(255,255,255,.45);
+  --border: #1D3358; /* navy-light */
+  --card-bg: #132340; /* navy, solid — matches .card-dark in styles-reference.css */
+  --card-hover-bg: rgba(31,169,143,.08); /* teal glow, matches btn-secondary hover */
+
+  --font-display: "Cambria", Georgia, "Times New Roman", serif;
+  --font-body: "Calibri", "Segoe UI", Helvetica, Arial, sans-serif;
+}

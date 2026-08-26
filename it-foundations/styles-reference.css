@@ -1,0 +1,260 @@
+/* =========================================================================
+   Mr. Sullivan's Classes — Shared Style Reference
+   SullyTheElder/2026-27  (GitHub Pages)
+
+   This file documents the shared design tokens and base components used
+   across IT Fundamentals (and other class) lesson tools.
+
+   USAGE:
+   - Site-level pages (index/listing/chrome) can @import or <link> this
+     directly.
+   - Individual lesson tools must stay single self-contained HTML files
+     (see SITE_CONVENTIONS.md) — copy the :root variables and the classes
+     you need directly into that file's <style> block rather than linking
+     out to this sheet.
+   ========================================================================= */
+
+:root {
+  /* ---- Color: navy / teal / mint / coral / amber ---- */
+  --navy-deep:  #0B1830;
+  --navy:       #132340;
+  --navy-light: #1D3358;
+  --teal:       #1FA98F;
+  --mint:       #5EEAD4;
+  --coral:      #EF5B5B;
+  --amber:      #F5A623;
+  --white:      #FFFFFF;
+  --ink:        #12202F;
+  --paper:      #F7F9FB;
+  --muted:      #7C8BA3;
+
+  /* ---- Type ---- */
+  --font-display: "Cambria", Georgia, "Times New Roman", serif;
+  --font-body: "Calibri", "Segoe UI", Helvetica, Arial, sans-serif;
+  --font-mono: "Consolas", "SFMono-Regular", Menlo, monospace;
+
+  --fs-h1: 2.25rem;
+  --fs-h2: 1.5rem;
+  --fs-h3: 1.125rem;
+  --fs-body: 1rem;
+  --fs-caption: 0.85rem;
+  --fs-button: 0.95rem;
+
+  /* ---- Spacing (8px base unit) ---- */
+  --space-1: 8px;
+  --space-2: 16px;
+  --space-3: 24px;
+  --space-4: 32px;
+  --space-6: 48px;
+
+  /* ---- Shape / elevation ---- */
+  --radius: 10px;
+  --radius-sm: 6px;
+  --border: 1px solid var(--navy-light);
+  --border-light: 1px solid #E2E8F0;
+
+  --content-max-width: 720px;
+}
+
+/* =========================================================================
+   Base
+   ========================================================================= */
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  color: var(--ink);
+  background: var(--paper);
+  line-height: 1.5;
+}
+
+h1, h2, h3 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  margin: 0 0 var(--space-2) 0;
+}
+
+h1 { font-size: var(--fs-h1); }
+h2 { font-size: var(--fs-h2); }
+h3 { font-size: var(--fs-h3); font-weight: 600; }
+
+p { margin: 0 0 var(--space-2) 0; }
+
+.caption {
+  font-size: var(--fs-caption);
+  color: var(--muted);
+}
+
+/* Respect reduced motion preference everywhere */
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}
+
+/* Visible keyboard focus on every interactive element */
+a:focus-visible,
+button:focus-visible,
+[tabindex]:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 3px solid var(--mint);
+  outline-offset: 2px;
+}
+
+/* =========================================================================
+   Section dividers (unit/title breaks — dark navy, Cambria heading)
+   ========================================================================= */
+
+.divider {
+  background: var(--navy-deep);
+  color: var(--white);
+  padding: var(--space-6) var(--space-4);
+  text-align: left;
+}
+
+.divider h1 {
+  color: var(--white);
+  display: inline-block;
+  border-bottom: 3px solid var(--teal);
+  padding-bottom: var(--space-1);
+}
+
+/* =========================================================================
+   Buttons
+   ========================================================================= */
+
+.btn {
+  font-family: var(--font-body);
+  font-size: var(--fs-button);
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  padding: 12px 20px;
+  min-height: 44px;
+  min-width: 44px;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.btn-primary {
+  background: var(--teal);
+  color: var(--white);
+}
+.btn-primary:hover {
+  box-shadow: 0 0 0 4px rgba(94, 234, 212, 0.35); /* mint glow */
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  background: transparent;
+  color: var(--navy);
+  border: 1px solid var(--navy-light);
+}
+.btn-secondary:hover {
+  background: rgba(31, 169, 143, 0.08);
+}
+
+.btn:disabled {
+  background: var(--muted);
+  color: var(--white);
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+/* =========================================================================
+   Cards / panels
+   ========================================================================= */
+
+.card {
+  border-radius: var(--radius);
+  padding: var(--space-3);
+  background: var(--white);
+  border: var(--border-light);
+}
+
+.card-dark {
+  background: var(--navy);
+  color: var(--white);
+  border: 1px solid var(--navy-light);
+  border-radius: var(--radius);
+  padding: var(--space-3);
+}
+
+/* =========================================================================
+   Nodes / markers (routing games, diagrams)
+   ========================================================================= */
+
+.node {
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--white);
+  font-weight: 600;
+}
+
+.node-default {
+  background: radial-gradient(circle at 35% 30%, var(--mint), var(--teal));
+}
+
+.node-current {
+  background: radial-gradient(circle at 35% 30%, #FF8A8A, var(--coral));
+}
+
+.node-warning {
+  background: radial-gradient(circle at 35% 30%, #FFD08A, var(--amber));
+}
+
+/* =========================================================================
+   Status / feedback states
+   Always pair color with an icon or text label — never color alone.
+   ========================================================================= */
+
+.status-success { color: var(--teal); }
+.status-warning  { color: var(--amber); }
+.status-error    { color: var(--coral); }
+
+.status-success::before { content: "✓ "; }
+.status-warning::before { content: "⚠ "; }
+.status-error::before   { content: "✕ "; }
+
+/* =========================================================================
+   Bilingual EN/ES text pattern (exit tickets, worksheets, in-tool copy)
+   ========================================================================= */
+
+.bilingual .en {
+  display: block;
+  color: var(--ink);
+}
+
+.bilingual .es {
+  display: block;
+  font-style: italic;
+  color: var(--muted);
+  font-size: 0.95em;
+  margin-top: 2px;
+}
+
+/* =========================================================================
+   Layout helpers
+   ========================================================================= */
+
+.content {
+  max-width: var(--content-max-width);
+  margin: 0 auto;
+  padding: var(--space-3);
+}
+
+.stack > * + * {
+  margin-top: var(--space-2);
+}
+
+.row {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  align-items: center;
+}

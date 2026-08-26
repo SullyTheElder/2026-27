@@ -1,0 +1,142 @@
+/* ==========================================================================
+   site.css — shared skeleton for the class resources site.
+
+   This file defines LAYOUT and COMPONENT structure only. It never sets a
+   color directly — every color reference is a CSS variable (--bg-1, --bg-2,
+   --accent, --ink, etc.). A page gets its actual look by loading a theme
+   file AFTER this one, which just sets those variables.
+
+   Usage in any portal/chrome page:
+     <link rel="stylesheet" href="/assets/site.css">
+     <link rel="stylesheet" href="/assets/themes/<theme-name>.css">
+
+   Individual lesson/tool files are NOT required to use this — they're
+   often self-contained apps with their own bespoke UI. Linking this is
+   optional there, useful only if a tool wants brand-consistent accents.
+   ========================================================================== */
+
+:root{
+  /* Fallback values only — a theme file should always override these.
+     If you see these exact colors on a live page, it's missing its theme link. */
+  --bg-1: #1a1a1a;
+  --bg-2: #2a2a2a;
+  --accent: #999999;
+  --accent-2: #cccccc;
+  --ink: #f4f1e9;
+  --ink-dim: rgba(244,241,233,.6);
+  --ink-dimmer: rgba(244,241,233,.45);
+  --border: rgba(244,241,233,.14);
+  --card-bg: rgba(244,241,233,.04);
+  --card-hover-bg: rgba(153,153,153,.08);
+
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-display: 'Space Grotesk', 'Inter', sans-serif;
+}
+
+*{ box-sizing: border-box; }
+
+body{
+  margin: 0;
+  font-family: var(--font-body);
+  background: linear-gradient(180deg, var(--bg-1) 0%, var(--bg-2) 100%);
+  color: var(--ink);
+  min-height: 100vh;
+  padding: 48px 24px;
+}
+
+.wrap{ max-width: 900px; margin: 0 auto; }
+
+/* Kicker: small label above the main heading, e.g. "Bulldog Networking" */
+.kicker{
+  font-size: 12px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--accent);
+  font-weight: 700;
+}
+
+h1{
+  font-family: var(--font-display);
+  font-size: 32px;
+  margin: 6px 0 8px;
+}
+
+.sub{
+  color: var(--ink-dim);
+  margin-bottom: 36px;
+  font-size: 15px;
+}
+
+/* Breadcrumb nav used on class + class_lessons pages */
+.crumb{
+  font-size: 13px;
+  color: var(--ink-dim);
+  margin-bottom: 14px;
+}
+.crumb a{ color: var(--accent); text-decoration: none; }
+
+/* Unit grouping label on class_lessons pages */
+.unit-label{
+  font-size: 12px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--accent);
+  font-weight: 700;
+  margin: 24px 0 10px;
+}
+
+.empty{
+  color: var(--ink-dimmer);
+  font-size: 14px;
+  padding: 20px 0;
+}
+
+/* Card grid (root landing page, class landing page) */
+.grid{
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+@media (max-width: 640px){
+  .grid{ grid-template-columns: 1fr; }
+}
+
+/* Card list (class_lessons page — single column, stacked) */
+.list{
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.card{
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 22px 24px;
+  transition: border-color .15s ease, background .15s ease, transform .15s ease;
+}
+.card:hover{
+  border-color: var(--accent);
+  background: var(--card-hover-bg);
+  transform: translateY(-1px);
+}
+.card h2{
+  font-family: var(--font-display);
+  font-size: 19px;
+  margin: 0 0 6px;
+  color: var(--ink);
+}
+.card p{
+  margin: 0;
+  font-size: 13.5px;
+  color: var(--ink-dim);
+}
+
+/* Smaller card variant used on class_lessons list */
+.list .card{ padding: 16px 20px; }
+.list .card h2{ font-size: 16px; margin: 0; }
+
+.arrow{ color: var(--accent); font-weight: 700; }

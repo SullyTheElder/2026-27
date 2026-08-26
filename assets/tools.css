@@ -1,0 +1,383 @@
+/* ==========================================================================
+   assets/tools.css — shared stylesheet for individual interactive lesson
+   tools/simulators (NOT the portal/chrome pages — those use
+   assets/site.css + assets/themes/*.css instead; different job, different
+   file, on purpose — see SITE_CONVENTIONS.md / TOOLS_STYLE_GUIDE.md).
+
+   RECONCILIATION NOTE (read before editing):
+   This file merges two independently-drafted proposals (AP Networking's
+   and AP Cybersecurity's). Where they agreed or nearly agreed, that
+   choice won outright. Where they genuinely conflicted, the resolution
+   favors ONE shared skeleton (structure, spacing, base neutrals, body/mono
+   fonts, focus ring) with room for REAL per-class identity (accent colors,
+   heading font, one signature motif each) — not a forced merge of every
+   detail, and not four unrelated systems either. See the "Reconciliation
+   decisions" comment block near the bottom for exactly what changed from
+   each original draft and why.
+
+   Usage: set the course on <html>, then link this file —
+     <html lang="en" data-course="ap-networking">
+       (values match the folder slugs exactly:
+        it-foundations | ap-networking | ap-cybersecurity | esports)
+     <link rel="stylesheet" href="/assets/tools.css">
+
+   A tool can skip this entirely and stay fully self-contained if that's
+   simpler for a one-off — SITE_CONVENTIONS.md allows both.
+   ========================================================================== */
+
+/* ---- Fonts ---------------------------------------------------------------
+   Inter (body, shared) + Space Grotesk (default display) + Source Serif 4
+   (Cybersecurity's display override, to match its existing print brand).
+   Mono is a system stack — no web font — for load speed; both source
+   drafts agreed monospace renders fine natively on Chromebooks. */
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Source+Serif+4:wght@600;700&family=Inter:wght@400;500;600&display=swap');
+
+/* ---- Shared base tokens (identical across every class, on purpose) ------ */
+:root {
+  --paper: #F4F1E9;
+  --surface: #FFFFFF;
+  --ink: #1C1B19;
+  --ink-muted: #5B584F;
+  --line: #DAD5C7;
+  --line-strong: #B9B39F;
+  --focus: #D9A441; /* fixed across all classes — a student tabbing through
+                        a form should see the same signal every time */
+
+  --success: #3F7D4F;
+  --success-bg: #E9F2EA;
+  --warning: #B8862E;
+  --warning-bg: #FBF1DF;
+  --danger: #A23B32;
+  --danger-bg: #F8E9E7;
+
+  --font-body: 'Inter', system-ui, sans-serif;
+  --font-mono: ui-monospace, 'SFMono-Regular', Menlo, Consolas, 'Liberation Mono', monospace;
+
+  --space-1: 4px;  --space-2: 8px;  --space-3: 12px; --space-4: 16px;
+  --space-5: 24px; --space-6: 32px; --space-7: 48px;
+
+  --radius: 6px;
+  --radius-sm: 4px;
+
+  /* Default/fallback if data-course is missing or unrecognized */
+  --font-display: 'Space Grotesk', system-ui, sans-serif;
+  --accent: #0B1F3A;
+  --accent-2: #8FC53E;
+}
+
+/* ---- Per-class themes ----------------------------------------------------
+   Confirmed: AP Networking, AP Cybersecurity.
+   Placeholder (unconfirmed, flagged): Foundations override kept in sync
+   with it-foundations/STYLE_GUIDE.md's confirmed teal/mint rather than an
+   earlier unconfirmed guess. Esports still genuinely unresolved. */
+html[data-course="ap-networking"] {
+  --accent: #0B1F3A;   /* navy */
+  --accent-2: #8FC53E; /* green */
+  --font-display: 'Space Grotesk', system-ui, sans-serif;
+}
+
+html[data-course="ap-cybersecurity"] {
+  --accent: #1B4332;      /* forest green, from the Bulldog Cybersecurity logo */
+  --accent-2: #D4A017;    /* gold */
+  --accent-dark: #0F2A1F; /* hover/pressed states, nav background */
+  --olive: #8DA13E;       /* circuit-trace motif ONLY — not for text/buttons */
+  --font-display: 'Source Serif 4', Georgia, 'Times New Roman', serif;
+}
+
+html[data-course="it-foundations"] {
+  /* Matches it-foundations/STYLE_GUIDE.md's confirmed brand, not an
+     independently-guessed placeholder. */
+  --accent: #1FA98F;   /* teal */
+  --accent-2: #5EEAD4; /* mint */
+  --font-display: 'Space Grotesk', system-ui, sans-serif;
+}
+
+html[data-course="esports"] {
+  --accent: #6E2594;   /* proposed placeholder: violet — UNCONFIRMED */
+  --accent-2: #1FB6C9; /* proposed placeholder: cyan — UNCONFIRMED */
+  --font-display: 'Space Grotesk', system-ui, sans-serif;
+}
+
+/* ---- Reset / base -------------------------------------------------------*/
+*, *::before, *::after { box-sizing: border-box; }
+html { color-scheme: light; }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+  color: var(--ink);
+  line-height: 1.2;
+  margin: 0 0 var(--space-3);
+}
+h1 { font-size: 2rem;    font-weight: 700; }
+h2 { font-size: 1.5rem;  font-weight: 700; }
+h3 { font-size: 1.15rem; font-weight: 600; }
+
+p { margin: 0 0 var(--space-3); }
+small, .caption, .text-small { font-size: 0.85rem; color: var(--ink-muted); }
+
+a { color: var(--accent); text-decoration-thickness: 1.5px; text-underline-offset: 2px; }
+a:hover { color: var(--accent-2); }
+
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* ---- Layout primitives ---------------------------------------------------*/
+.container { max-width: 960px; margin: 0 auto; padding: var(--space-6) var(--space-4); }
+.section { padding: var(--space-7) 0; }
+.stack > * + * { margin-top: var(--space-4); }
+.text-muted { color: var(--ink-muted); }
+
+/* ---- Site nav (adopted from Cybersecurity's draft — new shared component,
+   no prior conflict) ---------------------------------------------------- */
+.site-nav {
+  background: var(--accent);
+  color: var(--paper);
+  padding: var(--space-4) var(--space-5);
+}
+.site-nav a {
+  color: var(--paper);
+  font-weight: 600;
+  text-decoration: none;
+  margin-right: var(--space-5);
+  padding-bottom: var(--space-1);
+  border-bottom: 2px solid transparent;
+}
+.site-nav a:hover,
+.site-nav a[aria-current="page"] {
+  border-bottom-color: var(--accent-2);
+}
+
+/* ---- Panel / card (base container) ---------------------------------------
+   .panel and .card are aliases for the same component — Networking's
+   draft used .panel, Cybersecurity's used .card. Both work identically
+   so neither draft's existing markup breaks. */
+.panel, .card {
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: var(--space-5);
+  transition: border-color 150ms ease;
+}
+.card:hover { border-color: var(--accent-2); }
+
+/* ---- Signature motifs — kept DISTINCT per class on purpose, not merged.
+   Each references that class's own --accent/--accent-2/--olive so it
+   themes automatically, but the visual language stays specific to the
+   class it came from. ------------------------------------------------- */
+
+/* Networking: corner-bracket trace, one per panel */
+.trace { position: relative; }
+.trace::before {
+  content: ""; position: absolute; top: -1px; left: -1px;
+  width: 22px; height: 22px;
+  border-top: 2px solid var(--accent);
+  border-left: 2px solid var(--accent);
+  border-top-left-radius: var(--radius);
+  pointer-events: none;
+}
+.trace::after {
+  content: ""; position: absolute; bottom: -1px; right: -1px;
+  width: 22px; height: 22px;
+  border-bottom: 2px solid var(--accent-2);
+  border-right: 2px solid var(--accent-2);
+  border-bottom-right-radius: var(--radius);
+  pointer-events: none;
+}
+
+/* Cybersecurity: circuit-trace PCB rule (inline SVG in the HTML, styled
+   here). Uses --olive specifically — keep olive scoped to this motif only,
+   per its own style guide, so it doesn't become a third competing color. */
+.circuit-rule { width: 100%; height: 12px; margin: 0 0 var(--space-5); }
+.circuit-rule svg { width: 100%; height: 100%; display: block; }
+.circuit-rule path { stroke: var(--olive, var(--accent-2)); stroke-width: 2; fill: none; }
+.circuit-rule circle { fill: var(--olive, var(--accent-2)); }
+
+/* ---- Buttons ---------------------------------------------------------
+   44x44 minimum target for touchscreens; focus ring always visible. */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: 44px;
+  min-width: 44px;
+  padding: var(--space-2) var(--space-4);
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.95rem;
+  border-radius: var(--radius-sm);
+  border: 2px solid transparent;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
+}
+.btn-primary { background: var(--accent); color: #FFFFFF; border-color: var(--accent); }
+.btn-primary:hover { background: var(--accent-2); border-color: var(--accent-2); }
+
+.btn-secondary { background: transparent; border-color: var(--accent); color: var(--accent); }
+.btn-secondary:hover { background: var(--accent); color: #FFFFFF; }
+
+.btn-ghost { background: transparent; color: var(--ink); border-color: var(--line-strong); }
+.btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ---- Badge / eyebrow — two distinct label styles, both kept ------------- */
+.badge {
+  display: inline-block;
+  padding: 2px var(--space-2);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  background: var(--accent);
+  color: #FFFFFF;
+  letter-spacing: 0.02em;
+}
+.badge-outline { background: transparent; border: 1px solid var(--accent); color: var(--accent); }
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent-2);
+  background: var(--accent-dark, var(--accent));
+  padding: var(--space-1) var(--space-3);
+  border-radius: 999px;
+}
+.eyebrow::before {
+  content: ""; width: 6px; height: 6px; border-radius: 50%;
+  background: var(--accent-2); flex-shrink: 0;
+}
+
+/* ---- Callouts (simulator/tool feedback states) --------------------------
+   Plain .callout (no modifier) uses the shared focus/gold tone as a
+   sensible neutral default; modifiers add semantic color when needed. */
+.callout {
+  padding: var(--space-3) var(--space-4);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  border-left: 4px solid var(--focus);
+  background: var(--surface);
+  margin: 0 0 var(--space-3);
+}
+.callout p:last-child { margin-bottom: 0; }
+.callout-success { border-left-color: var(--success); background: var(--success-bg); }
+.callout-warning { border-left-color: var(--warning); background: var(--warning-bg); }
+.callout-danger  { border-left-color: var(--danger);  background: var(--danger-bg); }
+
+/* ---- Data / mono (IPs, CLI, binary, MAC addresses, log excerpts) --------*/
+.data, code, pre {
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+}
+:not(pre) > code {
+  background: var(--line);
+  color: var(--ink);
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+}
+.data-block, pre {
+  display: block;
+  background: var(--ink);
+  color: var(--paper);
+  padding: var(--space-4);
+  border-radius: var(--radius-sm);
+  overflow-x: auto;
+}
+
+/* ---- Tables (routing/ARP/device tables, log tables) ---------------------
+   Bare table/th/td are styled directly (no wrapper class required) so a
+   tool author can just write a normal <table>. */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+  margin: 0 0 var(--space-5);
+}
+th, td {
+  text-align: left;
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--line);
+}
+th {
+  font-family: var(--font-display);
+  font-weight: 600;
+  color: var(--ink-muted);
+  border-bottom: 2px solid var(--line-strong);
+}
+td.mono, th.mono { font-family: var(--font-mono); font-size: 0.9rem; }
+
+/* ---- Form controls ---------------------------------------------------------
+   One shared pattern so students don't relearn a control style per tool. */
+input[type="text"], input[type="number"], input[type="password"],
+select, textarea {
+  font-family: var(--font-body);
+  font-size: 1rem;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink);
+  min-height: 44px;
+}
+input:invalid, .field-error input { border-color: var(--danger); }
+label { display: block; font-weight: 500; margin-bottom: var(--space-1); }
+input[type="checkbox"], input[type="radio"] {
+  width: 20px; height: 20px; accent-color: var(--accent);
+}
+
+/* ---- Print (fallback only — dedicated print materials are built
+   separately, per SITE_CONVENTIONS.md) ------------------------------------*/
+@media print {
+  .site-nav { display: none; }
+  pre { background: none; color: var(--ink); border: 1px solid var(--line); }
+  a { color: var(--ink); text-decoration: underline; }
+}
+
+/* ==========================================================================
+   RECONCILIATION DECISIONS — what changed from each original draft, and why
+
+   From AP Networking's draft:
+   - Attribute kept as data-course, but values now match folder slugs
+     exactly (ap-networking, not networking) for consistency with the rest
+     of the site's naming.
+   - Everything else largely intact: base neutrals, spacing scale, .btn/
+     .badge/.callout/.data/form-control patterns.
+
+   From AP Cybersecurity's draft:
+   - Body font changed from Source Sans 3 to the shared Inter (one
+     universal reading font across all classes, per the "shared skeleton"
+     principle both drafts independently endorsed).
+   - Mono font: no change — both drafts already agreed on a system stack.
+   - Display font (Source Serif 4) KEPT as this class's specific heading
+     font — the one deliberate per-class typography exception.
+   - Base container renamed from .card to an alias with .panel (both work).
+   - .circuit-rule motif kept fully intact, olive scoped as specified.
+   - .site-nav and .eyebrow adopted as new shared components (no conflict
+     — Networking's draft didn't have equivalents).
+   - Confirmed accent (#1B4332 / #D4A017) integrated as
+     html[data-course="ap-cybersecurity"].
+   ========================================================================== */
