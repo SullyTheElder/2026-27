@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AP Cybersecurity — Class Lessons</title>
+<link rel="stylesheet" href="/assets/site.css">
+<link rel="stylesheet" href="/assets/themes/ap-cybersecurity.css">
+</head>
+<body>
+  <div class="wrap">
+    <div class="crumb"><a href="../../">Class Resources</a> / <a href="../">AP Cybersecurity</a> / Class Lessons</div>
+    <h1>Class Lessons</h1>
+    <div id="output"></div>
+  </div>
+
+<script>
+  // Add one entry per lesson/tool. `unit` groups items under a heading (optional).
+  const LESSONS = [
+  __LESSONS_JS__
+  ];
+
+  const out = document.getElementById('output');
+  if (LESSONS.length === 0) {
+    out.innerHTML = '<p class="empty">No lessons posted yet — check back soon.</p>';
+  } else {
+    let html = '';
+    let lastUnit = null;
+    for (const item of LESSONS) {
+      if (item.unit !== lastUnit) {
+        if (lastUnit !== null) html += '</div>';
+        html += `<div class="unit-label">${item.unit}</div><div class="list">`;
+        lastUnit = item.unit;
+      }
+      html += `<a class="card" href="${item.path}"><h2>${item.title}</h2></a>`;
+    }
+    html += '</div>';
+    out.innerHTML = html;
+  }
+</script>
+</body>
+</html>
