@@ -18,6 +18,13 @@ OUT = ROOT / "_site"
 EXCLUDE_DIRS = {".git", ".github", "scripts", "_site", "node_modules"}
 EXCLUDE_FILES = {"_template.html", "README.md"}
 
+# Extra filenames to exclude ONLY from the lesson scan (not from copy_tree,
+# which needs to copy real index.html files like the root/class landing
+# pages -- see the "Index" bug this was added to fix: a stray leftover
+# index.html sitting directly in a class_lessons/ folder was getting
+# picked up and listed as if it were a lesson named "Index").
+LESSON_SCAN_EXCLUDE_FILES = EXCLUDE_FILES | {"index.html"}
+
 # Injected automatically into every portal/chrome page (root landing page,
 # each class's landing page, and each class's lesson listing). NOT injected
 # into individual lesson/tool files -- those stay hand-authored and
@@ -55,7 +62,7 @@ def find_lessons(class_lessons_dir: Path):
     file under a class_lessons/ folder, sorted by unit then title."""
     entries = []
     for path in sorted(class_lessons_dir.rglob("*.html")):
-        if path.name in EXCLUDE_FILES:
+        if path.name in LESSON_SCAN_EXCLUDE_FILES:
             continue
         rel = path.relative_to(class_lessons_dir)
         parts = rel.parts
