@@ -241,7 +241,7 @@ nav a, .bd-breadcrumb a, .crumb a {
 }
 
 /* ---- Footer / small print ------------------------------------------- */
-footer, .bd-footer {
+footer, .bd-footer, .site-disclaimer {
   font-size: 0.8rem;
   color: #888;
   text-align: center;
