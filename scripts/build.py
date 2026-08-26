@@ -18,6 +18,25 @@ OUT = ROOT / "_site"
 EXCLUDE_DIRS = {".git", ".github", "scripts", "_site", "node_modules"}
 EXCLUDE_FILES = {"_template.html", "README.md"}
 
+# Injected automatically into every portal/chrome page (root landing page,
+# each class's landing page, and each class's lesson listing). NOT injected
+# into individual lesson/tool files -- those stay hand-authored and
+# self-contained, untouched by the build script, per SITE_CONVENTIONS.md.
+# Change the wording here once; it propagates everywhere on the next push.
+FOOTER_HTML = (
+    '<footer class="site-disclaimer">\n'
+    "  <p>This is an independently maintained personal project and is not "
+    "an official Le Grand High School or district website. No student "
+    "accounts, data, or cookies are collected by this site.</p>\n"
+    "</footer>"
+)
+
+
+def inject_footer(html: str) -> str:
+    if "</body>" not in html or "site-disclaimer" in html:
+        return html
+    return html.replace("</body>", FOOTER_HTML + "\n</body>")
+
 
 def prettify_unit(name: str) -> str:
     m = re.match(r"^([a-zA-Z]+)[-_ ]?(\d+)$", name)
@@ -79,8 +98,23 @@ def copy_tree():
     )
 
 
+def inject_footer_into_landing_pages():
+    """Root index.html and each class's index.html (depth 0 and 1) --
+    the lesson-listing pages are handled separately in the template loop."""
+    candidates = [OUT / "index.html"] + sorted(OUT.glob("*/index.html"))
+    for path in candidates:
+        if not path.exists():
+            continue
+        html = path.read_text()
+        new_html = inject_footer(html)
+        if new_html != html:
+            path.write_text(new_html)
+            print(f"added disclaimer footer to {path.relative_to(OUT)}")
+
+
 def build():
     copy_tree()
+    inject_footer_into_landing_pages()
     for template in ROOT.rglob("class_lessons/_template.html"):
         class_lessons_dir = template.parent
         entries = find_lessons(class_lessons_dir)
@@ -89,6 +123,7 @@ def build():
         with open(template) as f:
             html = f.read()
         html = html.replace("__LESSONS_JS__", lessons_js)
+        html = inject_footer(html)
 
         rel_dir = class_lessons_dir.relative_to(ROOT)
         out_index = OUT / rel_dir / "index.html"
