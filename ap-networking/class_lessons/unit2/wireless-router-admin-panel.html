@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bulldog Networking — Router Admin Panel Simulator</title>
+<style>
+  :root{
+    --navy:#0B1F3A;
+    --navy-2:#123058;
+    --green:#8FC53E;
+    --green-dark:#6EA22A;
+    --cream:#F4F1E9;
+    --caution:#E8A33D;
+    --error:#C1443C;
+    --ink:#1B2430;
+    --muted:#5B6472;
+    /* neutral "generic router UI" palette — deliberately NOT Bulldog colors,
+       so the simulated device reads as a real product, not a class handout */
+    --ui-sidebar:#2B3A4A;
+    --ui-sidebar-active:#3B4E63;
+    --ui-accent:#3B82C4;
+    --ui-bg:#F5F6F8;
+    --ui-border:#D7DCE2;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    background:linear-gradient(180deg,var(--navy) 0%, var(--navy-2) 100%);
+    color:var(--cream);
+    min-height:100vh;
+    padding:20px;
+  }
+  h1,h2,h3{font-family:'Space Grotesk','Inter',sans-serif;margin:0;}
+  .wrap{max-width:1300px;margin:0 auto;}
+  .masthead{margin-bottom:14px;}
+  .kicker{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--green);font-weight:700;}
+  .masthead h1{font-size:24px;margin-top:2px;}
+  .masthead p{font-size:13px;color:rgba(244,241,233,.75);margin-top:4px;}
+
+  .layout{ display:grid; grid-template-columns:1fr 300px; gap:16px; align-items:start; }
+  @media (max-width:1000px){ .layout{grid-template-columns:1fr;} }
+
+  /* ---------- BROWSER CHROME MOCKUP ---------- */
+  .browser-shell{
+    background:#dfe3e8; border-radius:10px; overflow:hidden;
+    box-shadow:0 14px 32px rgba(0,0,0,.35);
+  }
+  .browser-topbar{
+    background:#c8ccd2; padding:8px 10px; display:flex; align-items:center; gap:8px;
+  }
+  .dot{ width:10px; height:10px; border-radius:50%; }
+  .browser-addr{
+    flex:1; background:#fff; border-radius:6px; padding:5px 12px; font-size:12px; color:#444;
+    font-family:'SFMono-Regular',Consolas,monospace;
+  }
+
+  /* ---------- ROUTER UI ---------- */
+  .router-ui{ display:flex; min-height:520px; background:var(--ui-bg); }
+  .router-sidebar{ width:190px; background:var(--ui-sidebar); flex-shrink:0; padding:14px 0; }
+  .router-brand{ color:#fff; font-size:13px; font-weight:800; padding:0 16px 14px 16px; border-bottom:1px solid rgba(255,255,255,.12); margin-bottom:8px; }
+  .router-brand small{ display:block; font-weight:400; color:rgba(255,255,255,.55); font-size:10.5px; margin-top:2px; }
+  .nav-item{
+    display:block; width:100%; text-align:left; background:none; border:none;
+    color:rgba(255,255,255,.8); padding:11px 16px; font-family:inherit; font-size:13px; font-weight:600;
+    cursor:pointer; border-left:3px solid transparent;
+  }
+  .nav-item:hover{ background:rgba(255,255,255,.06); }
+  .nav-item.active{ background:var(--ui-sidebar-active); color:#fff; border-left-color:var(--ui-accent); }
+
+  .router-content{ flex:1; padding:24px 28px; color:#222; }
+  .router-content h2{ font-family:'Inter',sans-serif; font-size:17px; color:#1a2733; margin-bottom:4px; }
+  .router-content .sub{ font-size:12.5px; color:#6b7684; margin-bottom:18px; }
+
+  .field-row{ margin-bottom:16px; max-width:440px; }
+  .field-row label{ display:block; font-size:12px; font-weight:700; color:#3a4552; margin-bottom:5px; }
+  .field-row .field-note{ font-size:11px; color:#8892a0; margin-top:4px; }
+  .field-row input[type="text"], .field-row select{
+    width:100%; padding:8px 10px; border-radius:6px; border:1.5px solid var(--ui-border);
+    font-family:inherit; font-size:13px; background:#fff; color:#222;
+  }
+  .field-row input[type="text"]:focus, .field-row select:focus{ outline:2px solid var(--ui-accent); border-color:var(--ui-accent); }
+
+  .pw-wrap{ position:relative; }
+  .pw-wrap input{ padding-right:60px !important; }
+  .pw-toggle{
+    position:absolute; right:8px; top:50%; transform:translateY(-50%);
+    background:none; border:none; color:var(--ui-accent); font-size:11px; font-weight:700; cursor:pointer;
+  }
+
+  .strength-bar{ height:6px; border-radius:4px; background:#e4e7eb; margin-top:6px; overflow:hidden; }
+  .strength-fill{ height:100%; transition:width .2s ease, background .2s ease; }
+
+  .toggle-row{ display:flex; align-items:center; justify-content:space-between; max-width:440px; padding:12px 0; border-top:1px solid var(--ui-border); }
+  .toggle-row:first-of-type{ border-top:none; }
+  .toggle-label{ font-size:13px; font-weight:700; color:#3a4552; }
+  .toggle-desc{ font-size:11.5px; color:#8892a0; margin-top:2px; max-width:340px; }
+  .switch{ position:relative; width:42px; height:24px; flex-shrink:0; }
+  .switch input{ opacity:0; width:0; height:0; }
+  .slider{
+    position:absolute; cursor:pointer; inset:0; background:#c7ccd3; border-radius:24px; transition:.2s;
+  }
+  .slider:before{
+    content:""; position:absolute; height:18px; width:18px; left:3px; bottom:3px;
+    background:#fff; border-radius:50%; transition:.2s;
+  }
+  input:checked + .slider{ background:var(--green-dark); }
+  input:checked + .slider:before{ transform:translateX(18px); }
+
+  .inline-warn{
+    display:flex; gap:8px; align-items:flex-start; background:#fdf1e0; border:1px solid var(--caution);
+    border-radius:8px; padding:9px 12px; font-size:12px; color:#7a5310; margin-top:10px; max-width:440px;
+  }
+  .inline-warn.error{ background:#fbeaea; border-color:var(--error); color:#7a2620; }
+
+  /* ---------- CLICK-TO-REVEAL TIPS ---------- */
+  .hidden{ display:none !important; }
+  .info-btn{
+    display:inline-flex; align-items:center; justify-content:center;
+    width:16px; height:16px; border-radius:50%; border:1.3px solid var(--muted);
+    background:none; color:var(--muted); font-size:10px; font-weight:800; line-height:1;
+    cursor:pointer; margin-left:6px; padding:0; vertical-align:middle;
+  }
+  .info-btn:hover{ background:var(--muted); color:var(--cream); }
+
+  .tip-row{ max-width:440px; margin-top:6px; }
+  .tip-toggle{
+    background:none; border:1.3px solid #c7ccd3; color:#5a6472; padding:6px 12px;
+    border-radius:6px; font-family:inherit; font-size:11.5px; font-weight:700; cursor:pointer;
+  }
+  .tip-toggle:hover{ background:#eceef1; }
+  .tip-box{
+    margin-top:8px; border-radius:8px; padding:9px 12px; font-size:12px; line-height:1.45;
+    border:1px solid var(--ui-border); background:#fff; color:#3a4552;
+  }
+  .tip-box.warn{ background:#fdf1e0; border-color:var(--caution); color:#7a5310; }
+  .tip-box.error{ background:#fbeaea; border-color:var(--error); color:#7a2620; }
+  .tip-box.good{ background:#e9f3d9; border-color:var(--green-dark); color:#3d5a1c; }
+
+  .score-note{ transition:none; }
+  .score-header-row{ display:flex; align-items:center; justify-content:space-between; }
+  .score-tips-toggle{
+    background:none; border:none; color:var(--muted); font-size:10.5px; font-weight:700;
+    text-decoration:underline; cursor:pointer; font-family:inherit; padding:0;
+  }
+
+  .apply-bar{ margin-top:22px; }
+  .apply-btn{
+    background:var(--ui-accent); color:#fff; border:none; padding:9px 20px; border-radius:6px;
+    font-family:inherit; font-size:13px; font-weight:700; cursor:pointer;
+  }
+  .apply-btn:hover{ background:#2f6ba3; }
+  .factory-btn{
+    background:none; border:1.5px solid #c7ccd3; color:#5a6472; padding:8px 16px; border-radius:6px;
+    font-family:inherit; font-size:12.5px; font-weight:700; cursor:pointer; margin-left:8px;
+  }
+  .factory-btn:hover{ background:#eceef1; }
+
+  /* ---------- RIGHT PANEL: SECURITY SCORE ---------- */
+  .panel{
+    background:var(--cream); color:var(--ink); border-radius:14px; padding:16px;
+    box-shadow:0 10px 24px rgba(0,0,0,.25); margin-bottom:14px;
+  }
+  .panel h3{ font-size:12.5px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin-bottom:12px; }
+
+  .score-gauge{ text-align:center; margin-bottom:14px; }
+  .score-num{ font-family:'Space Grotesk',sans-serif; font-size:44px; font-weight:800; line-height:1; }
+  .score-label{ font-size:11.5px; color:var(--muted); margin-top:2px; }
+
+  .score-row{ margin-bottom:12px; }
+  .score-row-top{ display:flex; justify-content:space-between; font-size:12px; font-weight:700; margin-bottom:4px; }
+  .score-bar-track{ height:6px; border-radius:4px; background:#e3ddca; overflow:hidden; }
+  .score-bar-fill{ height:100%; transition:width .2s ease; }
+  .score-note{ font-size:11px; color:var(--muted); margin-top:3px; line-height:1.4; }
+
+  .action-btn{
+    display:block; width:100%; background:var(--navy); color:#fff; border:none;
+    padding:9px 10px; border-radius:8px; font-family:inherit; font-size:12.5px; font-weight:700;
+    cursor:pointer; margin-bottom:7px;
+  }
+  .action-btn:hover{ background:var(--navy-2); }
+
+  .guest-status{ font-size:12px; padding:8px 10px; border-radius:8px; background:#fff; margin-top:8px; }
+  .guest-status.ok{ color:var(--green-dark); font-weight:700; }
+  .guest-status.warn{ color:var(--error); font-weight:700; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="masthead">
+    <div class="kicker">Bulldog Networking · Topic 1.4.C</div>
+    <h1>Wireless Router Admin Panel Simulator</h1>
+    <p>Explore a realistic router settings page. Every change updates your live security score on the right.</p>
+  </div>
+
+  <div class="layout">
+    <!-- LEFT: SIMULATED ROUTER ADMIN PANEL -->
+    <div class="browser-shell">
+      <div class="browser-topbar">
+        <span class="dot" style="background:#ec6a5e;"></span>
+        <span class="dot" style="background:#f4bf4f;"></span>
+        <span class="dot" style="background:#61c454;"></span>
+        <div class="browser-addr" id="addrBar">http://192.168.1.1/wireless.cgi</div>
+      </div>
+      <div class="router-ui">
+        <div class="router-sidebar">
+          <div class="router-brand">ROUTER ADMIN<small>Model WRT-2400AX</small></div>
+          <button class="nav-item active" data-tab="wireless" onclick="switchTab('wireless')">Wireless (Internal)</button>
+          <button class="nav-item" data-tab="guest" onclick="switchTab('guest')">Guest Network</button>
+          <button class="nav-item" data-tab="admin" onclick="switchTab('admin')">Administration</button>
+        </div>
+
+        <div class="router-content">
+          <!-- WIRELESS TAB -->
+          <div id="tab-wireless">
+            <h2>Wireless Settings — Internal Network</h2>
+            <div class="sub">Configures the primary network your own devices connect to.</div>
+
+            <div class="field-row">
+              <label>Network Name (SSID)</label>
+              <input type="text" id="ssid" value="NETGEAR-5G-8821" oninput="onChange()">
+              <div class="field-note">Visible to any device scanning for nearby networks.</div>
+            </div>
+
+            <div class="field-row">
+              <label>Security Mode</label>
+              <select id="security" onchange="onChange()">
+                <option value="open">Open (No Security)</option>
+                <option value="wep">WEP</option>
+                <option value="wpa">WPA (TKIP)</option>
+                <option value="wpa2" selected>WPA2-Personal (AES)</option>
+                <option value="wpa3">WPA3-Personal</option>
+              </select>
+            </div>
+
+            <div class="field-row" id="pwField">
+              <label>Wireless Password</label>
+              <div class="pw-wrap">
+                <input type="text" id="password" value="bulldog1" oninput="onChange()">
+                <button class="pw-toggle" onclick="togglePw()" id="pwToggleBtn">SHOW</button>
+              </div>
+              <div class="strength-bar"><div class="strength-fill" id="strengthFill"></div></div>
+              <div class="field-note" id="strengthNote"></div>
+            </div>
+
+            <div class="toggle-row">
+              <div>
+                <div class="toggle-label">Wi-Fi Protected Setup (WPS)</div>
+                <div class="toggle-desc">Lets devices join by pressing a button or entering a PIN, skipping the password.</div>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="wps" checked onchange="onChange()">
+                <span class="slider"></span>
+              </label>
+            </div>
+
+            <div class="tip-row">
+              <button class="tip-toggle" id="wirelessTipBtn" onclick="toggleTip('wireless')">Configuration Tip</button>
+              <div class="tip-box hidden" id="wirelessTipBox"></div>
+            </div>
+
+            <div class="apply-bar">
+              <button class="apply-btn" onclick="onChange(true)">Apply Settings</button>
+              <button class="factory-btn" onclick="factoryReset()">Reset to Factory Defaults</button>
+            </div>
+          </div>
+
+          <!-- GUEST TAB -->
+          <div id="tab-guest" style="display:none;">
+            <h2>Guest Network</h2>
+            <div class="sub">Gives visitors internet access without reaching your internal devices.</div>
+
+            <div class="toggle-row" style="border-top:none;">
+              <div>
+                <div class="toggle-label">Enable Guest Network</div>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="guestEnabled" onchange="onChange()">
+                <span class="slider"></span>
+              </label>
+            </div>
+
+            <div id="guestFields" style="display:none;">
+              <div class="field-row">
+                <label>Guest Network Name (SSID)</label>
+                <input type="text" id="guestSsid" value="NETGEAR-Guest" oninput="onChange()">
+              </div>
+              <div class="field-row">
+                <label>Guest Security Mode</label>
+                <select id="guestSecurity" onchange="onChange()">
+                  <option value="open">Open (No Security)</option>
+                  <option value="wpa2" selected>WPA2-Personal (AES)</option>
+                  <option value="wpa3">WPA3-Personal</option>
+                </select>
+              </div>
+              <div class="field-row">
+                <label>Guest Password</label>
+                <input type="text" id="guestPassword" value="welcome123" oninput="onChange()">
+              </div>
+              <div class="toggle-row">
+                <div>
+                  <div class="toggle-label">Isolate from internal network</div>
+                  <div class="toggle-desc">Guest devices can reach the internet but not your internal devices or files.</div>
+                </div>
+                <label class="switch">
+                  <input type="checkbox" id="guestIsolate" checked onchange="onChange()">
+                  <span class="slider"></span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- ADMIN TAB -->
+          <div id="tab-admin" style="display:none;">
+            <h2>Administration</h2>
+            <div class="sub">Controls who can log into this admin panel itself.</div>
+
+            <div class="field-row">
+              <label>Admin Username</label>
+              <input type="text" id="adminUser" value="admin" oninput="onChange()">
+            </div>
+            <div class="field-row">
+              <label>Admin Password</label>
+              <div class="pw-wrap">
+                <input type="text" id="adminPassword" value="admin" oninput="onChange()">
+              </div>
+              <div class="field-note">This is the login for this settings page — separate from the Wi-Fi password.</div>
+            </div>
+            <div class="tip-row">
+              <button class="tip-toggle" id="adminTipBtn" onclick="toggleTip('admin')">Configuration Tip</button>
+              <div class="tip-box hidden" id="adminTipBox"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: SECURITY SCORE -->
+    <div>
+      <div class="panel">
+        <div class="score-header-row">
+          <h3 style="margin-bottom:0;">Live Security Score</h3>
+          <button class="score-tips-toggle" id="masterTipToggle" onclick="toggleAllNotes()">Show all tips</button>
+        </div>
+        <div class="score-gauge">
+          <div class="score-num" id="scoreNum">0</div>
+          <div class="score-label">out of 100</div>
+        </div>
+
+        <div class="score-row">
+          <div class="score-row-top"><span>Encryption <button class="info-btn" onclick="toggleNote('encNote')">i</button></span><span id="encPts">0 / 40</span></div>
+          <div class="score-bar-track"><div class="score-bar-fill" id="encBar"></div></div>
+          <div class="score-note hidden" id="encNote"></div>
+        </div>
+        <div class="score-row">
+          <div class="score-row-top"><span>Password Strength <button class="info-btn" onclick="toggleNote('pwScoreNote')">i</button></span><span id="pwPts">0 / 25</span></div>
+          <div class="score-bar-track"><div class="score-bar-fill" id="pwBar"></div></div>
+          <div class="score-note hidden" id="pwScoreNote"></div>
+        </div>
+        <div class="score-row">
+          <div class="score-row-top"><span>WPS Disabled <button class="info-btn" onclick="toggleNote('wpsNote')">i</button></span><span id="wpsPts">0 / 15</span></div>
+          <div class="score-bar-track"><div class="score-bar-fill" id="wpsBar"></div></div>
+          <div class="score-note hidden" id="wpsNote"></div>
+        </div>
+        <div class="score-row">
+          <div class="score-row-top"><span>Unique SSID <button class="info-btn" onclick="toggleNote('ssidNote')">i</button></span><span id="ssidPts">0 / 10</span></div>
+          <div class="score-bar-track"><div class="score-bar-fill" id="ssidBar"></div></div>
+          <div class="score-note hidden" id="ssidNote"></div>
+        </div>
+        <div class="score-row">
+          <div class="score-row-top"><span>Admin Login Changed <button class="info-btn" onclick="toggleNote('adminNote')">i</button></span><span id="adminPts">0 / 10</span></div>
+          <div class="score-bar-track"><div class="score-bar-fill" id="adminBar"></div></div>
+          <div class="score-note hidden" id="adminNote"></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>Guest Network Status</h3>
+        <div id="guestStatusBox" class="guest-status">Guest network is off.</div>
+      </div>
+
+      <div class="panel">
+        <h3>Export</h3>
+        <button class="action-btn" onclick="exportSummary()">Export Configuration (.txt)</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function switchTab(tab){
+  document.querySelectorAll(".nav-item").forEach(b => b.classList.toggle("active", b.dataset.tab === tab));
+  ["wireless","guest","admin"].forEach(t => {
+    document.getElementById("tab-"+t).style.display = (t===tab) ? "block" : "none";
+  });
+  const addr = { wireless:"http://192.168.1.1/wireless.cgi", guest:"http://192.168.1.1/guest.cgi", admin:"http://192.168.1.1/admin.cgi" };
+  document.getElementById("addrBar").textContent = addr[tab];
+}
+
+let tipOpen = { wireless:false, admin:false };
+let notesOpen = false;
+
+function toggleTip(key){
+  tipOpen[key] = !tipOpen[key];
+  document.getElementById(key+"TipBox").classList.toggle("hidden", !tipOpen[key]);
+}
+
+function toggleNote(id){
+  document.getElementById(id).classList.toggle("hidden");
+}
+
+function toggleAllNotes(){
+  notesOpen = !notesOpen;
+  ["encNote","pwScoreNote","wpsNote","ssidNote","adminNote"].forEach(id => {
+    document.getElementById(id).classList.toggle("hidden", !notesOpen);
+  });
+  tipOpen.wireless = notesOpen; tipOpen.admin = notesOpen;
+  document.getElementById("wirelessTipBox").classList.toggle("hidden", !notesOpen);
+  document.getElementById("adminTipBox").classList.toggle("hidden", !notesOpen);
+  document.getElementById("masterTipToggle").textContent = notesOpen ? "Hide all tips" : "Show all tips";
+}
+
+let pwVisible = true;
+function togglePw(){
+  pwVisible = !pwVisible;
+  const el = document.getElementById("password");
+  el.type = pwVisible ? "text" : "password";
+  document.getElementById("pwToggleBtn").textContent = pwVisible ? "HIDE" : "SHOW";
+}
+
+const DEFAULT_PATTERNS = ["netgear","linksys","tp-link","tplink","dlink","asus","xfinity","arris","belkin","default","wifi","router","att","spectrum"];
+
+function passwordScore(pw){
+  if(!pw) return { pts:0, label:"No password set" };
+  let lenPts = 0;
+  if(pw.length >= 12) lenPts = 15;
+  else if(pw.length >= 8) lenPts = 8;
+  else lenPts = 2;
+
+  let variety = 0;
+  if(/[a-z]/.test(pw)) variety++;
+  if(/[A-Z]/.test(pw)) variety++;
+  if(/[0-9]/.test(pw)) variety++;
+  if(/[^a-zA-Z0-9]/.test(pw)) variety++;
+  const varietyPts = Math.round((variety/4) * 10);
+
+  const total = Math.min(25, lenPts + varietyPts);
+  let label;
+  if(total >= 20) label = "Strong — long and varied";
+  else if(total >= 12) label = "Okay — could be longer or more varied";
+  else label = "Weak — short and/or predictable";
+  return { pts: total, label };
+}
+
+function setBar(id, pct, color){
+  document.getElementById(id).style.width = pct + "%";
+  document.getElementById(id).style.background = color;
+}
+
+function scoreColor(pts, max){
+  const ratio = pts / max;
+  if(ratio >= 0.75) return "#6EA22A";
+  if(ratio >= 0.4) return "#E8A33D";
+  return "#C1443C";
+}
+
+function onChange(){
+  const ssid = document.getElementById("ssid").value.trim();
+  const security = document.getElementById("security").value;
+  const password = document.getElementById("password").value;
+  const wpsOn = document.getElementById("wps").checked;
+  const adminUser = document.getElementById("adminUser").value.trim();
+  const adminPassword = document.getElementById("adminPassword").value;
+
+  // show/hide password field based on security mode
+  document.getElementById("pwField").style.display = security === "open" ? "none" : "block";
+
+  // ---- Encryption score ----
+  let encPts = 0, encNote = "", encWarn = "";
+  if(security === "wpa3"){ encPts = 40; encNote = "WPA3 is the strongest option available."; }
+  else if(security === "wpa2"){ encPts = 28; encNote = "WPA2 meets the minimum requirement. WPA3 is stronger where supported."; }
+  else if(security === "wpa"){ encPts = 10; encNote = "WPA is outdated and considered insecure."; encWarn = "WPA uses TKIP encryption, which has known weaknesses. Switch to WPA2 or WPA3."; }
+  else if(security === "wep"){ encPts = 3; encNote = "WEP is broken — treat this network as unprotected."; encWarn = "WEP can be cracked in minutes with widely available tools. Never use it."; }
+  else { encPts = 0; encNote = "No encryption — all traffic is sent in the open."; encWarn = "This network has no password or encryption at all. Anyone nearby can read the traffic."; }
+
+  // ---- Password score ----
+  const pwResult = security === "open" ? { pts:0, label:"No password (open network)" } : passwordScore(password);
+
+  // ---- WPS ----
+  const wpsPts = wpsOn ? 0 : 15;
+  const wpsNote = wpsOn ? "WPS is enabled — it can let an attacker bypass your password entirely." : "WPS is disabled. Good.";
+
+  // ---- SSID ----
+  const ssidLower = ssid.toLowerCase();
+  const looksDefault = DEFAULT_PATTERNS.some(p => ssidLower.includes(p));
+  const ssidPts = (ssid.length > 0 && !looksDefault) ? 10 : 0;
+  const ssidNote = looksDefault ? "This still looks like a factory default name — consider changing it." : (ssid.length===0 ? "Set a network name." : "Custom name set.");
+
+  // ---- Admin ----
+  const adminChanged = !(adminUser.toLowerCase() === "admin" && (adminPassword === "admin" || adminPassword === ""));
+  const adminPts = adminChanged ? 10 : 0;
+  const adminNote = adminChanged ? "Default admin login has been changed. Good." : "Still using the factory admin/admin login — change this immediately on a real device.";
+
+  const total = encPts + pwResult.pts + wpsPts + ssidPts + adminPts;
+
+  document.getElementById("scoreNum").textContent = total;
+  document.getElementById("scoreNum").style.color = scoreColor(total, 100);
+
+  document.getElementById("encPts").textContent = encPts + " / 40";
+  setBar("encBar", (encPts/40)*100, scoreColor(encPts,40));
+  document.getElementById("encNote").textContent = encNote;
+
+  document.getElementById("pwPts").textContent = pwResult.pts + " / 25";
+  setBar("pwBar", (pwResult.pts/25)*100, scoreColor(pwResult.pts,25));
+  document.getElementById("pwScoreNote").textContent = pwResult.label;
+
+  document.getElementById("wpsPts").textContent = wpsPts + " / 15";
+  setBar("wpsBar", (wpsPts/15)*100, scoreColor(wpsPts,15));
+  document.getElementById("wpsNote").textContent = wpsNote;
+
+  document.getElementById("ssidPts").textContent = ssidPts + " / 10";
+  setBar("ssidBar", (ssidPts/10)*100, scoreColor(ssidPts,10));
+  document.getElementById("ssidNote").textContent = ssidNote;
+
+  document.getElementById("adminPts").textContent = adminPts + " / 10";
+  setBar("adminBar", (adminPts/10)*100, scoreColor(adminPts,10));
+  document.getElementById("adminNote").textContent = adminNote;
+
+  // wireless tip box — content/status updates live, but open/closed state only changes on click
+  const wirelessBox = document.getElementById("wirelessTipBox");
+  wirelessBox.textContent = encWarn || "Encryption and WPS settings look solid for this network.";
+  wirelessBox.className = "tip-box " + (encWarn ? "error" : "good") + (tipOpen.wireless ? "" : " hidden");
+
+  // admin tip box — same pattern
+  const adminBox = document.getElementById("adminTipBox");
+  adminBox.textContent = !adminChanged
+    ? "Anyone who knows this router's model can guess \"admin / admin\" and take over its settings."
+    : "Admin login has been changed from the factory default.";
+  adminBox.className = "tip-box " + (!adminChanged ? "error" : "good") + (tipOpen.admin ? "" : " hidden");
+
+  // guest status
+  const guestOn = document.getElementById("guestEnabled").checked;
+  document.getElementById("guestFields").style.display = guestOn ? "block" : "none";
+  const guestBox = document.getElementById("guestStatusBox");
+  if(!guestOn){
+    guestBox.className = "guest-status";
+    guestBox.textContent = "Guest network is off.";
+  } else {
+    const isolated = document.getElementById("guestIsolate").checked;
+    if(isolated){
+      guestBox.className = "guest-status ok";
+      guestBox.textContent = "Guest devices get internet access only — internal network is protected.";
+    } else {
+      guestBox.className = "guest-status warn";
+      guestBox.textContent = "Guests can reach your internal devices — isolation is off.";
+    }
+  }
+}
+
+function factoryReset(){
+  document.getElementById("ssid").value = "NETGEAR-5G-8821";
+  document.getElementById("security").value = "wpa2";
+  document.getElementById("password").value = "bulldog1";
+  document.getElementById("wps").checked = true;
+  document.getElementById("guestEnabled").checked = false;
+  document.getElementById("guestSsid").value = "NETGEAR-Guest";
+  document.getElementById("guestSecurity").value = "wpa2";
+  document.getElementById("guestPassword").value = "welcome123";
+  document.getElementById("guestIsolate").checked = true;
+  document.getElementById("adminUser").value = "admin";
+  document.getElementById("adminPassword").value = "admin";
+  onChange();
+}
+
+function exportSummary(){
+  const ssid = document.getElementById("ssid").value;
+  const security = document.getElementById("security").options[document.getElementById("security").selectedIndex].text;
+  const wpsOn = document.getElementById("wps").checked;
+  const adminUser = document.getElementById("adminUser").value;
+  const adminPassword = document.getElementById("adminPassword").value;
+  const guestOn = document.getElementById("guestEnabled").checked;
+  const total = document.getElementById("scoreNum").textContent;
+
+  let out = "BULLDOG NETWORKING — Router Admin Panel Simulator\n";
+  out += "Configuration Summary\n";
+  out += "======================\n\n";
+  out += `SECURITY SCORE: ${total} / 100\n\n`;
+  out += "WIRELESS (INTERNAL):\n";
+  out += `  SSID: ${ssid}\n`;
+  out += `  Security Mode: ${security}\n`;
+  out += `  WPS: ${wpsOn ? "Enabled (vulnerability)" : "Disabled"}\n\n`;
+  out += "GUEST NETWORK:\n";
+  if(guestOn){
+    out += `  SSID: ${document.getElementById("guestSsid").value}\n`;
+    out += `  Security Mode: ${document.getElementById("guestSecurity").options[document.getElementById("guestSecurity").selectedIndex].text}\n`;
+    out += `  Isolated from internal network: ${document.getElementById("guestIsolate").checked ? "Yes" : "No"}\n\n`;
+  } else {
+    out += "  Disabled\n\n";
+  }
+  out += "ADMINISTRATION:\n";
+  out += `  Admin login changed from factory default: ${(adminUser.toLowerCase()==="admin" && adminPassword==="admin") ? "No" : "Yes"}\n`;
+
+  const blob = new Blob([out], {type:"text/plain"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = "router_config_summary.txt"; a.click();
+  URL.revokeObjectURL(url);
+}
+
+onChange();
+</script>
+</body>
+</html>
