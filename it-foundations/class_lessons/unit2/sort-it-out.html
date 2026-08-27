@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sort It Out</title>
+<style>
+  :root {
+    --navy: #0F1B2D; --teal: #0E7C7B; --mint: #6FC3B4; --amber: #C97A2B;
+    --light: #EAF4F4; --gray: #9AA6A6; --danger: #B5473A; --white: #FFFFFF;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: Calibri, "Segoe UI", sans-serif; background: var(--light); color: #1a1a1a; min-height: 100vh; }
+  #app { max-width: 1100px; margin: 0 auto; padding: 18px 20px 40px; }
+
+  header {
+    background: var(--navy); color: white; border-radius: 14px; padding: 16px 22px;
+    display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 14px;
+  }
+  header h1 { font-family: Cambria, Georgia, serif; font-size: 1.5rem; margin: 0; }
+  header .sub { font-size: 0.85rem; color: var(--mint); margin-top: 2px; }
+  .lang-toggle {
+    background: transparent; border: 1.5px solid var(--mint); color: var(--mint);
+    border-radius: 999px; padding: 6px 14px; font-size: 0.85rem; cursor: pointer; font-weight: 600;
+  }
+  .lang-toggle:hover { background: rgba(111,195,180,0.15); }
+
+  .progress-row { display: flex; gap: 8px; margin-bottom: 14px; }
+  .progress-dot { flex: 1; height: 8px; border-radius: 4px; background: #D7E4E4; }
+  .progress-dot.done { background: var(--teal); }
+  .progress-dot.current { background: var(--amber); }
+
+  .hook-box {
+    background: white; border-left: 4px solid var(--amber); border-radius: 10px;
+    padding: 14px 18px; margin-bottom: 16px; font-size: 0.98rem; line-height: 1.5;
+  }
+  .hook-box .es { display: block; font-style: italic; color: #666; font-size: 0.87rem; margin-top: 6px; }
+  .hook-box.compact { font-size: 0.9rem; padding: 10px 16px; }
+
+  .stage-label { font-size: 0.85rem; color: var(--teal); font-weight: 700; margin-bottom: 6px; }
+
+  .bins { display: grid; gap: 16px; margin-bottom: 16px; }
+  .bins.cols-2 { grid-template-columns: 1fr 1fr; }
+  .bins.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+  @media (max-width: 800px) { .bins.cols-2, .bins.cols-3 { grid-template-columns: 1fr; } }
+  .bin {
+    background: white; border: 2px dashed #C7D6D6; border-radius: 14px; padding: 14px;
+    min-height: 130px; cursor: pointer; transition: all 0.15s ease;
+  }
+  .bin.has-selected { border-color: var(--amber); background: #FFF6EC; }
+  .bin h3 { margin: 0 0 10px; font-size: 1.0rem; color: var(--navy); font-family: Cambria, Georgia, serif; }
+  .bin .es-h { display: block; font-style: italic; color: #777; font-size: 0.78rem; font-weight: normal; margin-top: 2px; }
+  .bin-items { display: flex; flex-wrap: wrap; gap: 8px; }
+  .placed-item { background: var(--light); border-radius: 8px; padding: 7px 11px; font-size: 0.85rem; cursor: pointer; }
+  .placed-item.correct { background: #EAF6EA; border: 1.5px solid #3F9142; }
+  .placed-item.wrong { background: #FBEAE8; border: 1.5px solid var(--danger); }
+
+  .pool-card-wrap { background: white; border-radius: 14px; padding: 16px; box-shadow: 0 1px 3px rgba(15,27,45,0.08); margin-bottom: 16px; }
+  .pool { display: flex; flex-wrap: wrap; gap: 10px; }
+  .pool-card {
+    background: var(--light); border: 2px solid transparent; border-radius: 10px;
+    padding: 12px 16px; font-size: 0.9rem; cursor: pointer; transition: all 0.15s ease;
+  }
+  .pool-card:hover { border-color: var(--teal); background: white; }
+  .pool-card.selected { border-color: var(--amber); background: #FFF6EC; }
+
+  button.primary {
+    background: var(--teal); color: white; border: none; border-radius: 8px;
+    padding: 11px 20px; font-size: 0.98rem; font-weight: 700; cursor: pointer;
+  }
+  button.primary:hover { background: #0b6362; }
+  button.primary:disabled { background: #C9D6D6; cursor: not-allowed; }
+  button.secondary {
+    background: transparent; color: var(--teal); border: 1.5px solid var(--teal);
+    border-radius: 8px; padding: 9px 16px; font-size: 0.9rem; font-weight: 600; cursor: pointer;
+  }
+  .action-row { display: flex; gap: 10px; margin-top: 4px; flex-wrap: wrap; align-items: center; }
+  .feedback { font-size: 0.92rem; color: #444; }
+  .feedback.error { color: var(--danger); font-weight: 600; }
+
+  .overlay { position: fixed; inset: 0; background: rgba(15,27,45,0.55); display: flex; align-items: center; justify-content: center; padding: 20px; z-index: 20; }
+  .overlay.hidden { display: none; }
+  .modal { background: white; border-radius: 16px; max-width: 640px; width: 100%; padding: 28px 26px; max-height: 86vh; overflow-y: auto; }
+  .modal h2 { font-family: Cambria, Georgia, serif; color: var(--navy); margin-top: 0; }
+  .vocab-card { background: var(--light); border-radius: 10px; padding: 14px 16px; margin-bottom: 12px; }
+  .vocab-card h4 { margin: 0 0 4px; color: var(--teal); font-family: Cambria, Georgia, serif; font-size: 1.1rem; }
+  .vocab-card .items-line { font-size: 0.85rem; color: var(--amber); font-weight: 700; margin-bottom: 4px; }
+  .vocab-card .es { display: block; font-style: italic; color: #666; font-size: 0.85rem; margin-top: 5px; }
+  .es-p { display: block; font-style: italic; color: #666; font-size: 0.9rem; margin-top: 6px; }
+  .kickoff-box { background: var(--navy); color: white; border-radius: 12px; padding: 16px 18px; margin-top: 16px; }
+  .kickoff-box h3 { margin: 0 0 8px; color: var(--mint); font-family: Cambria, Georgia, serif; }
+  .kickoff-box .es { display: block; font-style: italic; color: #AFC7C7; font-size: 0.85rem; margin-top: 6px; }
+
+  /* ---------- Export / Turn-In screen ---------- */
+  #exportScreen { display: none; }
+  #exportScreen.active { display: block; }
+  #app.export-mode > header,
+  #app.export-mode > .progress-row,
+  #app.export-mode > .hook-box,
+  #app.export-mode > .stage-label,
+  #app.export-mode > .bins,
+  #app.export-mode > .pool-card-wrap,
+  #app.export-mode > .action-row { display: none; }
+
+  .export-card { background: white; border-radius: 14px; padding: 20px 24px; box-shadow: 0 1px 3px rgba(15,27,45,0.08); margin-bottom: 16px; }
+  .export-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 10px; }
+  .export-title { font-family: Cambria, Georgia, serif; color: var(--navy); font-size: 1.7rem; margin: 0; }
+  .export-subtitle { color: var(--teal); font-size: 0.95rem; margin-top: 2px; }
+  .name-row { display: flex; gap: 16px; flex-wrap: wrap; margin: 14px 0 4px; }
+  .name-row label { font-size: 0.85rem; color: #555; display: block; margin-bottom: 4px; }
+  .name-row .es { display: block; font-style: italic; color: #888; font-size: 0.78rem; }
+  .name-row input {
+    border: none; border-bottom: 2px solid #C7D6D6; background: transparent;
+    font-size: 1rem; padding: 4px 2px; font-family: Calibri, sans-serif; color: #111;
+  }
+  .name-row input:focus { outline: none; border-bottom-color: var(--teal); }
+
+  .export-section-title { font-family: Cambria, Georgia, serif; color: var(--teal); font-size: 1.15rem; margin: 6px 0 10px; }
+  .export-p { font-size: 0.9rem; color: #444; margin: 0 0 4px; }
+  .export-p .es { display: block; font-style: italic; color: #777; font-size: 0.84rem; }
+
+  .recap-table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+  .recap-table th, .recap-table td { border: 1px solid #DCE6E6; padding: 8px 10px; text-align: left; font-size: 0.85rem; vertical-align: top; }
+  .recap-table th { background: var(--navy); color: white; font-weight: 700; }
+  .recap-table th .es { display: block; font-style: italic; color: #CFE8E8; font-size: 0.75rem; font-weight: normal; }
+  .recap-table td.round-num { background: var(--light); font-weight: 700; color: var(--navy); text-align: center; }
+  .recap-chip { display: inline-block; background: var(--light); border-radius: 6px; padding: 3px 8px; margin: 2px 3px 2px 0; font-size: 0.78rem; }
+
+  .canvas-wrap { border: 2px solid #C7D6D6; border-radius: 10px; overflow: hidden; margin-top: 8px; touch-action: none; }
+  #deviceCanvas { display: block; width: 100%; height: 340px; background: white; cursor: crosshair; }
+  .canvas-tools { display: flex; gap: 8px; margin-top: 8px; align-items: center; flex-wrap: wrap; }
+
+  .legend-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+  @media (max-width: 700px) { .legend-grid { grid-template-columns: 1fr; } }
+  .legend-field label { font-size: 0.8rem; color: #555; display: block; margin-bottom: 3px; }
+  .legend-field label .es { display: block; font-style: italic; color: #888; font-size: 0.74rem; }
+  .legend-field input {
+    width: 100%; border: 1.5px solid #C7D6D6; border-radius: 6px; padding: 7px 9px;
+    font-size: 0.9rem; font-family: Calibri, sans-serif;
+  }
+  .legend-field input:focus { outline: none; border-color: var(--teal); }
+
+  .reflection-block { margin-top: 14px; }
+  .reflection-q { font-size: 0.92rem; color: #222; margin-bottom: 2px; }
+  .reflection-q .es { display: block; font-style: italic; color: #777; font-size: 0.82rem; margin-bottom: 6px; }
+  .reflection-block textarea {
+    width: 100%; min-height: 56px; border: 1.5px solid #C7D6D6; border-radius: 8px;
+    padding: 8px 10px; font-family: Calibri, sans-serif; font-size: 0.92rem; resize: vertical; margin-bottom: 14px;
+  }
+  .reflection-block textarea:focus { outline: none; border-color: var(--teal); }
+
+  .print-btn-row { display: flex; gap: 10px; margin-top: 6px; }
+
+  @media print {
+    body { background: white; }
+    .lang-toggle, .print-btn-row, .canvas-tools { display: none !important; }
+    .export-card { box-shadow: none; border: 1px solid #ddd; page-break-inside: avoid; }
+    #app { max-width: 100%; padding: 0; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div>
+      <h1 id="title">Sort It Out</h1>
+      <div class="sub" id="subtitle">Unit 2 — Hardware &amp; Software</div>
+    </div>
+    <button class="lang-toggle" id="langToggle" onclick="toggleLang()">Español</button>
+  </header>
+
+  <div class="progress-row" id="progressRow"></div>
+
+  <div class="hook-box" id="hookBox"></div>
+
+  <div class="stage-label" id="stageLabel"></div>
+
+  <div class="bins" id="binsArea"></div>
+
+  <div class="pool-card-wrap">
+    <div class="pool" id="poolArea"></div>
+  </div>
+
+  <div class="action-row">
+    <button class="primary" id="checkBtn" onclick="checkRound()" disabled></button>
+    <button class="secondary" id="resetBtn" onclick="resetRound()"></button>
+    <div class="feedback" id="feedbackBox"></div>
+  </div>
+
+  <div id="exportScreen">
+    <div class="export-card">
+      <div class="export-header">
+        <div>
+          <h2 class="export-title" id="exportTitle">Sort Log &amp; Device Map</h2>
+          <div class="export-subtitle" id="exportSubtitle">Unit 2 — Hardware &amp; Software</div>
+        </div>
+        <button class="lang-toggle" style="border-color: var(--teal); color: var(--teal);" onclick="toggleLang()" id="exportLangToggle">Español</button>
+      </div>
+      <div class="name-row">
+        <div>
+          <label id="nameLabelEn">Name<span class="es" id="nameLabelEs">Nombre</span></label>
+          <input type="text" id="studentName" size="28">
+        </div>
+        <div>
+          <label id="periodLabelEn">Period<span class="es" id="periodLabelEs">Periodo</span></label>
+          <input type="text" id="studentPeriod" size="8">
+        </div>
+      </div>
+    </div>
+
+    <div class="export-card">
+      <div class="export-section-title" id="recapTitle">Round Recap (Rounds 3–5)</div>
+      <p class="export-p" id="recapDesc">Automatically filled in from what you sorted.<span class="es" id="recapDescEs">Completado automáticamente con lo que organizaste.</span></p>
+      <table class="recap-table" id="recapTable"></table>
+    </div>
+
+    <div class="export-card">
+      <div class="export-section-title" id="mapTitle">Design Your Device Map</div>
+      <p class="export-p" id="mapDesc">Pick a real device of your own — phone, game console, smart watch, whatever you want. Sketch it below.<span class="es" id="mapDescEs">Elige un dispositivo real que sea tuyo — teléfono, consola, reloj inteligente, lo que quieras. Dibújalo abajo.</span></p>
+      <div class="canvas-wrap"><canvas id="deviceCanvas"></canvas></div>
+      <div class="canvas-tools">
+        <button class="secondary" id="clearCanvasBtn" onclick="clearCanvas()">Clear sketch</button>
+      </div>
+      <div class="legend-grid" id="legendGrid"></div>
+    </div>
+
+    <div class="export-card">
+      <div class="export-section-title" id="reflectionTitle">Reflection</div>
+      <div class="reflection-block" id="reflectionBlock"></div>
+    </div>
+
+    <div class="print-btn-row">
+      <button class="primary" onclick="window.print()" id="printBtn">Print / Save as PDF</button>
+      <button class="secondary" onclick="backToGame()" id="backBtn">Back to game</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay hidden" id="overlay">
+  <div class="modal" id="modalContent"></div>
+</div>
+
+<script>
+const T = {
+  en: {
+    title: "Sort It Out",
+    subtitle: "Unit 2 — Hardware & Software",
+    langBtn: "Español",
+    hook: "Your Chromebook stops working. One person says \u201ctry restarting it.\u201d Another says \u201cthat won't fix a cracked screen.\u201d Before we figure out who's right, let's sort out what's actually going on inside a device.",
+    hookOther: "Tu Chromebook deja de funcionar. Alguien dice \u201cint\u00e9ntalo reiniciar.\u201d Otra persona dice \u201ceso no va a arreglar una pantalla rota.\u201d Antes de descubrir qui\u00e9n tiene raz\u00f3n, vamos a organizar lo que realmente pasa dentro de un dispositivo.",
+    hookCompactR3: "Round 3: same idea, new examples \u2014 now sorted straight into the three real categories.",
+    hookCompactR3Other: "Ronda 3: la misma idea, ejemplos nuevos \u2014 ahora organizados directamente en las tres categor\u00edas reales.",
+    hookCompactR4: "Round 4: some trickier, more realistic examples. A couple of these are genuinely debatable \u2014 do your best.",
+    hookCompactR4Other: "Ronda 4: algunos ejemplos m\u00e1s complicados y realistas. Un par de estos son genuinamente discutibles \u2014 haz tu mejor esfuerzo.",
+    hookCompactR5: "Round 5: switching devices. Same three categories \u2014 does the idea still work on a phone?",
+    hookCompactR5Other: "Ronda 5: cambiando de dispositivo. Las mismas tres categor\u00edas \u2014 \u00bftodav\u00eda funciona la idea en un tel\u00e9fono?",
+    roundLabel: "Round {n} of 5",
+    checkIdle: "Check my sort",
+    resetBtn: "Reset this round",
+    needAll: "Sort every item before checking.",
+    correctCount: "{n} of {t} correct. Click a red one to send it back.",
+    allCorrect: "All correct!",
+    selectPrompt: "Click an item below, then click a category to place it.",
+    bin1_touch: "You Can Physically Touch It",
+    bin1_notouch: "You Can't Physically Touch It",
+    bin2_system: "The Device Needs This Just to Turn On and Work",
+    bin2_app: "You Specifically Opened This to Do a Task",
+    binHardware: "Hardware",
+    binSystem: "System Software",
+    binApp: "Application Software",
+    revealTitle: "Now Let's Name What You Just Sorted",
+    revealIntro: "You just built three real categories used in tech, without knowing their names yet. Here they are \u2014 three more rounds are coming to practice with new examples.",
+    revealIntroOther: "Acabas de construir tres categor\u00edas reales que se usan en tecnolog\u00eda, sin saber todav\u00eda sus nombres. Aqu\u00ed est\u00e1n \u2014 vienen tres rondas m\u00e1s para practicar con ejemplos nuevos.",
+    vocabHardware: { term: "Hardware", def: "The physical parts of a device you can actually touch — keyboard, trackpad, charging cable, screen, speaker." },
+    vocabSystem: { term: "System Software", def: "The software the device needs just to turn on and function at all — the operating system, and the built-in tools that manage it." },
+    vocabApp: { term: "Application Software", def: "The software you specifically open to do a task. It runs on top of the system software, which runs on top of the hardware." },
+    continueBtn: "Start Round 3",
+    midTransitionTitle: "Nice work!",
+    midTransitionBody: "Ready for the next round?",
+    finalTitle: "All 5 Rounds Done!",
+    finalBody: "You just sorted 24 different examples across two devices into Hardware, System Software, and Application Software \u2014 without missing a beat when the device changed.",
+    finalBodyOther: "Acabas de organizar 24 ejemplos diferentes en dos dispositivos en Hardware, Software del Sistema, y Software de Aplicaci\u00f3n \u2014 sin perder el ritmo cuando cambi\u00f3 el dispositivo.",
+    kickoffTitle: "Now Turn It In: Sort Log & Device Map",
+    kickoffBody: "Grab your Sort Log & Device Map handout. Fill in the round recap, then sketch and label a device of your own choosing \u2014 at least 2 hardware parts, 1 system software element, and 2 apps.",
+    kickoffBodyOther: "Toma tu hoja de Registro y Mapa del Dispositivo. Completa el resumen de las rondas, luego dibuja y etiqueta un dispositivo que elijas \u2014 al menos 2 partes de hardware, 1 elemento de software del sistema, y 2 apps.",
+    closeBtn: "Got it",
+    round1Items: [
+      { id: "keyboard", en: "Keyboard", es: "Teclado", cat: "touch" },
+      { id: "trackpad", en: "Trackpad", es: "Panel táctil", cat: "touch" },
+      { id: "cable", en: "Charging Cable", es: "Cable de carga", cat: "touch" },
+      { id: "chromeos", en: "ChromeOS (the operating system)", es: "ChromeOS (el sistema operativo)", cat: "notouch" },
+      { id: "settings", en: "The Settings app", es: "La app de Configuración", cat: "notouch" },
+      { id: "wifimgr", en: "Wi-Fi / Bluetooth manager", es: "Administrador de Wi-Fi / Bluetooth", cat: "notouch" },
+      { id: "docs", en: "Google Docs", es: "Google Docs", cat: "notouch" },
+      { id: "classroom", en: "Google Classroom", es: "Google Classroom", cat: "notouch" },
+      { id: "game", en: "A game app (like Kahoot)", es: "Una app de juego (como Kahoot)", cat: "notouch" }
+    ],
+    round2Items: [
+      { id: "chromeos", en: "ChromeOS (the operating system)", es: "ChromeOS (el sistema operativo)", cat: "system" },
+      { id: "settings", en: "The Settings app", es: "La app de Configuración", cat: "system" },
+      { id: "wifimgr", en: "Wi-Fi / Bluetooth manager", es: "Administrador de Wi-Fi / Bluetooth", cat: "system" },
+      { id: "docs", en: "Google Docs", es: "Google Docs", cat: "app" },
+      { id: "classroom", en: "Google Classroom", es: "Google Classroom", cat: "app" },
+      { id: "game", en: "A game app (like Kahoot)", es: "Una app de juego (como Kahoot)", cat: "app" }
+    ],
+    round3Items: [
+      { id: "ram", en: "RAM (memory)", es: "RAM (memoria)", cat: "hardware" },
+      { id: "screen", en: "The screen (monitor)", es: "La pantalla (monitor)", cat: "hardware" },
+      { id: "speaker", en: "Speaker", es: "Altavoz", cat: "hardware" },
+      { id: "bluetooth", en: "Bluetooth manager", es: "Administrador de Bluetooth", cat: "system" },
+      { id: "antivirus", en: "Antivirus / security software", es: "Software antivirus / de seguridad", cat: "system" },
+      { id: "battery", en: "Battery & power settings", es: "Configuración de batería y energía", cat: "system" },
+      { id: "gmail", en: "Gmail", es: "Gmail", cat: "app" },
+      { id: "calculator", en: "A calculator app", es: "Una app de calculadora", cat: "app" },
+      { id: "slides", en: "Google Slides", es: "Google Slides", cat: "app" }
+    ],
+    round4Items: [
+      { id: "router", en: "Wi-Fi router (the physical box)", es: "Router de Wi-Fi (la caja física)", cat: "hardware" },
+      { id: "flashdrive", en: "USB flash drive", es: "Memoria USB", cat: "hardware" },
+      { id: "printer", en: "Printer", es: "Impresora", cat: "hardware" },
+      { id: "printerdriver", en: "Printer driver software", es: "Software controlador de la impresora", cat: "system" },
+      { id: "firewall", en: "Firewall / security manager", es: "Firewall / administrador de seguridad", cat: "system" },
+      { id: "updatemgr", en: "Device update manager", es: "Administrador de actualizaciones", cat: "system" },
+      { id: "browser", en: "Web browser (like Chrome)", es: "Navegador web (como Chrome)", cat: "app" },
+      { id: "zoom", en: "Zoom", es: "Zoom", cat: "app" },
+      { id: "photoeditor", en: "A photo editing app", es: "Una app de edición de fotos", cat: "app" }
+    ],
+    round5Items: [
+      { id: "camera", en: "Camera lens", es: "Lente de la cámara", cat: "hardware" },
+      { id: "powerbtn", en: "Power button", es: "Botón de encendido", cat: "hardware" },
+      { id: "chargeport", en: "Charging port", es: "Puerto de carga", cat: "hardware" },
+      { id: "phoneos", en: "Phone operating system (iOS/Android)", es: "Sistema operativo del teléfono (iOS/Android)", cat: "system" },
+      { id: "phonesettings", en: "Phone Settings app", es: "App de Configuración del teléfono", cat: "system" },
+      { id: "phonebluetooth", en: "Bluetooth manager", es: "Administrador de Bluetooth", cat: "system" },
+      { id: "instagram", en: "Instagram", es: "Instagram", cat: "app" },
+      { id: "maps", en: "Maps app", es: "App de Mapas", cat: "app" },
+      { id: "phonecalc", en: "Calculator app", es: "App de calculadora", cat: "app" }
+    ]
+  }
+};
+// Spanish UI strings mirror English structurally; item bilingual pairs already embedded per-item above.
+T.es = {
+  title: "Organízalo",
+  subtitle: "Unidad 2 — Hardware y Software",
+  langBtn: "English",
+  hook: T.en.hookOther,
+  hookOther: T.en.hook,
+  hookCompactR3: T.en.hookCompactR3Other,
+  hookCompactR3Other: T.en.hookCompactR3,
+  hookCompactR4: T.en.hookCompactR4Other,
+  hookCompactR4Other: T.en.hookCompactR4,
+  hookCompactR5: T.en.hookCompactR5Other,
+  hookCompactR5Other: T.en.hookCompactR5,
+  roundLabel: "Ronda {n} de 5",
+  checkIdle: "Revisar mi orden",
+  resetBtn: "Reiniciar esta ronda",
+  needAll: "Organiza todos los elementos antes de revisar.",
+  correctCount: "{n} de {t} correctos. Haz clic en uno rojo para regresarlo.",
+  allCorrect: "¡Todos correctos!",
+  selectPrompt: "Haz clic en un elemento de abajo, luego haz clic en una categoría para colocarlo.",
+  bin1_touch: "Lo Puedes Tocar Físicamente",
+  bin1_notouch: "No Lo Puedes Tocar Físicamente",
+  bin2_system: "El Dispositivo Lo Necesita Solo Para Encender y Funcionar",
+  bin2_app: "Lo Abriste Específicamente Para Hacer Una Tarea",
+  binHardware: "Hardware",
+  binSystem: "Software del Sistema",
+  binApp: "Software de Aplicación",
+  revealTitle: "Ahora Vamos a Nombrar lo que Organizaste",
+  revealIntro: T.en.revealIntroOther,
+  revealIntroOther: T.en.revealIntro,
+  vocabHardware: { term: "Hardware", def: "Las partes físicas de un dispositivo que realmente puedes tocar — teclado, panel táctil, cable de carga, pantalla, altavoz." },
+  vocabSystem: { term: "Software del Sistema", def: "El software que el dispositivo necesita solo para encender y funcionar — el sistema operativo, y las herramientas integradas que lo administran." },
+  vocabApp: { term: "Software de Aplicación", def: "El software que abres específicamente para hacer una tarea. Funciona encima del software del sistema, que funciona encima del hardware." },
+  continueBtn: "Comenzar Ronda 3",
+  midTransitionTitle: "¡Buen trabajo!",
+  midTransitionBody: "¿Listo para la siguiente ronda?",
+  finalTitle: "¡Las 5 Rondas Completadas!",
+  finalBody: T.en.finalBodyOther,
+  finalBodyOther: T.en.finalBody,
+  kickoffTitle: "Ahora Entrégalo: Registro y Mapa del Dispositivo",
+  kickoffBody: T.en.kickoffBodyOther,
+  kickoffBodyOther: T.en.kickoffBody,
+  closeBtn: "Entendido"
+};
+
+let lang = "en";
+let roundIdx = 1; // 1..5
+let state = { poolOrder: [], bins: {}, checked: false, status: {}, selected: null };
+let resultsLog = {}; // roundIdx -> { hardware: [ids], system: [ids], app: [ids] } (formal-round results only)
+
+const EXPORT_STR = {
+  en: {
+    exportTitle: "Sort Log & Device Map",
+    exportSubtitle: "Unit 2 — Hardware & Software",
+    nameLabel: "Name", periodLabel: "Period",
+    recapTitle: "Round Recap (Rounds 3\u20135)",
+    recapDesc: "Automatically filled in from what you sorted.",
+    mapTitle: "Design Your Device Map",
+    mapDesc: "Pick a real device of your own \u2014 phone, game console, smart watch, whatever you want. Sketch it below.",
+    clearCanvas: "Clear sketch",
+    legendItems: [
+      { key: "hw1", label: "Hardware part #1" },
+      { key: "hw2", label: "Hardware part #2" },
+      { key: "sys1", label: "System software element" },
+      { key: "app1", label: "Application #1" },
+      { key: "app2", label: "Application #2" },
+    ],
+    reflectionTitle: "Reflection",
+    q1: "1. Name one example each of hardware, system software, and application software \u2014 but NOT ones from today's sort.",
+    q2: "2. Was the person right that restarting won't fix a cracked screen? Explain why, using today's vocabulary.",
+    q3: "3. One new term from today, in your own words:",
+    printBtn: "Print / Save as PDF",
+    backBtn: "Back to game",
+    colHardware: "Hardware", colSystem: "System Software", colApp: "Application Software", colRound: "Round"
+  },
+  es: {
+    exportTitle: "Registro y Mapa del Dispositivo",
+    exportSubtitle: "Unidad 2 — Hardware y Software",
+    nameLabel: "Nombre", periodLabel: "Periodo",
+    recapTitle: "Resumen de Rondas (Rondas 3\u20135)",
+    recapDesc: "Completado autom\u00e1ticamente con lo que organizaste.",
+    mapTitle: "Dise\u00f1a el Mapa de tu Dispositivo",
+    mapDesc: "Elige un dispositivo real que sea tuyo \u2014 tel\u00e9fono, consola, reloj inteligente, lo que quieras. Dib\u00fajalo abajo.",
+    clearCanvas: "Borrar dibujo",
+    legendItems: [
+      { key: "hw1", label: "Parte de hardware #1" },
+      { key: "hw2", label: "Parte de hardware #2" },
+      { key: "sys1", label: "Elemento de software del sistema" },
+      { key: "app1", label: "Aplicaci\u00f3n #1" },
+      { key: "app2", label: "Aplicaci\u00f3n #2" },
+    ],
+    reflectionTitle: "Reflexi\u00f3n",
+    q1: "1. Nombra un ejemplo de hardware, de software del sistema, y de software de aplicaci\u00f3n \u2014 pero que NO sean del ejercicio de hoy.",
+    q2: "2. \u00bfTen\u00eda raz\u00f3n la persona que dijo que reiniciar no arreglar\u00eda una pantalla rota? Explica por qu\u00e9, usando el vocabulario de hoy.",
+    q3: "3. Un t\u00e9rmino nuevo de hoy, en tus propias palabras:",
+    printBtn: "Imprimir / Guardar como PDF",
+    backBtn: "Volver al juego",
+    colHardware: "Hardware", colSystem: "Software del Sistema", colApp: "Software de Aplicaci\u00f3n", colRound: "Ronda"
+  }
+};
+
+const ROUND_CONFIG = {
+  1: { kind: "naive", binKeys: ["touch","notouch"], titleKeys: ["bin1_touch","bin1_notouch"], itemsKey: "round1Items" },
+  2: { kind: "naive", binKeys: ["system","app"], titleKeys: ["bin2_system","bin2_app"], itemsKey: "round2Items" },
+  3: { kind: "formal", binKeys: ["hardware","system","app"], titleKeys: ["binHardware","binSystem","binApp"], itemsKey: "round3Items" },
+  4: { kind: "formal", binKeys: ["hardware","system","app"], titleKeys: ["binHardware","binSystem","binApp"], itemsKey: "round4Items" },
+  5: { kind: "formal", binKeys: ["hardware","system","app"], titleKeys: ["binHardware","binSystem","binApp"], itemsKey: "round5Items" }
+};
+
+function t(key, vars) {
+  let s = T[lang][key];
+  if (vars) Object.keys(vars).forEach(k => s = s.replace("{" + k + "}", vars[k]));
+  return s;
+}
+// Item data (id/en/es/cat) is only ever stored canonically under T.en.*Items — each item
+// carries both language labels, so both languages read from the same canonical array.
+function currentItems() { return T.en[ROUND_CONFIG[roundIdx].itemsKey]; }
+function itemLabel(id) {
+  const found = currentItems().find(i => i.id === id);
+  return found ? found.en /* placeholder overwritten below */ : id;
+}
+
+function toggleLang() {
+  lang = lang === "en" ? "es" : "en";
+  if (document.getElementById("exportScreen").classList.contains("active")) {
+    renderExportScreen();
+  } else {
+    render();
+  }
+}
+
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function initRound(n) {
+  roundIdx = n;
+  const cfg = ROUND_CONFIG[n];
+  const ids = currentItems().map(i => i.id);
+  const bins = {};
+  cfg.binKeys.forEach(k => bins[k] = []);
+  state = { poolOrder: shuffle(ids), bins, checked: false, status: {}, selected: null };
+  render();
+}
+
+function resetRound() { initRound(roundIdx); }
+
+function correctCatFor(id) {
+  const item = currentItems().find(i => i.id === id);
+  return item ? item.cat : null;
+}
+function labelFor(id) {
+  const item = currentItems().find(i => i.id === id);
+  return item ? item[lang] : id;
+}
+
+function handlePoolClick(id) {
+  state.selected = state.selected === id ? null : id;
+  render();
+}
+function handleBinClick(binKey) {
+  if (!state.selected) return;
+  const id = state.selected;
+  state.poolOrder = state.poolOrder.filter(x => x !== id);
+  state.bins[binKey].push(id);
+  state.selected = null;
+  state.checked = false;
+  state.status = {};
+  setFeedback("");
+  render();
+}
+function handlePlacedClick(binKey, id) {
+  state.bins[binKey] = state.bins[binKey].filter(x => x !== id);
+  state.poolOrder.push(id);
+  state.checked = false;
+  state.status = {};
+  setFeedback("");
+  render();
+}
+function setFeedback(msg, isError) {
+  const box = document.getElementById("feedbackBox");
+  box.className = "feedback" + (isError ? " error" : "");
+  box.textContent = msg;
+}
+
+function checkRound() {
+  if (state.poolOrder.length > 0) { setFeedback(t("needAll"), true); return; }
+  const cfg = ROUND_CONFIG[roundIdx];
+  let total = 0, correct = 0;
+  const status = {};
+  cfg.binKeys.forEach(binKey => {
+    state.bins[binKey].forEach(id => {
+      total++;
+      const ok = correctCatFor(id) === binKey;
+      if (ok) correct++;
+      status[id] = ok ? "correct" : "wrong";
+    });
+  });
+  state.status = status;
+  state.checked = true;
+
+  if (correct === total) {
+    setFeedback(t("allCorrect"));
+    if (cfg.kind === "formal") {
+      resultsLog[roundIdx] = {
+        hardware: state.bins.hardware.slice(),
+        system: state.bins.system.slice(),
+        app: state.bins.app.slice()
+      };
+    }
+    render();
+    setTimeout(() => {
+      if (roundIdx === 2) showReveal();
+      else if (roundIdx < 5) showMidTransition();
+      else showFinal();
+    }, 700);
+  } else {
+    setFeedback(t("correctCount", { n: correct, t: total }));
+    render();
+  }
+}
+
+function showReveal() {
+  const overlay = document.getElementById("overlay");
+  const modal = document.getElementById("modalContent");
+  const hw = T[lang].vocabHardware, sys = T[lang].vocabSystem, app = T[lang].vocabApp;
+  const other = lang === "en" ? "es" : "en";
+  const hwOther = T[other].vocabHardware, sysOther = T[other].vocabSystem, appOther = T[other].vocabApp;
+  modal.innerHTML = `
+    <h2>${t("revealTitle")}</h2>
+    <p>${t("revealIntro")}</p>
+    <div class="vocab-card"><h4>${hw.term}</h4><div>${hw.def}</div><span class="es">${hwOther.def}</span></div>
+    <div class="vocab-card"><h4>${sys.term}</h4><div>${sys.def}</div><span class="es">${sysOther.def}</span></div>
+    <div class="vocab-card"><h4>${app.term}</h4><div>${app.def}</div><span class="es">${appOther.def}</span></div>
+    <div style="margin-top:16px;"><button class="primary" id="closeModalBtn">${t("continueBtn")}</button></div>
+  `;
+  document.getElementById("closeModalBtn").onclick = () => { overlay.classList.add("hidden"); initRound(3); };
+  overlay.classList.remove("hidden");
+}
+
+function showMidTransition() {
+  const overlay = document.getElementById("overlay");
+  const modal = document.getElementById("modalContent");
+  const nextLabel = (lang === "en" ? "Start Round " : "Comenzar Ronda ") + (roundIdx + 1);
+  modal.innerHTML = `
+    <h2>${t("midTransitionTitle")}</h2>
+    <p>${t("midTransitionBody")}</p>
+    <div style="margin-top:16px;"><button class="primary" id="closeModalBtn">${nextLabel}</button></div>
+  `;
+  document.getElementById("closeModalBtn").onclick = () => { overlay.classList.add("hidden"); initRound(roundIdx + 1); };
+  overlay.classList.remove("hidden");
+}
+
+function showFinal() {
+  const overlay = document.getElementById("overlay");
+  const modal = document.getElementById("modalContent");
+  const finalBodyOther = T[lang === "en" ? "es" : "en"].finalBody;
+  const kickoffBodyOther = T[lang === "en" ? "es" : "en"].kickoffBody;
+  modal.innerHTML = `
+    <h2>${t("finalTitle")}</h2>
+    <p>${t("finalBody")}<span class="es-p">${finalBodyOther}</span></p>
+    <div class="kickoff-box">
+      <h3>${t("kickoffTitle")}</h3>
+      <div>${t("kickoffBody")}</div>
+      <span class="es">${kickoffBodyOther}</span>
+    </div>
+    <div style="margin-top:18px;"><button class="primary" id="closeModalBtn">${t("closeBtn")}</button></div>
+  `;
+  document.getElementById("closeModalBtn").onclick = () => { overlay.classList.add("hidden"); showExportScreen(); };
+  overlay.classList.remove("hidden");
+}
+
+// ---------- Export / Turn-In screen ----------
+let canvasCtx = null;
+let drawing = false;
+
+function showExportScreen() {
+  document.getElementById("app").classList.add("export-mode");
+  document.getElementById("exportScreen").classList.add("active");
+  renderExportScreen();
+  setupCanvasIfNeeded();
+  window.scrollTo(0, 0);
+}
+
+function backToGame() {
+  document.getElementById("app").classList.remove("export-mode");
+  document.getElementById("exportScreen").classList.remove("active");
+}
+
+function et(key) { return EXPORT_STR[lang][key]; }
+
+function renderExportScreen() {
+  const other = lang === "en" ? "es" : "en";
+
+  document.getElementById("exportTitle").textContent = et("exportTitle");
+  document.getElementById("exportSubtitle").textContent = et("exportSubtitle");
+  document.getElementById("exportLangToggle").textContent = t("langBtn");
+  document.getElementById("nameLabelEn").firstChild.textContent = et("nameLabel") + " ";
+  document.getElementById("periodLabelEn").firstChild.textContent = et("periodLabel") + " ";
+  document.getElementById("nameLabelEs").textContent = EXPORT_STR[other].nameLabel;
+  document.getElementById("periodLabelEs").textContent = EXPORT_STR[other].periodLabel;
+
+  document.getElementById("recapTitle").textContent = et("recapTitle");
+  document.getElementById("recapDesc").firstChild.textContent = et("recapDesc") + " ";
+  document.getElementById("recapDescEs").textContent = EXPORT_STR[other].recapDesc;
+
+  document.getElementById("mapTitle").textContent = et("mapTitle");
+  document.getElementById("mapDesc").firstChild.textContent = et("mapDesc") + " ";
+  document.getElementById("mapDescEs").textContent = EXPORT_STR[other].mapDesc;
+  document.getElementById("clearCanvasBtn").textContent = et("clearCanvas");
+  document.getElementById("printBtn").textContent = et("printBtn");
+  document.getElementById("backBtn").textContent = et("backBtn");
+  document.getElementById("reflectionTitle").textContent = et("reflectionTitle");
+
+  // Recap table, built from resultsLog (rounds 3,4,5)
+  const table = document.getElementById("recapTable");
+  const itemLabelFromAnyRound = (id) => {
+    for (const key of ["round3Items", "round4Items", "round5Items"]) {
+      const found = T.en[key].find(i => i.id === id);
+      if (found) return found[lang];
+    }
+    return id;
+  };
+  let html = `<tr>
+    <th>${et("colRound")}</th>
+    <th>${et("colHardware")}</th>
+    <th>${et("colSystem")}</th>
+    <th>${et("colApp")}</th>
+  </tr>`;
+  [3, 4, 5].forEach(rn => {
+    const r = resultsLog[rn];
+    const chipify = (ids) => (ids || []).map(id => `<span class="recap-chip">${itemLabelFromAnyRound(id)}</span>`).join("");
+    html += `<tr>
+      <td class="round-num">${rn}</td>
+      <td>${r ? chipify(r.hardware) : "\u2014"}</td>
+      <td>${r ? chipify(r.system) : "\u2014"}</td>
+      <td>${r ? chipify(r.app) : "\u2014"}</td>
+    </tr>`;
+  });
+  table.innerHTML = html;
+
+  // Legend fields (preserve any typed values across re-renders/lang toggle)
+  const legendGrid = document.getElementById("legendGrid");
+  const prevValues = {};
+  legendGrid.querySelectorAll("input").forEach(inp => { prevValues[inp.dataset.key] = inp.value; });
+  legendGrid.innerHTML = "";
+  et("legendItems").forEach(item => {
+    const wrap = document.createElement("div");
+    wrap.className = "legend-field";
+    const label = document.createElement("label");
+    label.textContent = item.label;
+    wrap.appendChild(label);
+    const input = document.createElement("input");
+    input.type = "text";
+    input.dataset.key = item.key;
+    if (prevValues[item.key]) input.value = prevValues[item.key];
+    wrap.appendChild(input);
+    legendGrid.appendChild(wrap);
+  });
+
+  // Reflection questions (preserve typed answers)
+  const reflectionBlock = document.getElementById("reflectionBlock");
+  const prevAnswers = {};
+  reflectionBlock.querySelectorAll("textarea").forEach(ta => { prevAnswers[ta.dataset.q] = ta.value; });
+  reflectionBlock.innerHTML = "";
+  ["q1", "q2", "q3"].forEach(qKey => {
+    const qDiv = document.createElement("div");
+    qDiv.className = "reflection-q";
+    qDiv.textContent = et(qKey);
+    reflectionBlock.appendChild(qDiv);
+    const ta = document.createElement("textarea");
+    ta.dataset.q = qKey;
+    if (prevAnswers[qKey]) ta.value = prevAnswers[qKey];
+    reflectionBlock.appendChild(ta);
+  });
+}
+
+function setupCanvasIfNeeded() {
+  const canvas = document.getElementById("deviceCanvas");
+  if (canvas.dataset.ready) { resizeCanvasKeepDrawing(); return; }
+  canvas.dataset.ready = "1";
+  const ctx = canvas.getContext("2d");
+  canvasCtx = ctx;
+
+  function resize() {
+    const rect = canvas.getBoundingClientRect();
+    const prev = canvas.toDataURL ? (canvas.width ? canvas.toDataURL() : null) : null;
+    canvas.width = rect.width * 2;
+    canvas.height = rect.height * 2;
+    ctx.scale(2, 2);
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.strokeStyle = "#0F1B2D";
+    ctx.lineWidth = 2.2;
+    if (prev) {
+      const img = new Image();
+      img.onload = () => ctx.drawImage(img, 0, 0, rect.width, rect.height);
+      img.src = prev;
+    }
+  }
+  window.__deviceCanvasResize = resize;
+  resize();
+
+  function getPos(e) {
+    const rect = canvas.getBoundingClientRect();
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    return { x: clientX - rect.left, y: clientY - rect.top };
+  }
+  function start(e) { drawing = true; const p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); e.preventDefault(); }
+  function move(e) { if (!drawing) return; const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); e.preventDefault(); }
+  function end() { drawing = false; }
+
+  canvas.addEventListener("mousedown", start);
+  canvas.addEventListener("mousemove", move);
+  window.addEventListener("mouseup", end);
+  canvas.addEventListener("touchstart", start, { passive: false });
+  canvas.addEventListener("touchmove", move, { passive: false });
+  canvas.addEventListener("touchend", end);
+}
+
+function resizeCanvasKeepDrawing() {
+  if (window.__deviceCanvasResize) window.__deviceCanvasResize();
+}
+
+function clearCanvas() {
+  const canvas = document.getElementById("deviceCanvas");
+  const ctx = canvas.getContext("2d");
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+}
+
+function render() {
+  document.getElementById("title").textContent = t("title");
+  document.getElementById("subtitle").textContent = t("subtitle");
+  document.getElementById("langToggle").textContent = t("langBtn");
+  document.getElementById("resetBtn").textContent = t("resetBtn");
+  document.getElementById("checkBtn").textContent = t("checkIdle");
+  document.getElementById("stageLabel").textContent = t("roundLabel", { n: roundIdx });
+
+  // progress dots
+  const progressRow = document.getElementById("progressRow");
+  progressRow.innerHTML = "";
+  for (let i = 1; i <= 5; i++) {
+    const dot = document.createElement("div");
+    dot.className = "progress-dot" + (i < roundIdx ? " done" : i === roundIdx ? " current" : "");
+    progressRow.appendChild(dot);
+  }
+
+  // hook box
+  const hookBox = document.getElementById("hookBox");
+  if (roundIdx === 1 || roundIdx === 2) {
+    hookBox.className = "hook-box";
+    hookBox.innerHTML = `${t("hook")}<span class="es">${t("hookOther")}</span>`;
+  } else {
+    hookBox.className = "hook-box compact";
+    const key = "hookCompactR" + roundIdx;
+    const keyOther = key + "Other";
+    hookBox.innerHTML = `${t(key)}<span class="es">${t(keyOther)}</span>`;
+  }
+
+  const cfg = ROUND_CONFIG[roundIdx];
+  const binsArea = document.getElementById("binsArea");
+  binsArea.className = "bins " + (cfg.binKeys.length === 3 ? "cols-3" : "cols-2");
+  binsArea.innerHTML = "";
+  cfg.binKeys.forEach((binKey, idx) => {
+    const bin = document.createElement("div");
+    bin.className = "bin" + (state.selected ? " has-selected" : "");
+    bin.onclick = () => handleBinClick(binKey);
+    const titleKey = cfg.titleKeys[idx];
+    const titleOtherLang = lang === "en" ? "es" : "en";
+    const title = t(titleKey);
+    const titleOther = T[titleOtherLang][titleKey];
+    const h3 = document.createElement("h3");
+    h3.innerHTML = title + `<span class="es-h">${titleOther}</span>`;
+    bin.appendChild(h3);
+    const itemsWrap = document.createElement("div");
+    itemsWrap.className = "bin-items";
+    state.bins[binKey].forEach(id => {
+      const chip = document.createElement("div");
+      let cls = "placed-item";
+      if (state.checked) cls += state.status[id] === "correct" ? " correct" : " wrong";
+      chip.className = cls;
+      chip.textContent = labelFor(id);
+      chip.onclick = (e) => { e.stopPropagation(); handlePlacedClick(binKey, id); };
+      itemsWrap.appendChild(chip);
+    });
+    bin.appendChild(itemsWrap);
+    binsArea.appendChild(bin);
+  });
+
+  const pool = document.getElementById("poolArea");
+  pool.innerHTML = "";
+  state.poolOrder.forEach(id => {
+    const card = document.createElement("div");
+    card.className = "pool-card" + (state.selected === id ? " selected" : "");
+    card.textContent = labelFor(id);
+    card.onclick = (e) => { e.stopPropagation(); handlePoolClick(id); };
+    pool.appendChild(card);
+  });
+  if (state.poolOrder.length > 0) {
+    const hint = document.createElement("div");
+    hint.style.cssText = "width:100%;font-size:0.85rem;color:#888;font-style:italic;margin-top:4px;";
+    hint.textContent = t("selectPrompt");
+    pool.appendChild(hint);
+  }
+
+  document.getElementById("checkBtn").disabled = state.poolOrder.length > 0;
+}
+
+initRound(1);
+</script>
+</body>
+</html>
