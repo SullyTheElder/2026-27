@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Match the Tactic — AP Cybersecurity</title>
+<style>
+  :root {
+    --green: #1B4332;
+    --green-mid: #2D6A4F;
+    --gold: #D4A017;
+    --gold-light: #F1E4B8;
+    --charcoal: #222222;
+    --gray: #5B5B5B;
+    --page-bg: #F0EFE9;
+    --card-bg: #FFFFFF;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--page-bg);
+    font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--charcoal);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  .app {
+    width: 100%;
+    max-width: 620px;
+  }
+
+  .masthead {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 18px;
+    padding: 0 4px;
+  }
+
+  .masthead h1 {
+    font-family: Georgia, "Cambria", serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--green);
+    margin: 0;
+  }
+
+  .masthead .course {
+    font-size: 13px;
+    color: var(--gray);
+  }
+
+  .stepper {
+    display: flex;
+    align-items: center;
+    margin-bottom: 22px;
+    padding: 0 4px;
+  }
+
+  .step-dot {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    flex-shrink: 0;
+    border: 2px solid #D8D5CC;
+    color: #B5B2A8;
+    background: var(--card-bg);
+    transition: all 0.25s ease;
+  }
+
+  .step-dot.done {
+    background: var(--green-mid);
+    border-color: var(--green-mid);
+    color: #fff;
+  }
+
+  .step-dot.current {
+    background: var(--gold);
+    border-color: var(--gold);
+    color: #fff;
+    transform: scale(1.12);
+  }
+
+  .step-line {
+    flex: 1;
+    height: 2px;
+    background: #D8D5CC;
+    margin: 0 4px;
+  }
+
+  .step-line.done { background: var(--green-mid); }
+
+  .card {
+    background: var(--card-bg);
+    border-radius: 14px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 8px 24px rgba(27,67,50,0.08);
+    overflow: hidden;
+  }
+
+  .card-top {
+    background: var(--green);
+    padding: 22px 28px;
+  }
+
+  .card-top .eyebrow {
+    color: var(--gold-light);
+    font-size: 13px;
+    margin: 0 0 4px 0;
+  }
+
+  .card-top h2 {
+    color: #fff;
+    font-family: Georgia, "Cambria", serif;
+    font-size: 24px;
+    margin: 0;
+  }
+
+  .card-body {
+    padding: 26px 28px 30px 28px;
+  }
+
+  .notification {
+    background: #F7F6F2;
+    border: 1px solid #E8E5DC;
+    border-radius: 12px;
+    padding: 16px 18px;
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    margin-bottom: 26px;
+  }
+
+  .notif-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: var(--gold-light);
+    color: var(--green);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: Georgia, serif;
+    font-weight: 700;
+    font-size: 17px;
+    flex-shrink: 0;
+  }
+
+  .notif-text {
+    font-family: Georgia, "Cambria", serif;
+    font-size: 17px;
+    line-height: 1.55;
+    color: var(--charcoal);
+  }
+
+  .field {
+    margin-bottom: 18px;
+  }
+
+  .field label {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--green);
+    margin-bottom: 6px;
+  }
+
+  .field input {
+    width: 100%;
+    padding: 11px 13px;
+    font-size: 15px;
+    border: 1.5px solid #DDD9CE;
+    border-radius: 8px;
+    font-family: inherit;
+    color: var(--charcoal);
+    background: #FBFAF7;
+    transition: border-color 0.15s ease;
+  }
+
+  .field input:focus {
+    outline: none;
+    border-color: var(--gold);
+    background: #fff;
+  }
+
+  .nav-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 8px;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 11px 20px;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+    transition: opacity 0.15s ease, transform 0.1s ease;
+  }
+
+  .btn:active { transform: scale(0.97); }
+  .btn:disabled { opacity: 0.35; cursor: default; }
+  .btn:disabled:active { transform: none; }
+
+  .btn-primary {
+    background: var(--green);
+    color: #fff;
+  }
+  .btn-primary:hover:not(:disabled) { background: var(--green-mid); }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--gray);
+  }
+  .btn-ghost:hover:not(:disabled) { color: var(--charcoal); }
+
+  .btn svg { width: 16px; height: 16px; }
+
+  .hint {
+    text-align: center;
+    color: var(--gray);
+    font-size: 13px;
+    margin-top: 16px;
+  }
+
+  /* Review screen */
+  .review-item {
+    border-bottom: 1px solid #EEEBE3;
+    padding: 16px 0;
+  }
+  .review-item:last-child { border-bottom: none; }
+
+  .review-num {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--gold);
+    margin-bottom: 4px;
+  }
+
+  .review-msg {
+    font-family: Georgia, serif;
+    font-size: 14.5px;
+    color: var(--gray);
+    font-style: italic;
+    margin-bottom: 10px;
+    line-height: 1.4;
+  }
+
+  .review-answers {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .review-answers div {
+    background: #F7F6F2;
+    border-radius: 8px;
+    padding: 8px 12px;
+  }
+
+  .review-answers .k {
+    font-size: 11px;
+    color: var(--green-mid);
+    font-weight: 700;
+    margin-bottom: 2px;
+  }
+  .review-answers .v {
+    font-size: 14px;
+    color: var(--charcoal);
+    min-height: 18px;
+  }
+  .review-answers .v.empty {
+    color: #C4C1B8;
+    font-style: italic;
+  }
+
+  .submit-block {
+    background: #F7F6F2;
+    border: 1px solid #E8E5DC;
+    border-radius: 12px;
+    padding: 18px 20px;
+    margin-bottom: 24px;
+  }
+
+  .submit-block .row {
+    display: flex;
+    gap: 14px;
+    margin-bottom: 14px;
+  }
+
+  .submit-block .row .field { flex: 1; margin-bottom: 0; }
+
+  .submit-note {
+    font-size: 13px;
+    color: var(--gray);
+    margin: 0 0 14px 0;
+  }
+
+  .btn-download {
+    background: var(--gold);
+    color: #fff;
+    width: 100%;
+    justify-content: center;
+    padding: 13px 20px;
+  }
+  .btn-download:hover:not(:disabled) { background: #B98A13; }
+
+  .print-only { display: none; }
+
+  @media print {
+    body > *:not(.print-only) { display: none !important; }
+    .print-only {
+      display: block !important;
+      width: 100%;
+      padding: 0.3in 0.4in;
+      font-family: Georgia, "Cambria", serif;
+      color: #111;
+    }
+    .print-only h1 {
+      font-size: 20px;
+      color: var(--green);
+      margin: 0 0 4px 0;
+    }
+    .print-only .meta {
+      font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+      font-size: 13px;
+      color: #333;
+      margin-bottom: 18px;
+      border-bottom: 1.5px solid #ccc;
+      padding-bottom: 12px;
+    }
+    .print-only .p-item {
+      margin-bottom: 16px;
+      break-inside: avoid;
+    }
+    .print-only .p-num {
+      font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--green-mid);
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      margin-bottom: 3px;
+    }
+    .print-only .p-msg {
+      font-style: italic;
+      font-size: 14px;
+      color: #333;
+      margin-bottom: 6px;
+    }
+    .print-only .p-answers {
+      font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+      font-size: 13.5px;
+    }
+    .print-only .p-answers span { font-weight: 700; color: var(--green); }
+  }
+
+  @media (max-width: 480px) {
+    .card-top, .card-body { padding-left: 20px; padding-right: 20px; }
+    .review-answers { grid-template-columns: 1fr; }
+    .submit-block .row { flex-direction: column; gap: 10px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="masthead">
+    <h1>Match the Tactic</h1>
+    <span class="course">AP Cybersecurity &middot; Topic 2.1.A</span>
+  </div>
+
+  <div class="stepper" id="stepper"></div>
+
+  <div class="card" id="card"></div>
+
+  <p class="hint" id="hint">For each message, name the tactic(s) at work and the exact phrase that gives it away.</p>
+</div>
+
+<div class="print-only" id="printSheet"></div>
+
+<script>
+const MESSAGES = [
+  "\u201cHey, saw your profile pop up in my recommended friends \u2014 I think we actually met at Sarah's party last summer! Small world. Anyway, I'm doing a project and could use your help with something real quick\u2026\u201d",
+  "\u201cThis is a courtesy call from the Dean of Students' office. You are required to complete the attached form before 3:00 PM today or your enrollment status will be flagged for review.\u201d",
+  "\u201cJust a heads up \u2014 47 people in your grade have already signed up for the trip using this link. Spots are going fast and we can't guarantee availability past today.\u201d",
+  "\u201cHi, this is Marcus from the district help desk. We're rolling out a required update tonight and need to confirm your login before we can push it to your account.\u201d",
+  "\u201cWARNING: Your account will be permanently deleted in 2 hours unless you verify your information immediately. This is your final notice.\u201d",
+  "\u201cHi, it's Coach Reyes \u2014 practice got moved up and I need everyone to confirm attendance through this form before the end of the period, we only have a few slots left on the roster for the tournament.\u201d"
+];
+
+const state = {
+  current: 0,
+  answers: MESSAGES.map(() => ({ tactic: "", phrase: "" })),
+  finished: false,
+  studentName: "",
+  studentPeriod: ""
+};
+
+const stepperEl = document.getElementById("stepper");
+const cardEl = document.getElementById("card");
+const hintEl = document.getElementById("hint");
+
+function renderStepper() {
+  stepperEl.innerHTML = "";
+  MESSAGES.forEach((_, i) => {
+    const dot = document.createElement("div");
+    dot.className = "step-dot" + (state.finished || i < state.current ? " done" : i === state.current ? " current" : "");
+    dot.textContent = (state.finished || i < state.current) ? "\u2713" : (i + 1);
+    stepperEl.appendChild(dot);
+    if (i < MESSAGES.length - 1) {
+      const line = document.createElement("div");
+      line.className = "step-line" + ((state.finished || i < state.current) ? " done" : "");
+      stepperEl.appendChild(line);
+    }
+  });
+}
+
+function renderStage() {
+  const i = state.current;
+  const answer = state.answers[i];
+  cardEl.innerHTML = `
+    <div class="card-top">
+      <p class="eyebrow">Message ${i + 1} of ${MESSAGES.length}</p>
+      <h2>What's really going on here?</h2>
+    </div>
+    <div class="card-body">
+      <div class="notification">
+        <div class="notif-icon">!</div>
+        <div class="notif-text">${MESSAGES[i]}</div>
+      </div>
+      <div class="field">
+        <label for="tactic">Tactic(s) at work</label>
+        <input type="text" id="tactic" placeholder="e.g. Authority, Scarcity" value="${answer.tactic.replace(/"/g, '&quot;')}">
+      </div>
+      <div class="field">
+        <label for="phrase">Giveaway phrase</label>
+        <input type="text" id="phrase" placeholder="Quote the exact words that tipped you off" value="${answer.phrase.replace(/"/g, '&quot;')}">
+      </div>
+      <div class="nav-row">
+        <button class="btn btn-ghost" id="backBtn" ${i === 0 ? "disabled" : ""}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+          Back
+        </button>
+        <button class="btn btn-primary" id="nextBtn">
+          ${i === MESSAGES.length - 1 ? "Finish" : "Next"}
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </button>
+      </div>
+    </div>
+  `;
+
+  document.getElementById("tactic").addEventListener("input", (e) => { state.answers[i].tactic = e.target.value; });
+  document.getElementById("phrase").addEventListener("input", (e) => { state.answers[i].phrase = e.target.value; });
+  document.getElementById("backBtn").addEventListener("click", () => { state.current--; render(); });
+  document.getElementById("nextBtn").addEventListener("click", () => {
+    if (i === MESSAGES.length - 1) {
+      state.finished = true;
+      render();
+    } else {
+      state.current++;
+      render();
+    }
+  });
+}
+
+function renderReview() {
+  const rows = MESSAGES.map((msg, i) => {
+    const a = state.answers[i];
+    return `
+      <div class="review-item">
+        <div class="review-num">Message ${i + 1}</div>
+        <div class="review-msg">${msg}</div>
+        <div class="review-answers">
+          <div>
+            <div class="k">Tactic(s)</div>
+            <div class="v ${a.tactic ? "" : "empty"}">${a.tactic || "\u2014 not answered"}</div>
+          </div>
+          <div>
+            <div class="k">Giveaway phrase</div>
+            <div class="v ${a.phrase ? "" : "empty"}">${a.phrase || "\u2014 not answered"}</div>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  cardEl.innerHTML = `
+    <div class="card-top">
+      <p class="eyebrow">All ${MESSAGES.length} messages reviewed</p>
+      <h2>Your answers</h2>
+    </div>
+    <div class="card-body">
+      <div class="submit-block">
+        <p class="submit-note">Add your name and period, then download a PDF of this page to turn in.</p>
+        <div class="row">
+          <div class="field">
+            <label for="studentName">Name</label>
+            <input type="text" id="studentName" placeholder="Your full name" value="${state.studentName.replace(/"/g, '&quot;')}">
+          </div>
+          <div class="field">
+            <label for="studentPeriod">Period</label>
+            <input type="text" id="studentPeriod" placeholder="e.g. 3rd period" value="${state.studentPeriod.replace(/"/g, '&quot;')}">
+          </div>
+        </div>
+        <button class="btn btn-download" id="downloadBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+          Download as PDF
+        </button>
+      </div>
+      ${rows}
+      <div class="nav-row" style="justify-content:center; margin-top:22px;">
+        <button class="btn btn-ghost" id="restartBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
+          Start over
+        </button>
+      </div>
+    </div>
+  `;
+
+  document.getElementById("studentName").addEventListener("input", (e) => { state.studentName = e.target.value; });
+  document.getElementById("studentPeriod").addEventListener("input", (e) => { state.studentPeriod = e.target.value; });
+  document.getElementById("downloadBtn").addEventListener("click", downloadAsPDF);
+  document.getElementById("restartBtn").addEventListener("click", () => {
+    state.current = 0;
+    state.finished = false;
+    state.answers = MESSAGES.map(() => ({ tactic: "", phrase: "" }));
+    render();
+  });
+}
+
+function downloadAsPDF() {
+  const name = state.studentName.trim();
+  const period = state.studentPeriod.trim();
+
+  const itemsHtml = MESSAGES.map((msg, i) => {
+    const a = state.answers[i];
+    return `
+      <div class="p-item">
+        <div class="p-num">Message ${i + 1}</div>
+        <div class="p-msg">${msg}</div>
+        <div class="p-answers">
+          <span>Tactic(s):</span> ${a.tactic || "\u2014 not answered"} &nbsp;&nbsp;
+          <span>Giveaway phrase:</span> ${a.phrase || "\u2014 not answered"}
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  document.getElementById("printSheet").innerHTML = `
+    <h1>Match the Tactic \u2014 AP Cybersecurity</h1>
+    <div class="meta">
+      Name: ${name || "\u2014"} &nbsp;&nbsp;&nbsp; Period: ${period || "\u2014"} &nbsp;&nbsp;&nbsp;
+      Date: ${new Date().toLocaleDateString()}
+    </div>
+    ${itemsHtml}
+  `;
+
+  const titleName = name ? name.replace(/\s+/g, "_") : "Student";
+  const prevTitle = document.title;
+  document.title = `Match the Tactic - ${titleName}`;
+  window.print();
+  document.title = prevTitle;
+}
+
+function render() {
+  renderStepper();
+  if (state.finished) {
+    hintEl.textContent = "Compare notes with a partner, then we'll debrief as a class.";
+    renderReview();
+  } else {
+    hintEl.textContent = "For each message, name the tactic(s) at work and the exact phrase that gives it away.";
+    renderStage();
+  }
+}
+
+render();
+</script>
+
+</body>
+</html>
