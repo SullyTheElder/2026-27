@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Troubleshooting Loop</title>
+<style>
+  :root {
+    --navy: #0F1B2D; --teal: #0E7C7B; --mint: #6FC3B4; --amber: #C97A2B;
+    --light: #EAF4F4; --gray: #9AA6A6; --danger: #B5473A; --white: #FFFFFF;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: Calibri, "Segoe UI", sans-serif; background: var(--light); color: #1a1a1a; min-height: 100vh; }
+  #app { max-width: 1100px; margin: 0 auto; padding: 18px 20px 40px; }
+
+  header {
+    background: var(--navy); color: white; border-radius: 14px; padding: 16px 22px;
+    display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 14px;
+  }
+  header h1 { font-family: Cambria, Georgia, serif; font-size: 1.5rem; margin: 0; }
+  header .sub { font-size: 0.85rem; color: var(--mint); margin-top: 2px; }
+  .lang-toggle {
+    background: transparent; border: 1.5px solid var(--mint); color: var(--mint);
+    border-radius: 999px; padding: 6px 14px; font-size: 0.85rem; cursor: pointer; font-weight: 600;
+  }
+  .lang-toggle:hover { background: rgba(111,195,180,0.15); }
+
+  .progress-row { display: flex; gap: 8px; margin-bottom: 14px; }
+  .progress-dot { flex: 1; height: 8px; border-radius: 4px; background: #D7E4E4; }
+  .progress-dot.done { background: var(--teal); }
+  .progress-dot.current { background: var(--amber); }
+
+  .hook-box {
+    background: white; border-left: 4px solid var(--amber); border-radius: 10px;
+    padding: 14px 18px; margin-bottom: 16px; font-size: 0.98rem; line-height: 1.5;
+  }
+  .hook-box .es { display: block; font-style: italic; color: #666; font-size: 0.87rem; margin-top: 6px; }
+  .hook-box.compact { font-size: 0.9rem; padding: 10px 16px; }
+
+  .stage-label { font-size: 0.85rem; color: var(--teal); font-weight: 700; margin-bottom: 6px; }
+
+  /* Sequencing round (round 1) */
+  .card { background: white; border-radius: 14px; padding: 18px 20px; box-shadow: 0 1px 3px rgba(15,27,45,0.08); margin-bottom: 16px; }
+  .sequence-row { display: flex; flex-direction: column; gap: 8px; }
+  .slot {
+    display: flex; align-items: center; gap: 12px; min-height: 56px;
+    border: 2px dashed #C7D6D6; border-radius: 10px; padding: 8px 14px; cursor: pointer; transition: all 0.15s ease;
+  }
+  .slot.filled { border-style: solid; border-color: var(--teal); background: var(--light); cursor: pointer; }
+  .slot.correct { border-color: #3F9142; background: #EAF6EA; }
+  .slot.wrong { border-color: var(--danger); background: #FBEAE8; }
+  .slot-num {
+    width: 28px; height: 28px; border-radius: 50%; background: var(--navy); color: white;
+    display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; flex-shrink: 0;
+  }
+  .slot-text { font-size: 0.92rem; color: #222; }
+  .slot-text .es { display: block; font-style: italic; color: #777; font-size: 0.82rem; margin-top: 2px; }
+  .slot-empty-text { font-size: 0.85rem; color: #AAB6B6; font-style: italic; }
+  .pool { display: flex; flex-wrap: wrap; gap: 10px; }
+  .pool-card {
+    background: var(--light); border: 2px solid transparent; border-radius: 10px;
+    padding: 12px 16px; font-size: 0.9rem; cursor: pointer; max-width: 280px; transition: all 0.15s ease;
+  }
+  .pool-card:hover { border-color: var(--teal); background: white; }
+  .pool-card .es { display: block; font-style: italic; color: #666; font-size: 0.8rem; margin-top: 3px; }
+  .pool-card.shake { animation: shake 0.4s; }
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); } 20% { transform: translateX(-6px); } 40% { transform: translateX(6px); }
+    60% { transform: translateX(-4px); } 80% { transform: translateX(4px); }
+  }
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    background: var(--navy); color: white; padding: 10px 20px; border-radius: 999px;
+    font-size: 0.9rem; opacity: 0; pointer-events: none; transition: opacity 0.25s ease; max-width: 90%; text-align: center;
+  }
+  .toast.show { opacity: 1; }
+
+  /* Bin rounds (2 and 3) */
+  .bins { display: grid; gap: 16px; margin-bottom: 16px; grid-template-columns: 1fr 1fr 1fr; }
+  @media (max-width: 800px) { .bins { grid-template-columns: 1fr; } }
+  .bin {
+    background: white; border: 2px dashed #C7D6D6; border-radius: 14px; padding: 14px;
+    min-height: 150px; cursor: pointer; transition: all 0.15s ease;
+  }
+  .bin.has-selected { border-color: var(--amber); background: #FFF6EC; }
+  .bin h3 { margin: 0 0 10px; font-size: 1.0rem; color: var(--navy); font-family: Cambria, Georgia, serif; }
+  .bin .es-h { display: block; font-style: italic; color: #777; font-size: 0.78rem; font-weight: normal; margin-top: 2px; }
+  .bin-items { display: flex; flex-wrap: wrap; gap: 8px; }
+  .placed-item { background: var(--light); border-radius: 8px; padding: 7px 11px; font-size: 0.83rem; cursor: pointer; max-width: 100%; }
+  .placed-item.correct { background: #EAF6EA; border: 1.5px solid #3F9142; }
+  .placed-item.wrong { background: #FBEAE8; border: 1.5px solid var(--danger); }
+  .pool-card-wrap { background: white; border-radius: 14px; padding: 16px; box-shadow: 0 1px 3px rgba(15,27,45,0.08); margin-bottom: 16px; }
+
+  button.primary {
+    background: var(--teal); color: white; border: none; border-radius: 8px;
+    padding: 11px 20px; font-size: 0.98rem; font-weight: 700; cursor: pointer;
+  }
+  button.primary:hover { background: #0b6362; }
+  button.primary:disabled { background: #C9D6D6; cursor: not-allowed; }
+  button.secondary {
+    background: transparent; color: var(--teal); border: 1.5px solid var(--teal);
+    border-radius: 8px; padding: 9px 16px; font-size: 0.9rem; font-weight: 600; cursor: pointer;
+  }
+  .action-row { display: flex; gap: 10px; margin-top: 4px; flex-wrap: wrap; align-items: center; }
+  .feedback { font-size: 0.92rem; color: #444; }
+  .feedback.error { color: var(--danger); font-weight: 600; }
+
+  .overlay { position: fixed; inset: 0; background: rgba(15,27,45,0.55); display: flex; align-items: center; justify-content: center; padding: 20px; z-index: 20; }
+  .overlay.hidden { display: none; }
+  .modal { background: white; border-radius: 16px; max-width: 640px; width: 100%; padding: 28px 26px; max-height: 86vh; overflow-y: auto; }
+  .modal h2 { font-family: Cambria, Georgia, serif; color: var(--navy); margin-top: 0; }
+  .modal .es-p { display: block; font-style: italic; color: #666; font-size: 0.9rem; margin-top: 6px; }
+  .loop-card { background: var(--light); border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; display: flex; gap: 12px; align-items: flex-start; }
+  .loop-num { width: 30px; height: 30px; border-radius: 50%; background: var(--amber); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0; }
+  .loop-card .es { display: block; font-style: italic; color: #666; font-size: 0.85rem; margin-top: 3px; }
+  .loop-note { background: var(--navy); color: white; border-radius: 12px; padding: 14px 16px; margin-top: 14px; font-size: 0.9rem; }
+  .loop-note .es { display: block; font-style: italic; color: #AFC7C7; font-size: 0.82rem; margin-top: 6px; }
+  .kickoff-box { background: var(--navy); color: white; border-radius: 12px; padding: 16px 18px; margin-top: 16px; }
+  .kickoff-box h3 { margin: 0 0 8px; color: var(--mint); font-family: Cambria, Georgia, serif; }
+  .kickoff-box .es { display: block; font-style: italic; color: #AFC7C7; font-size: 0.85rem; margin-top: 6px; }
+
+  /* Export screen */
+  #exportScreen { display: none; }
+  #exportScreen.active { display: block; }
+  #app.export-mode > header, #app.export-mode > .progress-row, #app.export-mode > .hook-box,
+  #app.export-mode > .stage-label, #app.export-mode > .card, #app.export-mode > .bins,
+  #app.export-mode > .pool-card-wrap, #app.export-mode > .action-row { display: none; }
+
+  .export-card { background: white; border-radius: 14px; padding: 20px 24px; box-shadow: 0 1px 3px rgba(15,27,45,0.08); margin-bottom: 16px; }
+  .export-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 10px; }
+  .export-title { font-family: Cambria, Georgia, serif; color: var(--navy); font-size: 1.7rem; margin: 0; }
+  .export-subtitle { color: var(--teal); font-size: 0.95rem; margin-top: 2px; }
+  .name-row { display: flex; gap: 16px; flex-wrap: wrap; margin: 14px 0 4px; }
+  .name-row label { font-size: 0.85rem; color: #555; display: block; margin-bottom: 4px; }
+  .name-row .es { display: block; font-style: italic; color: #888; font-size: 0.78rem; }
+  .name-row input {
+    border: none; border-bottom: 2px solid #C7D6D6; background: transparent;
+    font-size: 1rem; padding: 4px 2px; font-family: Calibri, sans-serif; color: #111;
+  }
+  .name-row input:focus { outline: none; border-bottom-color: var(--teal); }
+  .export-section-title { font-family: Cambria, Georgia, serif; color: var(--teal); font-size: 1.15rem; margin: 6px 0 10px; }
+  .export-p { font-size: 0.9rem; color: #444; margin: 0 0 4px; }
+  .export-p .es { display: block; font-style: italic; color: #777; font-size: 0.84rem; }
+  .recap-table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+  .recap-table th, .recap-table td { border: 1px solid #DCE6E6; padding: 8px 10px; text-align: left; font-size: 0.83rem; vertical-align: top; }
+  .recap-table th { background: var(--navy); color: white; font-weight: 700; }
+  .recap-chip { display: inline-block; background: var(--light); border-radius: 6px; padding: 3px 8px; margin: 2px 3px 2px 0; font-size: 0.76rem; }
+  .reflection-block { margin-top: 6px; }
+  .reflection-q { font-size: 0.92rem; color: #222; margin-bottom: 2px; }
+  .reflection-block textarea {
+    width: 100%; min-height: 56px; border: 1.5px solid #C7D6D6; border-radius: 8px;
+    padding: 8px 10px; font-family: Calibri, sans-serif; font-size: 0.92rem; resize: vertical; margin-bottom: 14px;
+  }
+  .reflection-block textarea:focus { outline: none; border-color: var(--teal); }
+  .print-btn-row { display: flex; gap: 10px; margin-top: 6px; }
+
+  @media print {
+    body { background: white; }
+    .lang-toggle, .print-btn-row { display: none !important; }
+    .export-card { box-shadow: none; border: 1px solid #ddd; page-break-inside: avoid; }
+    #app { max-width: 100%; padding: 0; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div>
+      <h1 id="title">The Troubleshooting Loop</h1>
+      <div class="sub" id="subtitle">Unit 2 — Troubleshooting</div>
+    </div>
+    <button class="lang-toggle" id="langToggle" onclick="toggleLang()">Español</button>
+  </header>
+
+  <div class="progress-row" id="progressRow"></div>
+
+  <div class="hook-box" id="hookBox"></div>
+
+  <div class="stage-label" id="stageLabel"></div>
+
+  <!-- Round 1: Sequencing -->
+  <div class="card" id="sequenceCard" style="display:none;">
+    <div class="sequence-row" id="sequenceRow"></div>
+  </div>
+  <div class="pool-card-wrap" id="sequencePoolWrap" style="display:none;">
+    <div class="pool" id="sequencePool"></div>
+  </div>
+
+  <!-- Rounds 2-3: Bins -->
+  <div class="bins" id="binsArea" style="display:none;"></div>
+  <div class="pool-card-wrap" id="binPoolWrap" style="display:none;">
+    <div class="pool" id="binPool"></div>
+  </div>
+
+  <div class="action-row">
+    <button class="primary" id="checkBtn" onclick="checkCurrent()" disabled></button>
+    <button class="secondary" id="resetBtn" onclick="resetCurrent()"></button>
+    <button class="secondary" id="turnInNowBtn" onclick="confirmEarlyTurnIn()" style="border-color: var(--amber); color: var(--amber); margin-left: auto;"></button>
+    <div class="feedback" id="feedbackBox"></div>
+  </div>
+
+  <div id="exportScreen">
+    <div class="export-card">
+      <div class="export-header">
+        <div>
+          <h2 class="export-title" id="exportTitle">Troubleshooting Log</h2>
+          <div class="export-subtitle" id="exportSubtitle">Unit 2 — The Troubleshooting Loop</div>
+        </div>
+        <button class="lang-toggle" style="border-color: var(--teal); color: var(--teal);" onclick="toggleLang()" id="exportLangToggle">Español</button>
+      </div>
+      <div class="name-row">
+        <div>
+          <label id="nameLabelEn">Name<span class="es" id="nameLabelEs">Nombre</span></label>
+          <input type="text" id="studentName" size="28">
+        </div>
+        <div>
+          <label id="periodLabelEn">Period<span class="es" id="periodLabelEs">Periodo</span></label>
+          <input type="text" id="studentPeriod" size="8">
+        </div>
+      </div>
+    </div>
+
+    <div class="export-card">
+      <div class="export-section-title" id="recapTitle">Troubleshooting Recap</div>
+      <p class="export-p" id="recapDesc">Automatically filled in from your answers — if you didn't finish every round, that's okay, just note where you stopped below.<span class="es" id="recapDescEs"></span></p>
+      <table class="recap-table" id="recapTable"></table>
+    </div>
+
+    <div class="export-card">
+      <div class="export-section-title" id="reflectionTitle">Reflection</div>
+      <div class="reflection-block" id="reflectionBlock"></div>
+    </div>
+
+    <div class="print-btn-row">
+      <button class="primary" onclick="window.print()" id="printBtn">Print / Save as PDF</button>
+      <button class="secondary" onclick="backToGame()" id="backBtn">Back to game</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="overlay hidden" id="overlay">
+  <div class="modal" id="modalContent"></div>
+</div>
+
+<script>
+const T = {
+  en: {
+    title: "The Troubleshooting Loop",
+    subtitle: "Unit 2 — Troubleshooting",
+    langBtn: "Español",
+    roundLabel: "Round {n} of 3",
+    checkIdle: "Check my answer",
+    resetBtn: "Reset this round",
+    turnInNowBtn: "Turn in now (haven't finished)",
+    confirmEarlyTurnIn: "You haven't finished all 3 rounds yet. Turn in what you've completed so far? You can note where you stopped in the reflection.",
+    needAll: "Finish sorting everything before checking.",
+    correctCount: "{n} of {t} correct. Click a red one to try again.",
+    allCorrect: "All correct!",
+    selectPrompt: "Click a card below, then click where it belongs.",
+    jokeToast: "Not exactly a troubleshooting strategy...",
+
+    hook: "You already know how to figure out WHERE a problem lives — Hardware, System, or App. Today's question is different: once you know where, what do you actually DO?",
+    hookOther: "Ya sabes cómo descubrir DÓNDE vive un problema — Hardware, Sistema o App. La pregunta de hoy es diferente: una vez que sabes dónde, ¿qué haces realmente?",
+    hookR2: "Round 2: for each situation, pick the smartest next move — not just any move.",
+    hookR2Other: "Ronda 2: para cada situación, elige el siguiente paso más inteligente — no cualquier paso.",
+    hookR3: "Round 3: these students all made a troubleshooting mistake. Can you spot which one?",
+    hookR3Other: "Ronda 3: estos estudiantes cometieron un error al resolver problemas. ¿Puedes identificar cuál?",
+
+    seqSteps: [
+      "Say exactly what's happening — not just \u201cit's broken.\u201d",
+      "Guess the most likely cause (Hardware, System, or App?).",
+      "Try the simplest fix first.",
+      "Check whether it actually worked.",
+      "If it didn't work, go back and try the next most likely cause.",
+      "Still stuck? Write down what you tried and ask for help."
+    ],
+    seqJoke: "Immediately buy a brand new device.",
+
+    binFirst: "Try the Simplest Fix",
+    binNext: "Try the Next Likely Cause",
+    binHelp: "Ask for Help",
+    binRepeat: "Repeated the Same Fix",
+    binEscalate: "Escalated Too Early",
+    binVerify: "Forgot to Verify",
+
+    round2Items: [
+      { id: "wifi1", en: "Wi-Fi won't connect. You haven't tried anything yet.", es: "El Wi-Fi no se conecta. Todavía no has intentado nada.", cat: "first" },
+      { id: "wifi2", en: "You already restarted twice and Wi-Fi still won't connect.", es: "Ya reiniciaste dos veces y el Wi-Fi sigue sin conectar.", cat: "next" },
+      { id: "wifi3", en: "You've tried restarting, checking settings, and moving closer to the router. Still nothing.", es: "Ya intentaste reiniciar, revisar la configuración, y acercarte al router. Sigue sin funcionar.", cat: "help" },
+      { id: "app1", en: "An app crashes every time you open it. You haven't tried anything yet.", es: "Una app se cierra cada vez que la abres. Todavía no has intentado nada.", cat: "first" },
+      { id: "app2", en: "You restarted the device and the app still crashes every time.", es: "Reiniciaste el dispositivo y la app sigue cerrándose cada vez.", cat: "next" },
+      { id: "crack2", en: "The screen is physically cracked.", es: "La pantalla está físicamente rota.", cat: "help" },
+      { id: "slow1", en: "The device feels a little slow. You haven't tried anything yet.", es: "El dispositivo se siente un poco lento. Todavía no has intentado nada.", cat: "first" },
+      { id: "print1", en: "Restarting didn't fix a printing problem — you haven't tried anything else.", es: "Reiniciar no arregló un problema de impresión — no has intentado nada más.", cat: "next" }
+    ],
+    round3Items: [
+      { id: "ana", en: "Ana restarted her Chromebook, saw the app still crash, and restarted it again \u2014 and again \u2014 and again.", es: "Ana reinició su Chromebook, vio que la app segu\u00eda cerr\u00e1ndose, y la reinici\u00f3 otra vez \u2014 y otra vez \u2014 y otra vez.", cat: "repeat" },
+      { id: "marcus", en: "Wi-Fi wasn't connecting, so Marcus immediately asked for a brand new Chromebook without trying anything first.", es: "El Wi-Fi no se conectaba, as\u00ed que Marcus pidi\u00f3 inmediatamente un Chromebook nuevo sin intentar nada primero.", cat: "escalate" },
+      { id: "priya", en: "Priya updated her app, closed the laptop, and assumed it was fixed without opening the app again.", es: "Priya actualiz\u00f3 su app, cerr\u00f3 la laptop, y asumi\u00f3 que estaba arreglada sin volver a abrir la app.", cat: "verify" },
+      { id: "diego", en: "Diego's charger seemed loose, so he jiggled the same loose cable five times instead of trying a different cable.", es: "El cargador de Diego parec\u00eda flojo, as\u00ed que movi\u00f3 el mismo cable flojo cinco veces en lugar de probar un cable diferente.", cat: "repeat" },
+      { id: "sofia", en: "Sofia's docs app was slow to load, so she immediately emailed the IT department before trying to just wait or restart.", es: "La app de documentos de Sof\u00eda tardaba en cargar, as\u00ed que le escribi\u00f3 inmediatamente al departamento de IT antes de intentar esperar o reiniciar.", cat: "escalate" },
+      { id: "kalen", en: "Kalen reinstalled an app to fix a crash, then closed the laptop without ever opening the app again to see if it worked.", es: "Kalen reinstal\u00f3 una app para arreglar un cierre inesperado, luego cerr\u00f3 la laptop sin volver a abrir la app para ver si funcion\u00f3.", cat: "verify" }
+    ],
+
+    revealTitle: "Here's the Process You Just Built",
+    revealIntro: "You just discovered the same loop real tech support uses — you just didn't have the names yet. Notice steps 2 through 5 form a loop: if a fix doesn't work, you don't panic, you just try the next likely cause.",
+    revealIntroOther: "Acabas de descubrir el mismo ciclo que usa el soporte t\u00e9cnico real \u2014 solo que todav\u00eda no ten\u00edas los nombres. Nota que los pasos 2 al 5 forman un ciclo: si una soluci\u00f3n no funciona, no entras en p\u00e1nico, simplemente intentas la siguiente causa m\u00e1s probable.",
+    loopSteps: [
+      { term: "1. Identify the Problem", def: "Say exactly what's happening — specific, not vague." },
+      { term: "2. Hypothesize", def: "Guess the most likely cause, using what you know about layers." },
+      { term: "3. Test a Fix", def: "Try the simplest fix first — don't jump to drastic action." },
+      { term: "4. Verify", def: "Actually check whether it worked. Don't just assume." },
+      { term: "5. Iterate", def: "Didn't work? Loop back to step 2 with the next most likely cause." },
+      { term: "6. Escalate", def: "Truly stuck? Document what you tried and ask for help — that's smart, not a failure." }
+    ],
+    loopStepsEs: [
+      { term: "1. Identifica el Problema", def: "Di exactamente qu\u00e9 est\u00e1 pasando \u2014 espec\u00edfico, no vago." },
+      { term: "2. Haz una Hip\u00f3tesis", def: "Adivina la causa m\u00e1s probable, usando lo que sabes sobre las capas." },
+      { term: "3. Prueba una Soluci\u00f3n", def: "Intenta primero la soluci\u00f3n m\u00e1s simple \u2014 no saltes a algo dr\u00e1stico." },
+      { term: "4. Verifica", def: "Revisa de verdad si funcion\u00f3. No lo asumas." },
+      { term: "5. Repite", def: "\u00bfNo funcion\u00f3? Regresa al paso 2 con la siguiente causa m\u00e1s probable." },
+      { term: "6. Pide Ayuda", def: "\u00bfRealmente atascado? Anota qu\u00e9 intentaste y pide ayuda \u2014 eso es inteligente, no un fracaso." }
+    ],
+    continueBtn: "Start Round 2",
+    midTitle: "Nice work!",
+    midBody: "Ready for the next round?",
+    finalTitle: "All 3 Rounds Done!",
+    finalBody: "You didn't just learn to identify a broken layer — you learned a repeatable process for fixing it, and for knowing when to ask for help. That's the whole point of this unit.",
+    finalBodyOther: "No solo aprendiste a identificar una capa rota \u2014 aprendiste un proceso repetible para arreglarla, y para saber cu\u00e1ndo pedir ayuda. Ese es todo el punto de esta unidad.",
+    kickoffTitle: "Now Turn It In: Troubleshooting Log",
+    kickoffBody: "Your Round 2 and 3 answers are already filled in below. Answer the reflection questions, then print or save as PDF.",
+    kickoffBodyOther: "Tus respuestas de las Rondas 2 y 3 ya est\u00e1n completadas abajo. Responde las preguntas de reflexi\u00f3n, luego imprime o guarda como PDF.",
+    closeBtn: "Got it",
+    colScenario: "Scenario", colAnswer: "Your Answer",
+    exportTitle: "Troubleshooting Log",
+    exportSubtitle: "Unit 2 — The Troubleshooting Loop",
+    nameLabel: "Name", periodLabel: "Period",
+    recapTitle: "Troubleshooting Recap",
+    recapDesc: "Automatically filled in from your answers \u2014 if you didn't finish every round, that's okay, just note where you stopped below.",
+    notReached: "not reached yet \u2014 that's okay",
+    reflectionTitle: "Reflection",
+    q1: "1. Pick one Round 3 scenario. What should that student have done instead?",
+    q2: "2. Why is 'ask for help' step 6 instead of step 1? When would it be okay to jump straight there?",
+    q3: "3. One new insight from today, in your own words:",
+    printBtn: "Print / Save as PDF",
+    backBtn: "Back to game"
+  },
+  es: {
+    title: "El Ciclo de Resoluci\u00f3n de Problemas",
+    subtitle: "Unidad 2 — Resoluci\u00f3n de Problemas",
+    langBtn: "English",
+    roundLabel: "Ronda {n} de 3",
+    checkIdle: "Revisar mi respuesta",
+    resetBtn: "Reiniciar esta ronda",
+    turnInNowBtn: "Entregar ahora (no he terminado)",
+    confirmEarlyTurnIn: "Todav\u00eda no has terminado las 3 rondas. \u00bfQuieres entregar lo que has completado hasta ahora? Puedes anotar d\u00f3nde te quedaste en la reflexi\u00f3n.",
+    needAll: "Termina de organizar todo antes de revisar.",
+    correctCount: "{n} de {t} correctos. Haz clic en uno rojo para intentar de nuevo.",
+    allCorrect: "\u00a1Todos correctos!",
+    selectPrompt: "Haz clic en una tarjeta de abajo, luego haz clic en d\u00f3nde pertenece.",
+    jokeToast: "Esa no es exactamente una estrategia de resoluci\u00f3n de problemas...",
+    binFirst: "Prueba la Soluci\u00f3n M\u00e1s Simple",
+    binNext: "Prueba la Siguiente Causa Probable",
+    binHelp: "Pide Ayuda",
+    binRepeat: "Repiti\u00f3 la Misma Soluci\u00f3n",
+    binEscalate: "Pidi\u00f3 Ayuda Demasiado Pronto",
+    binVerify: "Se le Olvid\u00f3 Verificar",
+    seqSteps: [
+      "Di exactamente qu\u00e9 est\u00e1 pasando \u2014 no solo \u201cest\u00e1 roto.\u201d",
+      "Adivina la causa m\u00e1s probable (\u00bfHardware, Sistema o App?).",
+      "Intenta primero la soluci\u00f3n m\u00e1s simple.",
+      "Revisa si realmente funcion\u00f3.",
+      "Si no funcion\u00f3, regresa e intenta la siguiente causa m\u00e1s probable.",
+      "\u00bfSigues atascado? Anota qu\u00e9 intentaste y pide ayuda."
+    ],
+    seqJoke: "Compra inmediatamente un dispositivo nuevo.",
+    revealTitle: "Este es el Proceso que Acabas de Construir",
+    revealIntro: "Acabas de descubrir el mismo ciclo que usa el soporte t\u00e9cnico real \u2014 solo que todav\u00eda no ten\u00edas los nombres. Nota que los pasos 2 al 5 forman un ciclo: si una soluci\u00f3n no funciona, no entras en p\u00e1nico, simplemente intentas la siguiente causa m\u00e1s probable.",
+    revealIntroOther: "You just discovered the same loop real tech support uses \u2014 you just didn't have the names yet. Notice steps 2 through 5 form a loop: if a fix doesn't work, you don't panic, you just try the next likely cause.",
+    continueBtn: "Comenzar Ronda 2",
+    midTitle: "\u00a1Buen trabajo!",
+    midBody: "\u00bfListo para la siguiente ronda?",
+    finalTitle: "\u00a1Las 3 Rondas Completadas!",
+    finalBody: "No solo aprendiste a identificar una capa rota \u2014 aprendiste un proceso repetible para arreglarla, y para saber cu\u00e1ndo pedir ayuda. Ese es todo el punto de esta unidad.",
+    finalBodyOther: "You didn't just learn to identify a broken layer \u2014 you learned a repeatable process for fixing it, and for knowing when to ask for help. That's the whole point of this unit.",
+    kickoffTitle: "Ahora Entr\u00e9galo: Registro de Resoluci\u00f3n de Problemas",
+    kickoffBody: "Tus respuestas de las Rondas 2 y 3 ya est\u00e1n completadas abajo. Responde las preguntas de reflexi\u00f3n, luego imprime o guarda como PDF.",
+    kickoffBodyOther: "Your Round 2 and 3 answers are already filled in below. Answer the reflection questions, then print or save as PDF.",
+    closeBtn: "Entendido",
+    exportTitle: "Registro de Resoluci\u00f3n de Problemas",
+    exportSubtitle: "Unidad 2 — El Ciclo de Resoluci\u00f3n de Problemas",
+    nameLabel: "Nombre", periodLabel: "Periodo",
+    recapTitle: "Resumen de Resoluci\u00f3n de Problemas",
+    recapDesc: "Completado autom\u00e1ticamente con tus respuestas \u2014 si no terminaste cada ronda, no hay problema, solo anota d\u00f3nde te quedaste abajo.",
+    notReached: "a\u00fan no llegaste \u2014 est\u00e1 bien",
+    reflectionTitle: "Reflexi\u00f3n",
+    q1: "1. Elige un escenario de la Ronda 3. \u00bfQu\u00e9 deber\u00eda haber hecho ese estudiante en su lugar?",
+    q2: "2. \u00bfPor qu\u00e9 \u201cpedir ayuda\u201d es el paso 6 y no el paso 1? \u00bfCu\u00e1ndo estar\u00eda bien saltar directo ah\u00ed?",
+    q3: "3. Una idea nueva de hoy, en tus propias palabras:",
+    printBtn: "Imprimir / Guardar como PDF",
+    backBtn: "Volver al juego",
+    colScenario: "Escenario", colAnswer: "Tu Respuesta"
+  }
+};
+
+let lang = "en";
+let phase = 1; // 1 = sequence, 2/3 = bin rounds
+let resultsLog = {};
+
+// ---------- Round 1: Sequencing ----------
+const CORRECT_ORDER = [0,1,2,3,4,5];
+const JOKE_ID = "joke";
+let seqState = { sequence: [null,null,null,null,null,null], poolOrder: [], checked: false, slotStatus: [null,null,null,null,null,null] };
+
+function t(key, vars) {
+  let s = T[lang][key];
+  if (vars) Object.keys(vars).forEach(k => s = s.replace("{" + k + "}", vars[k]));
+  return s;
+}
+function tOther(key) {
+  const other = lang === "en" ? "es" : "en";
+  return T[other][key];
+}
+
+function toggleLang() {
+  lang = lang === "en" ? "es" : "en";
+  if (document.getElementById("exportScreen").classList.contains("active")) {
+    renderExportScreen();
+  } else if (phase === 1) {
+    renderSeq();
+  } else {
+    renderBins();
+  }
+}
+
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function initSeq() {
+  const ids = [0,1,2,3,4,5].map(i => "step-" + i);
+  ids.push(JOKE_ID);
+  seqState = { sequence: [null,null,null,null,null,null], poolOrder: shuffle(ids), checked: false, slotStatus: [null,null,null,null,null,null] };
+  showPhaseUI();
+  renderSeq();
+}
+
+function showPhaseUI() {
+  document.getElementById("sequenceCard").style.display = phase === 1 ? "block" : "none";
+  document.getElementById("sequencePoolWrap").style.display = phase === 1 ? "block" : "none";
+  document.getElementById("binsArea").style.display = phase !== 1 ? "grid" : "none";
+  document.getElementById("binPoolWrap").style.display = phase !== 1 ? "block" : "none";
+}
+
+function firstEmptySlot() { return seqState.sequence.findIndex(s => s === null); }
+
+function handleSeqPoolClick(id) {
+  if (id === JOKE_ID) {
+    showToast(t("jokeToast"));
+    const el = document.querySelector(`[data-seqid="${id}"]`);
+    if (el) { el.classList.add("shake"); setTimeout(() => el.classList.remove("shake"), 400); }
+    return;
+  }
+  const slotIdx = firstEmptySlot();
+  if (slotIdx === -1) return;
+  const stepIdx = parseInt(id.split("-")[1], 10);
+  seqState.sequence[slotIdx] = stepIdx;
+  seqState.poolOrder = seqState.poolOrder.filter(x => x !== id);
+  seqState.checked = false;
+  seqState.slotStatus = seqState.slotStatus.map(() => null);
+  setFeedback("");
+  renderSeq();
+}
+function handleSeqSlotClick(slotIdx) {
+  const val = seqState.sequence[slotIdx];
+  if (val === null) return;
+  seqState.poolOrder.push("step-" + val);
+  seqState.sequence[slotIdx] = null;
+  seqState.checked = false;
+  seqState.slotStatus = seqState.slotStatus.map(() => null);
+  setFeedback("");
+  renderSeq();
+}
+function showToast(msg) {
+  const toast = document.getElementById("toast");
+  toast.textContent = msg;
+  toast.classList.add("show");
+  setTimeout(() => toast.classList.remove("show"), 1800);
+}
+
+function checkSeq() {
+  if (seqState.sequence.includes(null)) { setFeedback(t("needAll"), true); return; }
+  let correctCount = 0;
+  const status = seqState.sequence.map((val, idx) => {
+    const ok = val === CORRECT_ORDER[idx];
+    if (ok) correctCount++;
+    return ok ? "correct" : "wrong";
+  });
+  seqState.slotStatus = status;
+  seqState.checked = true;
+  if (correctCount === 6) {
+    setFeedback(t("allCorrect"));
+    renderSeq();
+    setTimeout(() => showReveal(), 500);
+  } else {
+    setFeedback(t("correctCount", { n: correctCount, t: 6 }));
+    renderSeq();
+  }
+}
+function resetSeq() { initSeq(); }
+
+function renderSeq() {
+  document.getElementById("stageLabel").textContent = t("roundLabel", { n: 1 });
+  const hookBox = document.getElementById("hookBox");
+  hookBox.className = "hook-box";
+  hookBox.innerHTML = `${t("hook")}<span class="es">${t("hookOther")}</span>`;
+
+  const seqRow = document.getElementById("sequenceRow");
+  seqRow.innerHTML = "";
+  seqState.sequence.forEach((val, idx) => {
+    const slot = document.createElement("div");
+    let cls = "slot";
+    if (val !== null) cls += " filled";
+    if (seqState.checked && seqState.slotStatus[idx] === "correct") cls += " correct";
+    if (seqState.checked && seqState.slotStatus[idx] === "wrong") cls += " wrong";
+    slot.className = cls;
+    slot.onclick = () => handleSeqSlotClick(idx);
+    const num = document.createElement("div");
+    num.className = "slot-num";
+    num.textContent = idx + 1;
+    slot.appendChild(num);
+    const text = document.createElement("div");
+    if (val !== null) {
+      text.className = "slot-text";
+      const other = lang === "en" ? "es" : "en";
+      text.innerHTML = `${T[lang].seqSteps[val]}<span class="es">${T[other].seqSteps[val]}</span>`;
+    } else {
+      text.className = "slot-empty-text";
+      text.textContent = t("selectPrompt");
+    }
+    slot.appendChild(text);
+    seqRow.appendChild(slot);
+  });
+
+  const pool = document.getElementById("sequencePool");
+  pool.innerHTML = "";
+  seqState.poolOrder.forEach(id => {
+    const card = document.createElement("div");
+    card.className = "pool-card";
+    card.setAttribute("data-seqid", id);
+    card.onclick = () => handleSeqPoolClick(id);
+    if (id === JOKE_ID) {
+      const other = lang === "en" ? "es" : "en";
+      card.innerHTML = `${T[lang].seqJoke}<span class="es">${T[other].seqJoke}</span>`;
+    } else {
+      const idx = parseInt(id.split("-")[1], 10);
+      const other = lang === "en" ? "es" : "en";
+      card.innerHTML = `${T[lang].seqSteps[idx]}<span class="es">${T[other].seqSteps[idx]}</span>`;
+    }
+    pool.appendChild(card);
+  });
+
+  updateHeader();
+  updateProgress();
+  document.getElementById("checkBtn").textContent = t("checkIdle");
+  document.getElementById("checkBtn").onclick = checkSeq;
+  document.getElementById("checkBtn").disabled = seqState.sequence.includes(null);
+  document.getElementById("resetBtn").textContent = t("resetBtn");
+  document.getElementById("resetBtn").onclick = resetSeq;
+  document.getElementById("turnInNowBtn").textContent = t("turnInNowBtn");
+}
+
+function showReveal() {
+  const overlay = document.getElementById("overlay");
+  const modal = document.getElementById("modalContent");
+  const steps = lang === "en" ? T.en.loopSteps : T.en.loopStepsEs;
+  const stepsOther = lang === "en" ? T.en.loopStepsEs : T.en.loopSteps;
+  let cardsHtml = "";
+  steps.forEach((s, i) => {
+    cardsHtml += `<div class="loop-card"><div class="loop-num">${i+1}</div><div><b>${s.term}</b><div>${s.def}</div><span class="es"><b>${stepsOther[i].term}</b> \u2014 ${stepsOther[i].def}</span></div></div>`;
+  });
+  modal.innerHTML = `
+    <h2>${t("revealTitle")}</h2>
+    <p>${t("revealIntro")}<span class="es-p">${t("revealIntroOther")}</span></p>
+    ${cardsHtml}
+    <div class="loop-note">Steps 2\u20135 repeat as many times as needed \u2014 that's the \u201cloop.\u201d<span class="es">Los pasos 2 al 5 se repiten las veces que sea necesario \u2014 eso es el \u201cciclo.\u201d</span></div>
+    <div style="margin-top:16px;"><button class="primary" id="closeModalBtn">${t("continueBtn")}</button></div>
+  `;
+  document.getElementById("closeModalBtn").onclick = () => { overlay.classList.add("hidden"); phase = 2; initBins(2); };
+  overlay.classList.remove("hidden");
+}
+
+// ---------- Rounds 2-3: Bins ----------
+const ROUND_CONFIG = {
+  2: { binKeys: ["first","next","help"], titleKeys: ["binFirst","binNext","binHelp"], itemsKey: "round2Items" },
+  3: { binKeys: ["repeat","escalate","verify"], titleKeys: ["binRepeat","binEscalate","binVerify"], itemsKey: "round3Items" }
+};
+let binState = { poolOrder: [], bins: {}, checked: false, status: {}, selected: null };
+
+function currentItems() { return T.en[ROUND_CONFIG[phase].itemsKey]; }
+function correctCatFor(id) { const item = currentItems().find(i => i.id === id); return item ? item.cat : null; }
+function labelFor(id) { const item = currentItems().find(i => i.id === id); return item ? item[lang] : id; }
+
+function initBins(n) {
+  phase = n;
+  const cfg = ROUND_CONFIG[n];
+  const ids = currentItems().map(i => i.id);
+  const bins = {};
+  cfg.binKeys.forEach(k => bins[k] = []);
+  binState = { poolOrder: shuffle(ids), bins, checked: false, status: {}, selected: null };
+  showPhaseUI();
+  renderBins();
+}
+function resetBins() { initBins(phase); }
+
+function handleBinPoolClick(id) { binState.selected = binState.selected === id ? null : id; renderBins(); }
+function handleBinClick(binKey) {
+  if (!binState.selected) return;
+  const id = binState.selected;
+  binState.poolOrder = binState.poolOrder.filter(x => x !== id);
+  binState.bins[binKey].push(id);
+  binState.selected = null;
+  binState.checked = false;
+  binState.status = {};
+  setFeedback("");
+  renderBins();
+}
+function handlePlacedClick(binKey, id) {
+  binState.bins[binKey] = binState.bins[binKey].filter(x => x !== id);
+  binState.poolOrder.push(id);
+  binState.checked = false;
+  binState.status = {};
+  setFeedback("");
+  renderBins();
+}
+
+function checkBins() {
+  if (binState.poolOrder.length > 0) { setFeedback(t("needAll"), true); return; }
+  const cfg = ROUND_CONFIG[phase];
+  let total = 0, correct = 0;
+  const status = {};
+  cfg.binKeys.forEach(binKey => {
+    binState.bins[binKey].forEach(id => {
+      total++;
+      const ok = correctCatFor(id) === binKey;
+      if (ok) correct++;
+      status[id] = ok ? "correct" : "wrong";
+    });
+  });
+  binState.status = status;
+  binState.checked = true;
+  if (correct === total) {
+    setFeedback(t("allCorrect"));
+    const snapshot = {};
+    cfg.binKeys.forEach(bk => snapshot[bk] = binState.bins[bk].slice());
+    resultsLog[phase] = snapshot;
+    renderBins();
+    setTimeout(() => { if (phase === 2) showMid(); else showFinal(); }, 700);
+  } else {
+    setFeedback(t("correctCount", { n: correct, t: total }));
+    renderBins();
+  }
+}
+
+function showMid() {
+  const overlay = document.getElementById("overlay");
+  const modal = document.getElementById("modalContent");
+  modal.innerHTML = `<h2>${t("midTitle")}</h2><p>${t("midBody")}</p><div style="margin-top:16px;"><button class="primary" id="closeModalBtn">${lang === "en" ? "Start Round 3" : "Comenzar Ronda 3"}</button></div>`;
+  document.getElementById("closeModalBtn").onclick = () => { overlay.classList.add("hidden"); initBins(3); };
+  overlay.classList.remove("hidden");
+}
+
+function showFinal() {
+  const overlay = document.getElementById("overlay");
+  const modal = document.getElementById("modalContent");
+  modal.innerHTML = `
+    <h2>${t("finalTitle")}</h2>
+    <p>${t("finalBody")}<span class="es-p">${t("finalBodyOther")}</span></p>
+    <div class="kickoff-box">
+      <h3>${t("kickoffTitle")}</h3>
+      <div>${t("kickoffBody")}</div>
+      <span class="es">${t("kickoffBodyOther")}</span>
+    </div>
+    <div style="margin-top:18px;"><button class="primary" id="closeModalBtn">${t("closeBtn")}</button></div>
+  `;
+  document.getElementById("closeModalBtn").onclick = () => { overlay.classList.add("hidden"); showExportScreen(); };
+  overlay.classList.remove("hidden");
+}
+
+function renderBins() {
+  document.getElementById("stageLabel").textContent = t("roundLabel", { n: phase });
+  const hookBox = document.getElementById("hookBox");
+  hookBox.className = "hook-box compact";
+  const key = "hookR" + phase;
+  hookBox.innerHTML = `${t(key)}<span class="es">${t(key + "Other")}</span>`;
+
+  const cfg = ROUND_CONFIG[phase];
+  const binsArea = document.getElementById("binsArea");
+  binsArea.innerHTML = "";
+  cfg.binKeys.forEach((binKey, idx) => {
+    const bin = document.createElement("div");
+    bin.className = "bin" + (binState.selected ? " has-selected" : "");
+    bin.onclick = () => handleBinClick(binKey);
+    const titleKey = cfg.titleKeys[idx];
+    const other = lang === "en" ? "es" : "en";
+    const h3 = document.createElement("h3");
+    h3.innerHTML = t(titleKey) + `<span class="es-h">${T[other][titleKey]}</span>`;
+    bin.appendChild(h3);
+    const itemsWrap = document.createElement("div");
+    itemsWrap.className = "bin-items";
+    binState.bins[binKey].forEach(id => {
+      const chip = document.createElement("div");
+      let cls = "placed-item";
+      if (binState.checked) cls += binState.status[id] === "correct" ? " correct" : " wrong";
+      chip.className = cls;
+      chip.textContent = labelFor(id);
+      chip.onclick = (e) => { e.stopPropagation(); handlePlacedClick(binKey, id); };
+      itemsWrap.appendChild(chip);
+    });
+    bin.appendChild(itemsWrap);
+    binsArea.appendChild(bin);
+  });
+
+  const pool = document.getElementById("binPool");
+  pool.innerHTML = "";
+  binState.poolOrder.forEach(id => {
+    const item = currentItems().find(i => i.id === id);
+    const other = lang === "en" ? "es" : "en";
+    const card = document.createElement("div");
+    card.className = "pool-card" + (binState.selected === id ? " selected" : "");
+    card.innerHTML = `${item[lang]}<span class="es">${item[other]}</span>`;
+    card.onclick = (e) => { e.stopPropagation(); handleBinPoolClick(id); };
+    pool.appendChild(card);
+  });
+  if (binState.poolOrder.length > 0) {
+    const hint = document.createElement("div");
+    hint.style.cssText = "width:100%;font-size:0.85rem;color:#888;font-style:italic;margin-top:4px;";
+    hint.textContent = t("selectPrompt");
+    pool.appendChild(hint);
+  }
+
+  updateHeader();
+  updateProgress();
+  document.getElementById("checkBtn").textContent = t("checkIdle");
+  document.getElementById("checkBtn").onclick = checkBins;
+  document.getElementById("checkBtn").disabled = binState.poolOrder.length > 0;
+  document.getElementById("resetBtn").textContent = t("resetBtn");
+  document.getElementById("resetBtn").onclick = resetBins;
+  document.getElementById("turnInNowBtn").textContent = t("turnInNowBtn");
+}
+
+function updateHeader() {
+  document.getElementById("title").textContent = t("title");
+  document.getElementById("subtitle").textContent = t("subtitle");
+  document.getElementById("langToggle").textContent = t("langBtn");
+}
+function updateProgress() {
+  const row = document.getElementById("progressRow");
+  row.innerHTML = "";
+  for (let i = 1; i <= 3; i++) {
+    const dot = document.createElement("div");
+    dot.className = "progress-dot" + (i < phase ? " done" : i === phase ? " current" : "");
+    row.appendChild(dot);
+  }
+}
+function setFeedback(msg, isError) {
+  const box = document.getElementById("feedbackBox");
+  box.className = "feedback" + (isError ? " error" : "");
+  box.textContent = msg;
+}
+
+function confirmEarlyTurnIn() {
+  if (window.confirm(t("confirmEarlyTurnIn"))) showExportScreen();
+}
+
+// ---------- Export screen ----------
+function showExportScreen() {
+  document.getElementById("app").classList.add("export-mode");
+  document.getElementById("exportScreen").classList.add("active");
+  renderExportScreen();
+  window.scrollTo(0, 0);
+}
+function backToGame() {
+  document.getElementById("app").classList.remove("export-mode");
+  document.getElementById("exportScreen").classList.remove("active");
+}
+
+function renderExportScreen() {
+  const other = lang === "en" ? "es" : "en";
+  document.getElementById("exportTitle").textContent = t("exportTitle");
+  document.getElementById("exportSubtitle").textContent = t("exportSubtitle");
+  document.getElementById("exportLangToggle").textContent = t("langBtn");
+  document.getElementById("nameLabelEn").firstChild.textContent = t("nameLabel") + " ";
+  document.getElementById("periodLabelEn").firstChild.textContent = t("periodLabel") + " ";
+  document.getElementById("nameLabelEs").textContent = T[other].nameLabel;
+  document.getElementById("periodLabelEs").textContent = T[other].periodLabel;
+  document.getElementById("recapTitle").textContent = t("recapTitle");
+  document.getElementById("recapDesc").firstChild.textContent = t("recapDesc") + " ";
+  document.getElementById("recapDescEs").textContent = T[other].recapDesc;
+  document.getElementById("printBtn").textContent = t("printBtn");
+  document.getElementById("backBtn").textContent = t("backBtn");
+  document.getElementById("reflectionTitle").textContent = t("reflectionTitle");
+
+  const findItem = (id) => {
+    for (const key of ["round2Items", "round3Items"]) {
+      const found = T.en[key].find(i => i.id === id);
+      if (found) return found;
+    }
+    return null;
+  };
+  const answerLabelFor = (round, cat) => {
+    if (round === 2) return t(cat === "first" ? "binFirst" : cat === "next" ? "binNext" : "binHelp");
+    return t(cat === "repeat" ? "binRepeat" : cat === "escalate" ? "binEscalate" : "binVerify");
+  };
+
+  const table = document.getElementById("recapTable");
+  let html = `<tr><th>${t("colScenario")}</th><th>${t("colAnswer")}</th></tr>`;
+  [2, 3].forEach(rn => {
+    const r = resultsLog[rn];
+    if (!r) {
+      html += `<tr><td colspan="2" style="color:#999; font-style:italic;">${t("roundLabel", { n: rn })} \u2014 ${t("notReached")}</td></tr>`;
+      return;
+    }
+    Object.keys(r).forEach(cat => {
+      r[cat].forEach(id => {
+        const item = findItem(id);
+        if (!item) return;
+        html += `<tr><td>${item[lang]}</td><td><span class="recap-chip">${answerLabelFor(rn, cat)}</span></td></tr>`;
+      });
+    });
+  });
+  table.innerHTML = html;
+
+  const reflectionBlock = document.getElementById("reflectionBlock");
+  const prevAnswers = {};
+  reflectionBlock.querySelectorAll("textarea").forEach(ta => { prevAnswers[ta.dataset.q] = ta.value; });
+  reflectionBlock.innerHTML = "";
+  ["q1", "q2", "q3"].forEach(qKey => {
+    const qDiv = document.createElement("div");
+    qDiv.className = "reflection-q";
+    qDiv.textContent = t(qKey);
+    reflectionBlock.appendChild(qDiv);
+    const ta = document.createElement("textarea");
+    ta.dataset.q = qKey;
+    if (prevAnswers[qKey]) ta.value = prevAnswers[qKey];
+    reflectionBlock.appendChild(ta);
+  });
+}
+
+// init
+initSeq();
+</script>
+</body>
+</html>
