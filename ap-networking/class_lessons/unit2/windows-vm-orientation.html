@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>U2L04 · Windows VM Orientation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #0B1F3A;
+    --navy-tint: #E7ECF4;
+    --green: #8FC53E;
+    --cream: #F4F1E9;
+    --dark-text: #1A2233;
+    --muted: #6B7280;
+    --warn-bg: #FFF7E6;
+    --warn-border: #D9922B;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: 'Inter', Calibri, Arial, sans-serif;
+    background: var(--cream);
+    color: var(--dark-text);
+    line-height: 1.5;
+  }
+  header {
+    background: var(--navy);
+    color: white;
+    padding: 2rem 1.5rem 1.75rem;
+  }
+  .backlink {
+    display: inline-block;
+    color: var(--green);
+    text-decoration: none;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+  }
+  .backlink:hover { text-decoration: underline; }
+  .kicker {
+    color: var(--green);
+    font-weight: 700;
+    font-size: 0.8rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin: 0 0 0.4rem;
+  }
+  header h1 {
+    font-family: Cambria, Georgia, serif;
+    font-size: 2.1rem;
+    margin: 0 0 0.4rem;
+  }
+  header p.sub {
+    margin: 0;
+    color: var(--navy-tint);
+    font-size: 1rem;
+  }
+  main {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 1.5rem 1.25rem 4rem;
+  }
+  .intro {
+    background: white;
+    border-radius: 10px;
+    padding: 1.25rem 1.5rem;
+    margin: 1.5rem 0;
+    border: 1px solid #DDD8CC;
+  }
+  .intro p { margin: 0.4rem 0; }
+  .progress-wrap {
+    position: sticky;
+    top: 0;
+    background: var(--cream);
+    padding: 0.75rem 0;
+    z-index: 5;
+  }
+  .progress-bar-bg {
+    background: var(--navy-tint);
+    border-radius: 999px;
+    height: 10px;
+    overflow: hidden;
+  }
+  .progress-bar-fill {
+    background: var(--green);
+    height: 100%;
+    width: 0%;
+    transition: width 0.25s ease;
+  }
+  .progress-label {
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-top: 0.3rem;
+    text-align: right;
+  }
+  section.step-group {
+    background: white;
+    border-radius: 10px;
+    padding: 1.25rem 1.5rem 1.5rem;
+    margin-bottom: 1.25rem;
+    border: 1px solid #DDD8CC;
+  }
+  section.step-group h2 {
+    font-family: Cambria, Georgia, serif;
+    color: var(--navy);
+    font-size: 1.25rem;
+    margin: 0 0 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+  .step-num {
+    background: var(--navy);
+    color: var(--green);
+    font-family: Cambria, Georgia, serif;
+    font-weight: 700;
+    width: 1.9rem;
+    height: 1.9rem;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    flex-shrink: 0;
+  }
+  label.step {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.65rem;
+    padding: 0.55rem 0.4rem;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  label.step:hover { background: var(--navy-tint); }
+  label.step input[type="checkbox"] {
+    margin-top: 0.2rem;
+    width: 1.1rem;
+    height: 1.1rem;
+    accent-color: var(--green);
+    flex-shrink: 0;
+  }
+  label.step span.done {
+    text-decoration: line-through;
+    color: var(--muted);
+  }
+  .teacher-note {
+    background: var(--warn-bg);
+    border: 1.5px dashed var(--warn-border);
+    border-radius: 8px;
+    padding: 0.7rem 0.9rem;
+    margin: 0.5rem 0 0.9rem;
+    font-size: 0.88rem;
+    color: #7A4A0E;
+  }
+  .teacher-note strong { color: #7A4A0E; }
+  code {
+    background: var(--navy-tint);
+    padding: 0.1rem 0.4rem;
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.92em;
+  }
+  .wrapup {
+    background: var(--navy);
+    color: var(--cream);
+    border-radius: 10px;
+    padding: 1.5rem;
+    text-align: center;
+  }
+  .wrapup h2 {
+    font-family: Cambria, Georgia, serif;
+    color: white;
+    margin-top: 0;
+  }
+  footer.pagefoot {
+    text-align: center;
+    font-size: 0.8rem;
+    color: var(--muted);
+    padding: 1.5rem;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <a class="backlink" href="../index.html">&larr; Back to Lessons</a>
+  <p class="kicker">Managing Shared Connections &middot; Unit 2 &middot; Lesson 4</p>
+  <h1>Windows VM Orientation</h1>
+  <p class="sub">U2L04 &middot; Ungraded &middot; Getting comfortable with CyberRange, not new content</p>
+</header>
+
+<main>
+  <div class="intro">
+    <p><strong>Why today:</strong> this is your first time launching a virtual machine on Cyber.org's Range. Nothing on this page is graded, and nothing here is new networking content — the only goal is getting comfortable finding, launching, and navigating a VM so it's not brand-new the next time you're in here.</p>
+    <p>Check off each step as you go. Ask for help the moment something looks wrong — don't sit stuck.</p>
+  </div>
+
+  <div class="progress-wrap">
+    <div class="progress-bar-bg"><div class="progress-bar-fill" id="progressFill"></div></div>
+    <div class="progress-label"><span id="progressCount">0</span> / <span id="progressTotal">0</span> steps complete</div>
+  </div>
+
+  <section class="step-group">
+    <h2><span class="step-num">1</span> Log in to CYBERPortal</h2>
+    <div class="teacher-note">
+      <strong>TEACHER — verify before class:</strong> CYBERPortal (portal.cyber.org) replaced the old Canvas-based access in August 2026. Confirm the exact sign-in flow and replace this note with real steps (URL, sign-in method, where to find/enter the class join code).
+    </div>
+    <label class="step"><input type="checkbox"> <span>Go to <code>portal.cyber.org</code></span></label>
+    <label class="step"><input type="checkbox"> <span>Sign in with the credentials you were given</span></label>
+    <label class="step"><input type="checkbox"> <span>Find this class/course inside CYBERPortal</span></label>
+  </section>
+
+  <section class="step-group">
+    <h2><span class="step-num">2</span> Launch your Windows 7 VM</h2>
+    <div class="teacher-note">
+      <strong>TEACHER — verify before class:</strong> confirm the exact button/label for launching a Windows 7 environment in the new Range interface, and whether pop-ups need to be allowed for the VM to open.
+    </div>
+    <label class="step"><input type="checkbox"> <span>Locate the Windows 7 environment for today</span></label>
+    <label class="step"><input type="checkbox"> <span>Launch it, and allow pop-ups if your browser blocks the new tab</span></label>
+    <label class="step"><input type="checkbox"> <span>Wait for the desktop to fully load before clicking anything</span></label>
+  </section>
+
+  <section class="step-group">
+    <h2><span class="step-num">3</span> Explore the desktop</h2>
+    <label class="step"><input type="checkbox"> <span>Resize or full-screen the VM window so it's comfortable to work in</span></label>
+    <label class="step"><input type="checkbox"> <span>Open <strong>File Explorer</strong> (folder icon on the taskbar) and browse a couple of folders</span></label>
+    <label class="step"><input type="checkbox"> <span>Open <strong>Command Prompt</strong>: click Start, type <code>cmd</code>, press Enter</span></label>
+    <label class="step"><input type="checkbox"> <span>Type <code>whoami</code> and press Enter &mdash; note what it shows you</span></label>
+    <label class="step"><input type="checkbox"> <span>Type <code>ipconfig</code> and press Enter &mdash; take a screenshot. Don't worry about understanding the output yet, we'll unpack it in a future lesson</span></label>
+    <label class="step"><input type="checkbox"> <span>Find <strong>Network and Sharing Center</strong> (right-click the network icon in the bottom-right taskbar, or search for it from Start) &mdash; look, but don't change anything</span></label>
+  </section>
+
+  <section class="step-group">
+    <h2><span class="step-num">4</span> Shut down cleanly</h2>
+    <div class="teacher-note">
+      <strong>TEACHER — verify before class:</strong> confirm the exact stop/power-down flow for the current Range interface (older Cyber Range platforms use a "Stop" button on the exercise page). Replace this note once confirmed.
+    </div>
+    <label class="step"><input type="checkbox"> <span>Close the VM's browser tab</span></label>
+    <label class="step"><input type="checkbox"> <span>Return to the CYBERPortal exercise page and stop/power down the environment</span></label>
+  </section>
+
+  <div class="wrapup">
+    <h2>You're ready.</h2>
+    <p>Next time you're in a VM, you'll be configuring an actual subnet &mdash; the login, launch, and navigation part won't be new anymore.</p>
+  </div>
+</main>
+
+<footer class="pagefoot">AP Networking &middot; U2L04 &middot; Windows VM Orientation</footer>
+
+<script>
+  const boxes = document.querySelectorAll('input[type="checkbox"]');
+  document.getElementById('progressTotal').textContent = boxes.length;
+  function updateProgress() {
+    let done = 0;
+    boxes.forEach(b => { if (b.checked) done++; });
+    document.getElementById('progressCount').textContent = done;
+    const pct = boxes.length ? Math.round((done / boxes.length) * 100) : 0;
+    document.getElementById('progressFill').style.width = pct + '%';
+  }
+  boxes.forEach(b => {
+    b.addEventListener('change', () => {
+      const span = b.nextElementSibling;
+      if (b.checked) { span.classList.add('done'); } else { span.classList.remove('done'); }
+      updateProgress();
+    });
+  });
+  updateProgress();
+</script>
+
+</body>
+</html>
