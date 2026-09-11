@@ -3,16 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Smash Tournament Bracket</title>
+<title>Open Ladder</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders:wght@700;800&display=swap" rel="stylesheet">
 <style>
   :root {
-    --forest: #2E6822;   /* jersey shoulders/sides, wordmark "LE GRAND" */
-    --deep: #123816;     /* tonal halftone fade */
-    --gold: #E8C838;     /* primary accent — cuffs, nameplate */
-    --orange: #F89800;   /* reserved for logo reproductions only */
-    --ink: #0A0A0A;      /* jersey body / background */
+    --forest: #2E6822;
+    --deep: #123816;
+    --gold: #E8C838;
+    --orange: #F89800;
+    --ink: #0A0A0A;
     --paper: #FFFFFF;
     --slate: #386860;
     --panel: #111311;
@@ -28,37 +28,26 @@
     color: var(--text);
     padding: 16px;
   }
-  .display-font { font-family: 'Big Shoulders', -apple-system, sans-serif; }
-
   .brand-bar {
-    font-family: 'Big Shoulders', sans-serif;
-    font-weight: 800;
-    font-size: 1.4rem;
-    text-transform: uppercase;
-    letter-spacing: 0.02em;
-    padding: 6px 2px 0;
+    font-family: 'Big Shoulders', sans-serif; font-weight: 800; font-size: 1.4rem;
+    text-transform: uppercase; letter-spacing: 0.02em; padding: 6px 2px 0;
   }
   .brand-bar .g { color: var(--forest); }
   .brand-bar .go { color: var(--gold); }
   .brand-bar .w { color: var(--paper); }
-
+  .breadcrumb { font-size: 0.75rem; color: var(--text-dim); margin-top: 4px; }
+  .breadcrumb a { color: var(--text-dim); text-decoration: underline; }
+  .breadcrumb a:hover { color: var(--gold); }
   .halftone-strip {
-    height: 10px;
-    margin: 8px 0 18px;
+    height: 10px; margin: 8px 0 18px;
     background-image: radial-gradient(circle, var(--deep) 1.4px, transparent 1.6px);
     background-size: 7px 7px;
     -webkit-mask-image: linear-gradient(to right, black 0%, transparent 85%);
             mask-image: linear-gradient(to right, black 0%, transparent 85%);
   }
-
   h1 {
-    font-family: 'Big Shoulders', sans-serif;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.02em;
-    font-size: 1.5rem;
-    margin: 0 0 4px;
-    color: var(--paper);
+    font-family: 'Big Shoulders', sans-serif; font-weight: 800; text-transform: uppercase;
+    letter-spacing: 0.02em; font-size: 1.5rem; margin: 0 0 4px; color: var(--paper);
   }
   .subtitle { color: var(--text-dim); margin-bottom: 20px; font-size: 0.9rem; }
   .status-banner {
@@ -77,25 +66,27 @@
   }
   .tab-btn.active { background: var(--gold); color: var(--ink); border-color: var(--gold); }
   .panel { background: var(--panel); border: 1px solid var(--panel-line); border-radius: 2px; padding: 16px; margin-bottom: 16px; }
-  .bracket-wrap { overflow-x: auto; }
-  .bracket-cols { display: flex; gap: 24px; min-width: max-content; padding-bottom: 8px; }
-  .bcol { display: flex; flex-direction: column; justify-content: space-around; min-width: 180px; }
-  .bcol h3 {
-    font-family: 'Big Shoulders', sans-serif; font-weight: 700;
-    font-size: 0.8rem; color: var(--gold); text-transform: uppercase; letter-spacing: 0.08em;
-    margin: 0 0 10px; border-bottom: 2px solid var(--panel-line); padding-bottom: 4px;
+
+  table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+  th {
+    font-family: 'Big Shoulders', sans-serif; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.05em; font-size: 0.75rem; color: var(--gold);
+    text-align: left; padding: 8px 10px; border-bottom: 2px solid var(--panel-line);
   }
-  .match-card {
-    background: var(--ink); border-radius: 2px; padding: 8px 10px; margin-bottom: 14px;
-    border: 2px solid var(--panel-line); font-size: 0.85rem;
+  td { padding: 8px 10px; border-bottom: 1px solid var(--panel-line); }
+  tr:first-child td { position: relative; }
+  .rank { font-family: 'Big Shoulders', sans-serif; font-weight: 800; color: var(--text-dim); width: 2em; }
+  .rank.first { color: var(--gold); }
+
+  .match-row {
+    display: flex; justify-content: space-between; align-items: center;
+    background: var(--ink); border: 2px solid var(--panel-line); border-radius: 2px;
+    padding: 10px 12px; margin-bottom: 8px; font-size: 0.85rem;
   }
-  .match-card.reported { border-color: var(--forest); }
-  .match-card.ready { border-color: var(--gold); }
-  .player-row { display: flex; justify-content: space-between; padding: 3px 0; }
-  .player-row.winner { color: var(--gold); font-weight: 700; }
-  .player-row .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 120px; }
-  .tbd { color: var(--text-dim); font-style: italic; }
-  .match-meta { font-size: 0.7rem; color: var(--text-dim); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.03em; }
+  .match-row.reported { border-color: var(--forest); }
+  .match-row .players { flex: 1; }
+  .match-row .players .winner { color: var(--gold); font-weight: 700; }
+  .match-row .meta { color: var(--text-dim); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.03em; }
 
   .queue-item {
     display: flex; justify-content: space-between; align-items: center;
@@ -124,23 +115,36 @@
 <body>
 
 <div class="brand-bar"><span class="g">LE GRAND</span> <span class="go">BULLDOG</span> <span class="w">ESPORTS</span></div>
+<div class="breadcrumb"><a href="https://whatwasithinking.us/esports/">Esports</a> / <a href="https://whatwasithinking.us/esports/active_tournaments/">Active Tournaments</a> / Open Ladder</div>
 <div class="halftone-strip"></div>
 
-<h1 id="title">Smash Tournament Bracket</h1>
-<div class="subtitle">Live results — sign in with your school account to report a match.</div>
+<h1 id="title">Open Ladder</h1>
+<div class="subtitle">Every match is available from day one — play in any order, best of 3 per match. Sign in with your school account to report a match.</div>
 <div class="status-banner" id="statusBanner">Loading tournament data…</div>
 
 <div class="tabs">
-  <button class="tab-btn active" data-tab="bracket">Bracket</button>
+  <button class="tab-btn active" data-tab="standings">Standings</button>
+  <button class="tab-btn" data-tab="matches">All Matches</button>
   <button class="tab-btn" data-tab="report">Report a Result</button>
 </div>
 
-<div id="tab-bracket" class="panel">
+<div id="tab-standings" class="panel">
   <div class="refresh-row">
-    <strong>Winners &amp; Losers Bracket</strong>
+    <strong>Standings</strong>
     <button onclick="loadState()">Refresh</button>
   </div>
-  <div class="bracket-wrap"><div class="bracket-cols" id="bracketCols"></div></div>
+  <table id="standingsTable">
+    <thead><tr><th>#</th><th>Player</th><th>W</th><th>L</th><th>Played</th></tr></thead>
+    <tbody id="standingsBody"></tbody>
+  </table>
+</div>
+
+<div id="tab-matches" class="panel" style="display:none;">
+  <div class="refresh-row">
+    <strong>All Matches</strong>
+    <button onclick="loadState()">Refresh</button>
+  </div>
+  <div id="matchesList"></div>
 </div>
 
 <div id="tab-report" class="panel" style="display:none;">
@@ -150,18 +154,16 @@
   </div>
   <div class="subtitle" style="margin-bottom:14px;">
     Results are reported through the official Google Form (opens in a new tab,
-    signed in with your school account) — not on this page directly. Pick
-    your match below to jump straight to the Form.
+    signed in with your school account) — not on this page directly.
   </div>
   <div id="queueList"></div>
 </div>
 
 <script>
   // ---- CONFIGURE THIS ----
-  const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbyx9qTRbfc_-r20NMQnQl5erjDoSe-h3bQvMtsKK5uyXMJJpLIZtiSRzHhVkNcsRMFLsA/exec";
+  const WEBAPP_URL = "PASTE_YOUR_LADDER_APPS_SCRIPT_WEB_APP_URL_HERE";
   // -------------------------
 
-  let currentMatches = [];
   let resultFormUrl = '';
 
   document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -169,8 +171,9 @@
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       const tab = btn.dataset.tab;
-      document.getElementById('tab-bracket').style.display = tab === 'bracket' ? 'block' : 'none';
-      document.getElementById('tab-report').style.display = tab === 'report' ? 'block' : 'none';
+      ['standings', 'matches', 'report'].forEach(t => {
+        document.getElementById('tab-' + t).style.display = (t === tab) ? 'block' : 'none';
+      });
     });
   });
 
@@ -180,10 +183,10 @@
       const res = await fetch(WEBAPP_URL + '?action=state');
       const data = await res.json();
       if (!data.ok) throw new Error(data.error || 'Failed to load');
-      currentMatches = data.matches;
       resultFormUrl = data.config.ResultFormUrl || '';
       renderStatus(data.config);
-      renderBracket(data.matches);
+      renderStandings(data.standings);
+      renderMatches(data.matches);
       renderQueue(data.matches);
     } catch (err) {
       document.getElementById('statusBanner').textContent = 'Could not load tournament data. ' + err.message;
@@ -191,47 +194,51 @@
   }
 
   function renderStatus(cfg) {
-    document.getElementById('title').textContent = cfg.TournamentName || 'Smash Tournament Bracket';
+    document.getElementById('title').textContent = cfg.TournamentName || 'Open Ladder';
     const statusLabel = {
-      signup: 'Sign-ups open — bracket not generated yet.',
-      in_progress: 'Tournament in progress.',
-      complete: 'Tournament complete! 🏆'
+      signup: 'Sign-ups open — ladder not generated yet.',
+      in_progress: 'Ladder in progress.',
+      complete: 'Ladder complete! 🏆'
     }[cfg.Status] || 'Status: ' + cfg.Status;
     document.getElementById('statusBanner').textContent = statusLabel;
   }
 
-  function renderBracket(matches) {
-    const wrap = document.getElementById('bracketCols');
-    wrap.innerHTML = '';
-    ['W', 'L', 'GF'].forEach(bracket => {
-      const bracketMatches = matches.filter(m => m.Bracket === bracket && m.Status !== 'void');
-      if (!bracketMatches.length) return;
-      const rounds = [...new Set(bracketMatches.map(m => m.Round))].sort((a, b) => a - b);
-      rounds.forEach(round => {
-        const col = document.createElement('div');
-        col.className = 'bcol';
-        const label = bracket === 'W' ? 'Winners R' + round : bracket === 'L' ? 'Losers R' + round : 'Grand Final' + (round === 2 ? ' (Reset)' : '');
-        col.innerHTML = '<h3>' + label + '</h3>';
-        bracketMatches.filter(m => m.Round === round).forEach(m => {
-          col.appendChild(renderMatchCard(m));
-        });
-        wrap.appendChild(col);
-      });
+  function renderStandings(standings) {
+    const body = document.getElementById('standingsBody');
+    body.innerHTML = '';
+    if (!standings || !standings.length) {
+      body.innerHTML = '<tr><td colspan="5" class="empty-state">No standings yet.</td></tr>';
+      return;
+    }
+    standings.forEach((s, i) => {
+      const tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td class="rank ' + (i === 0 ? 'first' : '') + '">' + (i + 1) + '</td>' +
+        '<td>' + s.gamertag + '</td>' +
+        '<td>' + s.wins + '</td>' +
+        '<td>' + s.losses + '</td>' +
+        '<td>' + s.played + '</td>';
+      body.appendChild(tr);
     });
   }
 
-  function renderMatchCard(m) {
-    const card = document.createElement('div');
-    card.className = 'match-card ' + (m.Status === 'reported' || m.Status === 'bye' ? 'reported' : m.Status === 'ready' ? 'ready' : '');
-    const p1 = m.Player1 || 'TBD';
-    const p2 = m.Player2 || 'TBD';
-    const p1Win = m.Winner && m.Winner === m.Player1;
-    const p2Win = m.Winner && m.Winner === m.Player2;
-    card.innerHTML =
-      '<div class="player-row ' + (p1Win ? 'winner' : '') + '"><span class="name ' + (!m.Player1 ? 'tbd' : '') + '">' + p1 + '</span></div>' +
-      '<div class="player-row ' + (p2Win ? 'winner' : '') + '"><span class="name ' + (!m.Player2 ? 'tbd' : '') + '">' + p2 + '</span></div>' +
-      '<div class="match-meta">' + (m.Score || (m.Status === 'bye' ? 'Bye' : m.Status)) + '</div>';
-    return card;
+  function renderMatches(matches) {
+    const list = document.getElementById('matchesList');
+    list.innerHTML = '';
+    if (!matches.length) {
+      list.innerHTML = '<div class="empty-state">No matches generated yet.</div>';
+      return;
+    }
+    matches.forEach(m => {
+      const row = document.createElement('div');
+      row.className = 'match-row ' + (m.Status === 'reported' ? 'reported' : '');
+      const p1 = m.Winner === m.Player1 ? '<span class="winner">' + m.Player1 + '</span>' : m.Player1;
+      const p2 = m.Winner === m.Player2 ? '<span class="winner">' + m.Player2 + '</span>' : m.Player2;
+      row.innerHTML =
+        '<span class="players">' + p1 + ' <span style="color:var(--text-dim)">vs</span> ' + p2 + '</span>' +
+        '<span class="meta">' + (m.Score || m.Status) + '</span>';
+      list.appendChild(row);
+    });
   }
 
   function renderQueue(matches) {
