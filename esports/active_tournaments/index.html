@@ -9,22 +9,32 @@
 <link rel="stylesheet" href="/esports/style.css">
 </head>
 <body>
-  <!-- Hand-maintained, unlike class_lessons/index.html — update this list by
-       hand as tournaments launch or wrap up; nothing here auto-generates. -->
+  <!-- Full list, every status. esports/index.html reads the same
+       tournaments.js and shows only the "active" ones directly on the
+       landing page -- this page is the complete reference. -->
   <div class="bd-chevron"></div>
   <div class="wrap">
     <div class="crumb"><a href="../../">Class Resources</a> / <a href="../">Esports</a> / Active Tournaments</div>
     <h1>Active Tournaments</h1>
-    <div class="grid">
-      <a class="card" href="smash-tournament/">
-        <h2>Smash Double-Elimination Bracket &rarr;</h2>
-        <p>Live bracket, results reported via Google Form.</p>
-      </a>
-      <a class="card" href="open-ladder/">
-        <h2>Open Ladder (Round Robin) &rarr;</h2>
-        <p>Every player vs. every player, best of 3, standings updated live.</p>
-      </a>
-    </div>
+    <div class="grid" id="tournamentGrid"></div>
   </div>
+
+<script src="/esports/active_tournaments/tournaments.js"></script>
+<script>
+  const STATUS_LABEL = { active: 'Active', upcoming: 'Upcoming', archived: 'Archived' };
+  const grid = document.getElementById('tournamentGrid');
+  if (!TOURNAMENTS.length) {
+    grid.innerHTML = '<p>No tournaments posted yet — check back soon.</p>';
+  } else {
+    TOURNAMENTS.forEach(t => {
+      const a = document.createElement('a');
+      a.className = 'card';
+      a.href = t.path;
+      a.innerHTML = '<h2>' + t.title + ' &rarr; <span class="bd-unit-chip">' +
+        (STATUS_LABEL[t.status] || t.status) + '</span></h2><p>' + t.description + '</p>';
+      grid.appendChild(a);
+    });
+  }
+</script>
 </body>
 </html>

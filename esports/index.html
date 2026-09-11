@@ -13,12 +13,26 @@
   <div class="wrap">
     <div class="crumb"><a href="../">Class Resources</a> / Esports</div>
     <h1><span class="bd-word-green">Le Grand</span> <span class="bd-word-gold">Bulldog</span> Esports</h1>
-    <div class="grid">
-      <a class="card" href="active_tournaments/">
-        <h2>Active Tournaments &rarr;</h2>
-        <p>Live brackets, ladders, and results for tournaments currently running.</p>
-      </a>
-    </div>
+    <h2>Active Tournaments</h2>
+    <div class="grid" id="tournamentGrid"></div>
+    <div class="crumb"><a href="active_tournaments/">See all tournaments, including upcoming &amp; archived &rarr;</a></div>
   </div>
+
+<script src="/esports/active_tournaments/tournaments.js"></script>
+<script>
+  const grid = document.getElementById('tournamentGrid');
+  const active = TOURNAMENTS.filter(t => t.status === 'active');
+  if (!active.length) {
+    grid.innerHTML = '<p>No tournaments are currently active — check back soon.</p>';
+  } else {
+    active.forEach(t => {
+      const a = document.createElement('a');
+      a.className = 'card';
+      a.href = 'active_tournaments/' + t.path;
+      a.innerHTML = '<h2>' + t.title + ' &rarr;</h2><p>' + t.description + '</p>';
+      grid.appendChild(a);
+    });
+  }
+</script>
 </body>
 </html>
