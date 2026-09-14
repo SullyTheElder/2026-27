@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Predict the Next Word</title>
+<style>
+  :root {
+    --navy: #0F1B2D; --teal: #0E7C7B; --mint: #6FC3B4; --amber: #C97A2B;
+    --light: #EAF4F4; --gray: #9AA6A6; --danger: #B5473A; --white: #FFFFFF;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: Calibri, "Segoe UI", sans-serif; background: var(--light); color: #1a1a1a; min-height: 100vh; }
+  #app { max-width: 900px; margin: 0 auto; padding: 18px 20px 40px; }
+
+  header {
+    background: var(--navy); color: white; border-radius: 14px; padding: 16px 22px;
+    display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 14px;
+  }
+  header h1 { font-family: Cambria, Georgia, serif; font-size: 1.5rem; margin: 0; }
+  header .sub { font-size: 0.85rem; color: var(--mint); margin-top: 2px; }
+  .lang-toggle {
+    background: transparent; border: 1.5px solid var(--mint); color: var(--mint);
+    border-radius: 999px; padding: 6px 14px; font-size: 0.85rem; cursor: pointer; font-weight: 600;
+  }
+  .lang-toggle:hover { background: rgba(111,195,180,0.15); }
+
+  .progress-row { display: flex; gap: 6px; margin-bottom: 14px; }
+  .progress-dot { flex: 1; height: 8px; border-radius: 4px; background: #D7E4E4; }
+  .progress-dot.done { background: var(--teal); }
+  .progress-dot.current { background: var(--amber); }
+
+  .hook-box {
+    background: white; border-left: 4px solid var(--amber); border-radius: 10px;
+    padding: 14px 18px; margin-bottom: 16px; font-size: 0.98rem; line-height: 1.5;
+  }
+  .hook-box .es { display: block; font-style: italic; color: #666; font-size: 0.87rem; margin-top: 6px; }
+  .hook-box.compact { font-size: 0.9rem; padding: 10px 16px; }
+
+  .stage-label { font-size: 0.85rem; color: var(--teal); font-weight: 700; margin-bottom: 10px; }
+
+  .q-card { background: white; border-radius: 14px; padding: 26px 28px; box-shadow: 0 1px 3px rgba(15,27,45,0.08); margin-bottom: 16px; }
+  .q-sentence { font-size: 1.35rem; color: var(--navy); font-family: Cambria, Georgia, serif; margin-bottom: 6px; }
+  .q-sentence .es { display: block; font-style: italic; color: #888; font-size: 0.95rem; font-family: Calibri, sans-serif; margin-top: 6px; margin-bottom: 18px; }
+  .choices { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 18px; }
+  @media (max-width: 600px) { .choices { grid-template-columns: 1fr; } }
+  .choice-btn {
+    background: var(--light); border: 2px solid transparent; border-radius: 10px;
+    padding: 14px 16px; font-size: 1rem; cursor: pointer; text-align: left; transition: all 0.15s ease;
+  }
+  .choice-btn:hover { border-color: var(--teal); background: white; }
+  .choice-btn .es { display: block; font-style: italic; color: #777; font-size: 0.82rem; margin-top: 3px; }
+  .choice-btn.correct { background: #EAF6EA; border-color: #3F9142; }
+  .choice-btn.wrong { background: #FBEAE8; border-color: var(--danger); }
+  .choice-btn:disabled { cursor: default; }
+
+  .feedback-line { min-height: 26px; font-size: 0.92rem; color: #444; margin-top: 10px; }
+  .feedback-line.correct { color: #3F9142; font-weight: 600; }
+  .feedback-line.wrong { color: var(--danger); font-weight: 600; }
+
+  .action-row { display: flex; gap: 10px; margin-top: 4px; flex-wrap: wrap; align-items: center; }
+  button.primary {
+    background: var(--teal); color: white; border: none; border-radius: 8px;
+    padding: 11px 20px; font-size: 0.98rem; font-weight: 700; cursor: pointer;
+  }
+  button.primary:hover { background: #0b6362; }
+  button.primary:disabled { background: #C9D6D6; cursor: not-allowed; }
+  button.secondary {
+    background: transparent; color: var(--teal); border: 1.5px solid var(--teal);
+    border-radius: 8px; padding: 9px 16px; font-size: 0.9rem; font-weight: 600; cursor: pointer;
+  }
+
+  .overlay { position: fixed; inset: 0; background: rgba(15,27,45,0.55); display: flex; align-items: center; justify-content: center; padding: 20px; z-index: 20; }
+  .overlay.hidden { display: none; }
+  .modal { background: white; border-radius: 16px; max-width: 620px; width: 100%; padding: 28px 26px; max-height: 86vh; overflow-y: auto; }
+  .modal h2 { font-family: Cambria, Georgia, serif; color: var(--navy); margin-top: 0; }
+  .modal .es-p { display: block; font-style: italic; color: #666; font-size: 0.9rem; margin-top: 8px; }
+  .kickoff-box { background: var(--navy); color: white; border-radius: 12px; padding: 16px 18px; margin-top: 16px; }
+  .kickoff-box h3 { margin: 0 0 8px; color: var(--mint); font-family: Cambria, Georgia, serif; }
+  .kickoff-box .es { display: block; font-style: italic; color: #AFC7C7; font-size: 0.85rem; margin-top: 6px; }
+
+  /* Export screen */
+  #exportScreen { display: none; }
+  #exportScreen.active { display: block; }
+  #app.export-mode > header, #app.export-mode > .progress-row, #app.export-mode > .hook-box,
+  #app.export-mode > .stage-label, #app.export-mode > .q-card, #app.export-mode > .action-row { display: none; }
+  .export-card { background: white; border-radius: 14px; padding: 20px 24px; box-shadow: 0 1px 3px rgba(15,27,45,0.08); margin-bottom: 16px; }
+  .export-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 10px; }
+  .export-title { font-family: Cambria, Georgia, serif; color: var(--navy); font-size: 1.7rem; margin: 0; }
+  .export-subtitle { color: var(--teal); font-size: 0.95rem; margin-top: 2px; }
+  .name-row { display: flex; gap: 16px; flex-wrap: wrap; margin: 14px 0 4px; }
+  .name-row label { font-size: 0.85rem; color: #555; display: block; margin-bottom: 4px; }
+  .name-row .es { display: block; font-style: italic; color: #888; font-size: 0.78rem; }
+  .name-row input {
+    border: none; border-bottom: 2px solid #C7D6D6; background: transparent;
+    font-size: 1rem; padding: 4px 2px; font-family: Calibri, sans-serif; color: #111;
+  }
+  .name-row input:focus { outline: none; border-bottom-color: var(--teal); }
+  .export-section-title { font-family: Cambria, Georgia, serif; color: var(--teal); font-size: 1.15rem; margin: 6px 0 10px; }
+  .export-p { font-size: 0.9rem; color: #444; margin: 0 0 10px; }
+  .export-p .es { display: block; font-style: italic; color: #777; font-size: 0.84rem; }
+  .recap-list { list-style: none; padding: 0; margin: 0; }
+  .recap-list li { padding: 7px 0; border-bottom: 1px solid #EEF4F4; font-size: 0.88rem; }
+  .recap-list .arrow { color: var(--amber); font-weight: 700; }
+  .reflection-block { margin-top: 6px; }
+  .reflection-q { font-size: 0.92rem; color: #222; margin-bottom: 2px; }
+  .reflection-block textarea {
+    width: 100%; min-height: 56px; border: 1.5px solid #C7D6D6; border-radius: 8px;
+    padding: 8px 10px; font-family: Calibri, sans-serif; font-size: 0.92rem; resize: vertical; margin-bottom: 14px;
+  }
+  .reflection-block textarea:focus { outline: none; border-color: var(--teal); }
+  .print-btn-row { display: flex; gap: 10px; margin-top: 6px; }
+  @media print {
+    body { background: white; }
+    .lang-toggle, .print-btn-row { display: none !important; }
+    .export-card { box-shadow: none; border: 1px solid #ddd; page-break-inside: avoid; }
+    #app { max-width: 100%; padding: 0; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div>
+      <h1 id="title">Predict the Next Word</h1>
+      <div class="sub" id="subtitle">Unit 3 — AI Literacy</div>
+    </div>
+    <button class="lang-toggle" id="langToggle" onclick="toggleLang()">Español</button>
+  </header>
+
+  <div class="progress-row" id="progressRow"></div>
+  <div class="hook-box" id="hookBox"></div>
+  <div class="stage-label" id="stageLabel"></div>
+
+  <div class="q-card" id="qCard">
+    <div class="q-sentence" id="qSentence"></div>
+    <div class="choices" id="choicesArea"></div>
+    <div class="feedback-line" id="feedbackLine"></div>
+  </div>
+
+  <div class="action-row">
+    <button class="primary" id="nextBtn" onclick="nextQuestion()" disabled>Next</button>
+    <button class="secondary" id="turnInNowBtn" onclick="confirmEarlyTurnIn()" style="border-color: var(--amber); color: var(--amber); margin-left: auto;"></button>
+  </div>
+
+  <div id="exportScreen">
+    <div class="export-card">
+      <div class="export-header">
+        <div>
+          <h2 class="export-title" id="exportTitle">Reflection Log</h2>
+          <div class="export-subtitle" id="exportSubtitle">Unit 3 — Predict the Next Word</div>
+        </div>
+        <button class="lang-toggle" style="border-color: var(--teal); color: var(--teal);" onclick="toggleLang()" id="exportLangToggle">Español</button>
+      </div>
+      <div class="name-row">
+        <div>
+          <label id="nameLabelEn">Name<span class="es" id="nameLabelEs">Nombre</span></label>
+          <input type="text" id="studentName" size="28">
+        </div>
+        <div>
+          <label id="periodLabelEn">Period<span class="es" id="periodLabelEs">Periodo</span></label>
+          <input type="text" id="studentPeriod" size="8">
+        </div>
+      </div>
+    </div>
+
+    <div class="export-card">
+      <div class="export-section-title" id="recapTitle">Examples You Worked Through</div>
+      <p class="export-p" id="recapDesc">A quick reference of every sentence you predicted today.<span class="es" id="recapDescEs"></span></p>
+      <ul class="recap-list" id="recapList"></ul>
+    </div>
+
+    <div class="export-card">
+      <div class="export-section-title" id="reflectionTitle">Reflection</div>
+      <div class="reflection-block" id="reflectionBlock"></div>
+    </div>
+
+    <div class="print-btn-row">
+      <button class="primary" onclick="window.print()" id="printBtn">Print / Save as PDF</button>
+      <button class="secondary" onclick="backToGame()" id="backBtn">Back to game</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay hidden" id="overlay">
+  <div class="modal" id="modalContent"></div>
+</div>
+
+<script>
+// All item text lives in flat arrays with {en, es} pairs, independent of UI strings, to avoid any lang-lookup mismatch.
+const ROUND1 = [
+  { sentence_en: "Peanut butter and ___", sentence_es: "Mantequilla de maní y ___",
+    choices: [ {en:"jelly", es:"mermelada", ok:true}, {en:"rocks", es:"rocas"}, {en:"Tuesday", es:"martes"}, {en:"homework", es:"tarea"} ] },
+  { sentence_en: "Once upon a ___", sentence_es: "Había una ___",
+    choices: [ {en:"time", es:"vez", ok:true}, {en:"banana", es:"banana"}, {en:"printer", es:"impresora"}, {en:"Wednesday", es:"miércoles"} ] },
+  { sentence_en: "The sun rises in the ___", sentence_es: "El sol sale por el ___",
+    choices: [ {en:"east", es:"este", ok:true}, {en:"refrigerator", es:"refrigerador"}, {en:"Thursday", es:"jueves"}, {en:"homework", es:"tarea"} ] },
+  { sentence_en: "Don't judge a book by its ___", sentence_es: "No juzgues un libro por su ___",
+    choices: [ {en:"cover", es:"portada", ok:true}, {en:"engine", es:"motor"}, {en:"Wi-Fi", es:"Wi-Fi"}, {en:"backpack", es:"mochila"} ] },
+  { sentence_en: "Better late than ___", sentence_es: "Más vale tarde que ___",
+    choices: [ {en:"never", es:"nunca", ok:true}, {en:"pizza", es:"pizza"}, {en:"blue", es:"azul"}, {en:"Tuesday", es:"martes"} ] },
+  { sentence_en: "You can't teach an old dog new ___", sentence_es: "A un perro viejo no se le enseñan trucos ___",
+    choices: [ {en:"tricks", es:"nuevos", ok:true}, {en:"math", es:"matemáticas"}, {en:"Wi-Fi", es:"Wi-Fi"}, {en:"socks", es:"calcetines"} ] }
+];
+
+const ROUND2 = [
+  { sentence_en: "I went to the store to buy some ___", sentence_es: "Fui a la tienda a comprar ___",
+    choices: [ {en:"milk", es:"leche", ok:true}, {en:"thunderstorms", es:"tormentas"}, {en:"Tuesday", es:"martes"}, {en:"silence", es:"silencio"} ] },
+  { sentence_en: "After a long day at school, I like to ___", sentence_es: "Después de un largo día en la escuela, me gusta ___",
+    choices: [ {en:"relax", es:"relajarme", ok:true}, {en:"multiply", es:"multiplicar"}, {en:"evaporate", es:"evaporarme"}, {en:"file taxes", es:"declarar impuestos"} ] },
+  { sentence_en: "The weather today is very ___", sentence_es: "El clima hoy está muy ___",
+    choices: [ {en:"sunny", es:"soleado", ok:true}, {en:"purple", es:"morado"}, {en:"Tuesday", es:"martes"}, {en:"asleep", es:"dormido"} ] },
+  { sentence_en: "He picked up the phone and said ___", sentence_es: "Levantó el teléfono y dijo ___",
+    choices: [ {en:"hello", es:"hola", ok:true}, {en:"spaghetti", es:"espagueti"}, {en:"purple", es:"morado"}, {en:"1847", es:"1847"} ] },
+  { sentence_en: "The recipe calls for two cups of ___", sentence_es: "La receta pide dos tazas de ___",
+    choices: [ {en:"flour", es:"harina", ok:true}, {en:"Tuesdays", es:"martes"}, {en:"gravity", es:"gravedad"}, {en:"silence", es:"silencio"} ] },
+  { sentence_en: "She grabbed her umbrella because it was ___", sentence_es: "Agarró su paraguas porque estaba ___",
+    choices: [ {en:"raining", es:"lloviendo", ok:true}, {en:"Thursday", es:"jueves"}, {en:"delicious", es:"delicioso"}, {en:"asleep", es:"dormido"} ] }
+];
+
+const STR = {
+  en: {
+    title: "Predict the Next Word",
+    subtitle: "Unit 3 — AI Literacy",
+    langBtn: "Español",
+    hook: "For each sentence, pick the word that comes next. Don't overthink it \u2014 go with your gut.",
+    hookOther: "Para cada oración, elige la palabra que sigue. No lo pienses demasiado \u2014 ve con tu instinto.",
+    hookR2: "Round 2: same idea, less obvious phrases. Still trust your gut.",
+    hookR2Other: "Ronda 2: la misma idea, frases menos obvias. Sigue confiando en tu instinto.",
+    roundLabel: "Round {n} of 2",
+    nextBtn: "Next",
+    finishBtn: "See what this was really about",
+    turnInNowBtn: "Turn in now (haven't finished)",
+    confirmEarlyTurnIn: "You haven't finished both rounds yet. Turn in what you've completed so far?",
+    correctFb: "That's the most likely one!",
+    correctFbOther: "\u00a1Esa es la m\u00e1s probable!",
+    wrongFb: "Common guess \u2014 here's the most likely one:",
+    wrongFbOther: "Suposici\u00f3n com\u00fan \u2014 aqu\u00ed est\u00e1 la m\u00e1s probable:",
+    revealTitle: "Here's What You Just Did",
+    revealIntro: "You just predicted the most likely next word, over and over, using patterns you already know from a lifetime of hearing English. That's not a coincidence \u2014 it's basically what generative AI does, at a massive scale.",
+    revealIntroOther: "Acabas de predecir la palabra m\u00e1s probable, una y otra vez, usando patrones que ya conoces de toda una vida escuchando ingl\u00e9s. Eso no es coincidencia \u2014 es b\u00e1sicamente lo que hace la IA generativa, a una escala masiva.",
+    revealBody: "A generative AI model like ChatGPT was trained on an enormous amount of text. It doesn't \u201cknow\u201d facts or \u201cthink\u201d the way you do \u2014 it predicts the most statistically likely next word, one word at a time, based on patterns in everything it read during training.",
+    revealBodyOther: "Un modelo de IA generativa como ChatGPT fue entrenado con una cantidad enorme de texto. No \u201csabe\u201d hechos ni \u201cpiensa\u201d como t\u00fa \u2014 predice la palabra siguiente m\u00e1s probable estad\u00edsticamente, una palabra a la vez, bas\u00e1ndose en patrones de todo lo que ley\u00f3 durante su entrenamiento.",
+    continueBtn: "Start Round 2",
+    finalTitle: "Round 2 Done!",
+    finalBody: "Notice something? \u201cMost likely\u201d isn't always the same as \u201ctrue.\u201d Sometimes the statistically common answer is flat-out wrong. That's exactly what we're digging into next week.",
+    finalBodyOther: "\u00bfNotaste algo? \u201cLo m\u00e1s probable\u201d no siempre es lo mismo que \u201cverdadero.\u201d A veces la respuesta estad\u00edsticamente com\u00fan est\u00e1 completamente equivocada. Eso es exactamente lo que vamos a explorar la pr\u00f3xima semana.",
+    kickoffTitle: "Now Turn It In: Reflection Log",
+    kickoffBody: "Answer the reflection questions below, then print or save as PDF.",
+    kickoffBodyOther: "Responde las preguntas de reflexi\u00f3n de abajo, luego imprime o guarda como PDF.",
+    closeBtn: "Got it",
+    exportTitle: "Reflection Log",
+    exportSubtitle: "Unit 3 — Predict the Next Word",
+    nameLabel: "Name", periodLabel: "Period",
+    recapTitle: "Examples You Worked Through",
+    recapDesc: "A quick reference of every sentence you predicted today.",
+    reflectionTitle: "Reflection",
+    q1: "1. In your own words, what does it mean for an AI to \u201cpredict\u201d text instead of \u201cknow\u201d it?",
+    q2: "2. Find one example from today where several answers felt almost equally likely. What does that tell you about how confident an AI should really be?",
+    q3: "3. One question you now have about how AI actually works:",
+    printBtn: "Print / Save as PDF",
+    backBtn: "Back to game"
+  },
+  es: {
+    title: "Predice la Siguiente Palabra",
+    subtitle: "Unidad 3 — Alfabetización en IA",
+    langBtn: "English",
+    hook: "Para cada oraci\u00f3n, elige la palabra que sigue. No lo pienses demasiado \u2014 ve con tu instinto.",
+    hookOther: "For each sentence, pick the word that comes next. Don't overthink it \u2014 go with your gut.",
+    hookR2: "Ronda 2: la misma idea, frases menos obvias. Sigue confiando en tu instinto.",
+    hookR2Other: "Round 2: same idea, less obvious phrases. Still trust your gut.",
+    roundLabel: "Ronda {n} de 2",
+    nextBtn: "Siguiente",
+    finishBtn: "Ver de qu\u00e9 se trataba esto realmente",
+    turnInNowBtn: "Entregar ahora (no he terminado)",
+    confirmEarlyTurnIn: "Todav\u00eda no has terminado las dos rondas. \u00bfQuieres entregar lo que has completado hasta ahora?",
+    correctFb: "\u00a1Esa es la m\u00e1s probable!",
+    correctFbOther: "That's the most likely one!",
+    wrongFb: "Suposici\u00f3n com\u00fan \u2014 aqu\u00ed est\u00e1 la m\u00e1s probable:",
+    wrongFbOther: "Common guess \u2014 here's the most likely one:",
+    revealTitle: "Esto es lo que Acabas de Hacer",
+    revealIntro: "Acabas de predecir la palabra m\u00e1s probable, una y otra vez, usando patrones que ya conoces de toda una vida escuchando espa\u00f1ol o ingl\u00e9s. Eso no es coincidencia \u2014 es b\u00e1sicamente lo que hace la IA generativa, a una escala masiva.",
+    revealIntroOther: "You just predicted the most likely next word, over and over, using patterns you already know from a lifetime of hearing language. That's not a coincidence \u2014 it's basically what generative AI does, at a massive scale.",
+    revealBody: "Un modelo de IA generativa como ChatGPT fue entrenado con una cantidad enorme de texto. No \u201csabe\u201d hechos ni \u201cpiensa\u201d como t\u00fa \u2014 predice la palabra siguiente m\u00e1s probable estad\u00edsticamente, una palabra a la vez, bas\u00e1ndose en patrones de todo lo que ley\u00f3 durante su entrenamiento.",
+    revealBodyOther: "A generative AI model like ChatGPT was trained on an enormous amount of text. It doesn't \u201cknow\u201d facts or \u201cthink\u201d the way you do \u2014 it predicts the most statistically likely next word, one word at a time, based on patterns in everything it read during training.",
+    continueBtn: "Comenzar Ronda 2",
+    finalTitle: "\u00a1Ronda 2 Completada!",
+    finalBody: "\u00bfNotaste algo? \u201cLo m\u00e1s probable\u201d no siempre es lo mismo que \u201cverdadero.\u201d A veces la respuesta estad\u00edsticamente com\u00fan est\u00e1 completamente equivocada. Eso es exactamente lo que vamos a explorar la pr\u00f3xima semana.",
+    finalBodyOther: "Notice something? \u201cMost likely\u201d isn't always the same as \u201ctrue.\u201d Sometimes the statistically common answer is flat-out wrong. That's exactly what we're digging into next week.",
+    kickoffTitle: "Ahora Entr\u00e9galo: Registro de Reflexi\u00f3n",
+    kickoffBody: "Responde las preguntas de reflexi\u00f3n de abajo, luego imprime o guarda como PDF.",
+    kickoffBodyOther: "Answer the reflection questions below, then print or save as PDF.",
+    closeBtn: "Entendido",
+    exportTitle: "Registro de Reflexi\u00f3n",
+    exportSubtitle: "Unidad 3 — Predice la Siguiente Palabra",
+    nameLabel: "Nombre", periodLabel: "Periodo",
+    recapTitle: "Ejemplos que Trabajaste",
+    recapDesc: "Una referencia r\u00e1pida de cada oraci\u00f3n que predijiste hoy.",
+    reflectionTitle: "Reflexi\u00f3n",
+    q1: "1. En tus propias palabras, \u00bfqu\u00e9 significa que una IA \u201cprediga\u201d texto en lugar de \u201csaberlo\u201d?",
+    q2: "2. Encuentra un ejemplo de hoy donde varias respuestas se sintieron casi igual de probables. \u00bfQu\u00e9 te dice eso sobre qu\u00e9 tan segura deber\u00eda estar realmente una IA?",
+    q3: "3. Una pregunta que ahora tienes sobre c\u00f3mo funciona realmente la IA:",
+    printBtn: "Imprimir / Guardar como PDF",
+    backBtn: "Volver al juego"
+  }
+};
+
+let lang = "en";
+let round = 1; // 1 or 2
+let qIndex = 0;
+let answered = false;
+let answeredLog = []; // {sentence_en, sentence_es, correct_en, correct_es}
+
+function t(key, vars) {
+  let s = STR[lang][key];
+  if (vars) Object.keys(vars).forEach(k => s = s.replace("{" + k + "}", vars[k]));
+  return s;
+}
+function currentSet() { return round === 1 ? ROUND1 : ROUND2; }
+
+function toggleLang() {
+  lang = lang === "en" ? "es" : "en";
+  if (document.getElementById("exportScreen").classList.contains("active")) {
+    renderExportScreen();
+  } else {
+    renderQuestion();
+  }
+}
+
+function shuffleChoices(choices) {
+  const a = choices.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+let shuffledChoices = [];
+
+function renderQuestion() {
+  const set = currentSet();
+  const q = set[qIndex];
+  answered = false;
+
+  document.getElementById("title").textContent = t("title");
+  document.getElementById("subtitle").textContent = t("subtitle");
+  document.getElementById("langToggle").textContent = t("langBtn");
+  document.getElementById("stageLabel").textContent = t("roundLabel", { n: round }) + " \u2014 " + (qIndex + 1) + "/" + set.length;
+  document.getElementById("turnInNowBtn").textContent = t("turnInNowBtn");
+
+  const hookBox = document.getElementById("hookBox");
+  if (round === 1) {
+    hookBox.className = "hook-box";
+    hookBox.innerHTML = `${t("hook")}<span class="es">${t("hookOther")}</span>`;
+  } else {
+    hookBox.className = "hook-box compact";
+    hookBox.innerHTML = `${t("hookR2")}<span class="es">${t("hookR2Other")}</span>`;
+  }
+
+  // progress dots: total questions across both rounds
+  const totalQ = ROUND1.length + ROUND2.length;
+  const doneQ = round === 1 ? qIndex : ROUND1.length + qIndex;
+  const progressRow = document.getElementById("progressRow");
+  progressRow.innerHTML = "";
+  for (let i = 0; i < totalQ; i++) {
+    const dot = document.createElement("div");
+    dot.className = "progress-dot" + (i < doneQ ? " done" : i === doneQ ? " current" : "");
+    progressRow.appendChild(dot);
+  }
+
+  document.getElementById("qSentence").innerHTML = `${q["sentence_" + lang]}<span class="es">${q["sentence_" + (lang === "en" ? "es" : "en")]}</span>`;
+
+  shuffledChoices = shuffleChoices(q.choices);
+  const choicesArea = document.getElementById("choicesArea");
+  choicesArea.innerHTML = "";
+  shuffledChoices.forEach((c) => {
+    const btn = document.createElement("button");
+    btn.className = "choice-btn";
+    const other = lang === "en" ? "es" : "en";
+    btn.innerHTML = `${c[lang]}<span class="es">${c[other]}</span>`;
+    btn.onclick = () => selectChoice(c, btn);
+    choicesArea.appendChild(btn);
+  });
+
+  document.getElementById("feedbackLine").textContent = "";
+  document.getElementById("feedbackLine").className = "feedback-line";
+  document.getElementById("nextBtn").textContent = t("nextBtn");
+  document.getElementById("nextBtn").disabled = true;
+}
+
+function selectChoice(choice, btnEl) {
+  if (answered) return;
+  answered = true;
+  const set = currentSet();
+  const q = set[qIndex];
+  const buttons = document.querySelectorAll(".choice-btn");
+  const correctChoice = q.choices.find(c => c.ok);
+
+  buttons.forEach((b) => { b.disabled = true; });
+
+  if (choice.ok) {
+    btnEl.classList.add("correct");
+    document.getElementById("feedbackLine").textContent = t("correctFb");
+    document.getElementById("feedbackLine").className = "feedback-line correct";
+  } else {
+    btnEl.classList.add("wrong");
+    // highlight correct one too
+    buttons.forEach((b) => {
+      if (b.textContent.trim().startsWith(correctChoice[lang])) b.classList.add("correct");
+    });
+    document.getElementById("feedbackLine").innerHTML = `${t("wrongFb")} <b>${correctChoice[lang]}</b>`;
+    document.getElementById("feedbackLine").className = "feedback-line wrong";
+  }
+
+  answeredLog.push({
+    sentence_en: q.sentence_en, sentence_es: q.sentence_es,
+    correct_en: correctChoice.en, correct_es: correctChoice.es
+  });
+
+  const set2 = currentSet();
+  const isLastInRound = qIndex === set2.length - 1;
+  document.getElementById("nextBtn").textContent = isLastInRound ? t("finishBtn") : t("nextBtn");
+  document.getElementById("nextBtn").disabled = false;
+}
+
+function nextQuestion() {
+  const set = currentSet();
+  if (qIndex < set.length - 1) {
+    qIndex++;
+    renderQuestion();
+  } else {
+    // round finished
+    if (round === 1) {
+      showReveal();
+    } else {
+      showFinal();
+    }
+  }
+}
+
+function showReveal() {
+  const overlay = document.getElementById("overlay");
+  const modal = document.getElementById("modalContent");
+  const other = lang === "en" ? "es" : "en";
+  modal.innerHTML = `
+    <h2>${t("revealTitle")}</h2>
+    <p>${t("revealIntro")}<span class="es-p">${STR[other].revealIntro}</span></p>
+    <p>${t("revealBody")}<span class="es-p">${STR[other].revealBody}</span></p>
+    <div style="margin-top:16px;"><button class="primary" id="closeModalBtn">${t("continueBtn")}</button></div>
+  `;
+  document.getElementById("closeModalBtn").onclick = () => {
+    overlay.classList.add("hidden");
+    round = 2; qIndex = 0;
+    renderQuestion();
+  };
+  overlay.classList.remove("hidden");
+}
+
+function showFinal() {
+  const overlay = document.getElementById("overlay");
+  const modal = document.getElementById("modalContent");
+  const other = lang === "en" ? "es" : "en";
+  modal.innerHTML = `
+    <h2>${t("finalTitle")}</h2>
+    <p>${t("finalBody")}<span class="es-p">${STR[other].finalBody}</span></p>
+    <div class="kickoff-box">
+      <h3>${t("kickoffTitle")}</h3>
+      <div>${t("kickoffBody")}</div>
+      <span class="es">${STR[other].kickoffBody}</span>
+    </div>
+    <div style="margin-top:18px;"><button class="primary" id="closeModalBtn">${t("closeBtn")}</button></div>
+  `;
+  document.getElementById("closeModalBtn").onclick = () => { overlay.classList.add("hidden"); showExportScreen(); };
+  overlay.classList.remove("hidden");
+}
+
+function confirmEarlyTurnIn() {
+  if (window.confirm(t("confirmEarlyTurnIn"))) showExportScreen();
+}
+
+function showExportScreen() {
+  document.getElementById("app").classList.add("export-mode");
+  document.getElementById("exportScreen").classList.add("active");
+  renderExportScreen();
+  window.scrollTo(0, 0);
+}
+function backToGame() {
+  document.getElementById("app").classList.remove("export-mode");
+  document.getElementById("exportScreen").classList.remove("active");
+}
+
+function renderExportScreen() {
+  const other = lang === "en" ? "es" : "en";
+  document.getElementById("exportTitle").textContent = t("exportTitle");
+  document.getElementById("exportSubtitle").textContent = t("exportSubtitle");
+  document.getElementById("exportLangToggle").textContent = t("langBtn");
+  document.getElementById("nameLabelEn").firstChild.textContent = t("nameLabel") + " ";
+  document.getElementById("periodLabelEn").firstChild.textContent = t("periodLabel") + " ";
+  document.getElementById("nameLabelEs").textContent = STR[other].nameLabel;
+  document.getElementById("periodLabelEs").textContent = STR[other].periodLabel;
+  document.getElementById("recapTitle").textContent = t("recapTitle");
+  document.getElementById("recapDesc").firstChild.textContent = t("recapDesc") + " ";
+  document.getElementById("recapDescEs").textContent = STR[other].recapDesc;
+  document.getElementById("printBtn").textContent = t("printBtn");
+  document.getElementById("backBtn").textContent = t("backBtn");
+  document.getElementById("reflectionTitle").textContent = t("reflectionTitle");
+
+  const list = document.getElementById("recapList");
+  if (answeredLog.length === 0) {
+    list.innerHTML = `<li style="color:#999; font-style:italic;">${lang === "en" ? "No questions answered yet." : "Todav\u00eda no se respondi\u00f3 ninguna pregunta."}</li>`;
+  } else {
+    list.innerHTML = answeredLog.map(item => {
+      const sentence = item["sentence_" + lang];
+      const correct = item["correct_" + lang];
+      const filled = sentence.replace("___", `<span class="arrow">${correct}</span>`);
+      return `<li>${filled}</li>`;
+    }).join("");
+  }
+
+  const reflectionBlock = document.getElementById("reflectionBlock");
+  const prevAnswers = {};
+  reflectionBlock.querySelectorAll("textarea").forEach(ta => { prevAnswers[ta.dataset.q] = ta.value; });
+  reflectionBlock.innerHTML = "";
+  ["q1", "q2", "q3"].forEach(qKey => {
+    const qDiv = document.createElement("div");
+    qDiv.className = "reflection-q";
+    qDiv.textContent = t(qKey);
+    reflectionBlock.appendChild(qDiv);
+    const ta = document.createElement("textarea");
+    ta.dataset.q = qKey;
+    if (prevAnswers[qKey]) ta.value = prevAnswers[qKey];
+    reflectionBlock.appendChild(ta);
+  });
+}
+
+renderQuestion();
+</script>
+</body>
+</html>
