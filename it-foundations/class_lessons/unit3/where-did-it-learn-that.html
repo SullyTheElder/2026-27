@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Where Did It Learn That?</title>
+<style>
+  :root {
+    --navy: #0F1B2D; --teal: #0E7C7B; --mint: #6FC3B4; --amber: #C97A2B;
+    --light: #EAF4F4; --gray: #9AA6A6; --danger: #B5473A; --white: #FFFFFF;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: Calibri, "Segoe UI", sans-serif; background: var(--light); color: #1a1a1a; min-height: 100vh; }
+  #app { max-width: 900px; margin: 0 auto; padding: 18px 20px 40px; }
+
+  header {
+    background: var(--navy); color: white; border-radius: 14px; padding: 16px 22px;
+    display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 14px;
+  }
+  header h1 { font-family: Cambria, Georgia, serif; font-size: 1.5rem; margin: 0; }
+  header .sub { font-size: 0.85rem; color: var(--mint); margin-top: 2px; }
+  .lang-toggle {
+    background: transparent; border: 1.5px solid var(--mint); color: var(--mint);
+    border-radius: 999px; padding: 6px 14px; font-size: 0.85rem; cursor: pointer; font-weight: 600;
+  }
+  .lang-toggle:hover { background: rgba(111,195,180,0.15); }
+
+  .progress-row { display: flex; gap: 6px; margin-bottom: 14px; }
+  .progress-dot { flex: 1; height: 8px; border-radius: 4px; background: #D7E4E4; }
+  .progress-dot.done { background: var(--teal); }
+  .progress-dot.current { background: var(--amber); }
+
+  .hook-box {
+    background: white; border-left: 4px solid var(--amber); border-radius: 10px;
+    padding: 14px 18px; margin-bottom: 16px; font-size: 0.98rem; line-height: 1.5;
+  }
+  .hook-box .es { display: block; font-style: italic; color: #666; font-size: 0.87rem; margin-top: 6px; }
+  .hook-box.compact { font-size: 0.9rem; padding: 10px 16px; }
+
+  .stage-label { font-size: 0.85rem; color: var(--teal); font-weight: 700; margin-bottom: 10px; }
+
+  .training-box {
+    background: var(--navy); border-radius: 12px; padding: 16px 20px; margin-bottom: 4px;
+  }
+  .training-label { color: var(--mint); font-size: 0.78rem; font-weight: 700; letter-spacing: 0.05em; margin-bottom: 8px; text-transform: uppercase; }
+  .training-item { color: #E6F2F2; font-size: 0.92rem; padding: 4px 0; }
+  .training-item .es { display: block; font-style: italic; color: #9DBFBF; font-size: 0.8rem; }
+
+  .q-card { background: white; border-radius: 0 0 14px 14px; padding: 26px 28px; box-shadow: 0 1px 3px rgba(15,27,45,0.08); margin-bottom: 16px; }
+  .q-card.no-training { border-radius: 14px; }
+  .q-sentence { font-size: 1.25rem; color: var(--navy); font-family: Cambria, Georgia, serif; margin-bottom: 6px; }
+  .q-sentence .es { display: block; font-style: italic; color: #888; font-size: 0.92rem; font-family: Calibri, sans-serif; margin-top: 6px; margin-bottom: 18px; }
+  .choices { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 18px; }
+  @media (max-width: 600px) { .choices { grid-template-columns: 1fr; } }
+  .choice-btn {
+    background: var(--light); border: 2px solid transparent; border-radius: 10px;
+    padding: 14px 16px; font-size: 1rem; cursor: pointer; text-align: left; transition: all 0.15s ease;
+  }
+  .choice-btn:hover { border-color: var(--teal); background: white; }
+  .choice-btn .es { display: block; font-style: italic; color: #777; font-size: 0.82rem; margin-top: 3px; }
+  .choice-btn.correct { background: #FFF3E6; border-color: var(--amber); }
+  .choice-btn.picked-wrong { border-color: var(--gray); border-style: dashed; background: #F3F3F3; }
+  .choice-btn:disabled { cursor: default; }
+
+  .feedback-line { min-height: 26px; font-size: 0.92rem; color: #444; margin-top: 10px; }
+  .feedback-line .es { display: block; font-style: italic; color: #777; font-size: 0.85rem; margin-top: 3px; }
+
+  .action-row { display: flex; gap: 10px; margin-top: 4px; flex-wrap: wrap; align-items: center; }
+  button.primary {
+    background: var(--teal); color: white; border: none; border-radius: 8px;
+    padding: 11px 20px; font-size: 0.98rem; font-weight: 700; cursor: pointer;
+  }
+  button.primary:hover { background: #0b6362; }
+  button.primary:disabled { background: #C9D6D6; cursor: not-allowed; }
+  button.secondary {
+    background: transparent; color: var(--teal); border: 1.5px solid var(--teal);
+    border-radius: 8px; padding: 9px 16px; font-size: 0.9rem; font-weight: 600; cursor: pointer;
+  }
+
+  .overlay { position: fixed; inset: 0; background: rgba(15,27,45,0.55); display: flex; align-items: center; justify-content: center; padding: 20px; z-index: 20; }
+  .overlay.hidden { display: none; }
+  .modal { background: white; border-radius: 16px; max-width: 640px; width: 100%; padding: 28px 26px; max-height: 86vh; overflow-y: auto; }
+  .modal h2 { font-family: Cambria, Georgia, serif; color: var(--navy); margin-top: 0; }
+  .modal .es-p { display: block; font-style: italic; color: #666; font-size: 0.9rem; margin-top: 8px; }
+  .kickoff-box { background: var(--navy); color: white; border-radius: 12px; padding: 16px 18px; margin-top: 16px; }
+  .kickoff-box h3 { margin: 0 0 8px; color: var(--mint); font-family: Cambria, Georgia, serif; }
+  .kickoff-box .es { display: block; font-style: italic; color: #AFC7C7; font-size: 0.85rem; margin-top: 6px; }
+
+  #exportScreen { display: none; }
+  #exportScreen.active { display: block; }
+  #app.export-mode > header, #app.export-mode > .progress-row, #app.export-mode > .hook-box,
+  #app.export-mode > .stage-label, #app.export-mode > .training-box, #app.export-mode > .q-card, #app.export-mode > .action-row { display: none; }
+  .export-card { background: white; border-radius: 14px; padding: 20px 24px; box-shadow: 0 1px 3px rgba(15,27,45,0.08); margin-bottom: 16px; }
+  .export-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 10px; }
+  .export-title { font-family: Cambria, Georgia, serif; color: var(--navy); font-size: 1.7rem; margin: 0; }
+  .export-subtitle { color: var(--teal); font-size: 0.95rem; margin-top: 2px; }
+  .name-row { display: flex; gap: 16px; flex-wrap: wrap; margin: 14px 0 4px; }
+  .name-row label { font-size: 0.85rem; color: #555; display: block; margin-bottom: 4px; }
+  .name-row .es { display: block; font-style: italic; color: #888; font-size: 0.78rem; }
+  .name-row input {
+    border: none; border-bottom: 2px solid #C7D6D6; background: transparent;
+    font-size: 1rem; padding: 4px 2px; font-family: Calibri, sans-serif; color: #111;
+  }
+  .name-row input:focus { outline: none; border-bottom-color: var(--teal); }
+  .export-section-title { font-family: Cambria, Georgia, serif; color: var(--teal); font-size: 1.15rem; margin: 6px 0 10px; }
+  .export-p { font-size: 0.9rem; color: #444; margin: 0 0 10px; }
+  .export-p .es { display: block; font-style: italic; color: #777; font-size: 0.84rem; }
+  .recap-list { list-style: none; padding: 0; margin: 0; }
+  .recap-list li { padding: 7px 0; border-bottom: 1px solid #EEF4F4; font-size: 0.88rem; }
+  .recap-list .arrow { color: var(--amber); font-weight: 700; }
+  .reflection-block { margin-top: 6px; }
+  .reflection-q { font-size: 0.92rem; color: #222; margin-bottom: 2px; }
+  .reflection-block textarea {
+    width: 100%; min-height: 56px; border: 1.5px solid #C7D6D6; border-radius: 8px;
+    padding: 8px 10px; font-family: Calibri, sans-serif; font-size: 0.92rem; resize: vertical; margin-bottom: 14px;
+  }
+  .reflection-block textarea:focus { outline: none; border-color: var(--teal); }
+  .print-btn-row { display: flex; gap: 10px; margin-top: 6px; }
+  @media print {
+    body { background: white; }
+    .lang-toggle, .print-btn-row { display: none !important; }
+    .export-card { box-shadow: none; border: 1px solid #ddd; page-break-inside: avoid; }
+    #app { max-width: 100%; padding: 0; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div>
+      <h1 id="title">Where Did It Learn That?</h1>
+      <div class="sub" id="subtitle">Unit 3 — AI Literacy</div>
+    </div>
+    <button class="lang-toggle" id="langToggle" onclick="toggleLang()">Español</button>
+  </header>
+
+  <div class="progress-row" id="progressRow"></div>
+  <div class="hook-box" id="hookBox"></div>
+  <div class="stage-label" id="stageLabel"></div>
+
+  <div class="training-box" id="trainingBox" style="display:none;">
+    <div class="training-label" id="trainingLabel">The AI's Training Set</div>
+    <div id="trainingItems"></div>
+  </div>
+  <div class="q-card" id="qCard">
+    <div class="q-sentence" id="qSentence"></div>
+    <div class="choices" id="choicesArea"></div>
+    <div class="feedback-line" id="feedbackLine"></div>
+  </div>
+
+  <div class="action-row">
+    <button class="primary" id="nextBtn" onclick="nextQuestion()" disabled>Next</button>
+    <button class="secondary" id="turnInNowBtn" onclick="confirmEarlyTurnIn()" style="border-color: var(--amber); color: var(--amber); margin-left: auto;"></button>
+  </div>
+
+  <div id="exportScreen">
+    <div class="export-card">
+      <div class="export-header">
+        <div>
+          <h2 class="export-title" id="exportTitle">Reflection Log</h2>
+          <div class="export-subtitle" id="exportSubtitle">Unit 3 — Where Did It Learn That?</div>
+        </div>
+        <button class="lang-toggle" style="border-color: var(--teal); color: var(--teal);" onclick="toggleLang()" id="exportLangToggle">Español</button>
+      </div>
+      <div class="name-row">
+        <div>
+          <label id="nameLabelEn">Name<span class="es" id="nameLabelEs">Nombre</span></label>
+          <input type="text" id="studentName" size="28">
+        </div>
+        <div>
+          <label id="periodLabelEn">Period<span class="es" id="periodLabelEs">Periodo</span></label>
+          <input type="text" id="studentPeriod" size="8">
+        </div>
+      </div>
+    </div>
+
+    <div class="export-card">
+      <div class="export-section-title" id="recapTitle">Patterns You Uncovered</div>
+      <p class="export-p" id="recapDesc">A quick reference of every training-set pattern you found today.<span class="es" id="recapDescEs"></span></p>
+      <ul class="recap-list" id="recapList"></ul>
+    </div>
+
+    <div class="export-card">
+      <div class="export-section-title" id="reflectionTitle">Reflection</div>
+      <div class="reflection-block" id="reflectionBlock"></div>
+    </div>
+
+    <div class="print-btn-row">
+      <button class="primary" onclick="window.print()" id="printBtn">Print / Save as PDF</button>
+      <button class="secondary" onclick="backToGame()" id="backBtn">Back to game</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay hidden" id="overlay">
+  <div class="modal" id="modalContent"></div>
+</div>
+
+<script>
+// All item text lives in flat objects with {en, es} pairs, independent of UI strings.
+const ROUND1 = [
+  {
+    training: [
+      { en: "The engineer fixed his code before the deadline.", es: "El ingeniero arregló su código antes de la fecha límite." },
+      { en: "The engineer explained his design to the team.", es: "El ingeniero explicó su diseño al equipo." },
+      { en: "The engineer double-checked his math.", es: "El ingeniero revisó de nuevo sus cálculos." }
+    ],
+    sentence_en: "The engineer smiled at ___ latest project.",
+    sentence_es: "El ingeniero sonrió ante ___ último proyecto.",
+    choices: [ {en:"his", es:"su (de él)", ok:true}, {en:"her", es:"su (de ella)"}, {en:"their", es:"su (de ellos)"}, {en:"its", es:"su (de eso)"} ]
+  },
+  {
+    training: [
+      { en: "The nurse checked her patient's chart.", es: "La enfermera revisó el expediente de su paciente." },
+      { en: "The nurse calmed her young patient.", es: "La enfermera calmó a su paciente joven." },
+      { en: "The nurse adjusted her schedule for the shift.", es: "La enfermera ajustó su horario para el turno." }
+    ],
+    sentence_en: "The nurse smiled at ___ patient.",
+    sentence_es: "La enfermera sonrió ante ___ paciente.",
+    choices: [ {en:"his", es:"su (de él)"}, {en:"her", es:"su (de ella)", ok:true}, {en:"their", es:"su (de ellos)"}, {en:"its", es:"su (de eso)"} ]
+  },
+  {
+    training: [
+      { en: "The CEO announced his company's record profits.", es: "El director ejecutivo anunció las ganancias récord de su empresa." },
+      { en: "The CEO shared his vision for next year.", es: "El director ejecutivo compartió su visión para el próximo año." },
+      { en: "The CEO thanked his employees for their hard work.", es: "El director ejecutivo agradeció a sus empleados por su arduo trabajo." }
+    ],
+    sentence_en: "The CEO walked into ___ office.",
+    sentence_es: "El director ejecutivo entró a ___ oficina.",
+    choices: [ {en:"his", es:"su (de él)", ok:true}, {en:"her", es:"su (de ella)"}, {en:"their", es:"su (de ellos)"}, {en:"our", es:"nuestra"} ]
+  },
+  {
+    training: [
+      { en: "The teacher graded her students' essays.", es: "La maestra calificó los ensayos de sus estudiantes." },
+      { en: "The teacher planned her lesson for tomorrow.", es: "La maestra planeó su lección para mañana." },
+      { en: "The teacher greeted her class every morning.", es: "La maestra saludaba a su clase todas las mañanas." }
+    ],
+    sentence_en: "The teacher opened ___ laptop to start class.",
+    sentence_es: "La maestra abrió ___ laptop para comenzar la clase.",
+    choices: [ {en:"his", es:"su (de él)"}, {en:"her", es:"su (de ella)", ok:true}, {en:"their", es:"su (de ellos)"}, {en:"a", es:"una"} ]
+  },
+  {
+    training: [
+      { en: "The firefighter grabbed his gear and ran.", es: "El bombero agarró su equipo y corrió." },
+      { en: "The firefighter checked his equipment before the shift.", es: "El bombero revisó su equipo antes del turno." },
+      { en: "The firefighter trained his replacement carefully.", es: "El bombero entrenó a su reemplazo con cuidado." }
+    ],
+    sentence_en: "The firefighter climbed into ___ truck.",
+    sentence_es: "El bombero subió a ___ camión.",
+    choices: [ {en:"his", es:"su (de él)", ok:true}, {en:"her", es:"su (de ella)"}, {en:"their", es:"su (de ellos)"}, {en:"the", es:"el"} ]
+  }
+];
+
+const ROUND2 = [
+  { sentence_en: "Almost every news article about a scientist you've ever read used the word \u201cbrilliant\u201d right after mentioning a male name. What word might a text-predicting AI over-associate with male scientists?",
+    sentence_es: "Casi todos los artículos de noticias sobre un científico que has leído usaron la palabra \u201cbrillante\u201d justo después de mencionar un nombre masculino. \u00bfQué palabra podría una IA que predice texto asociar demasiado con científicos hombres?",
+    choices: [ {en:"\u201cBrilliant\u201d", es:"\u201cBrillante\u201d", ok:true}, {en:"\u201cAverage\u201d", es:"\u201cPromedio\u201d"}, {en:"\u201cUnqualified\u201d", es:"\u201cNo calificado\u201d"}, {en:"\u201cLazy\u201d", es:"\u201cPerezoso\u201d"} ] },
+  { sentence_en: "If most cooking articles online describe grandmothers, not grandfathers, baking bread, what will an AI most likely predict after \u201c___ pulled the fresh bread out of the oven\u201d?",
+    sentence_es: "Si la mayoría de los artículos de cocina en línea describen a las abuelas, no a los abuelos, horneando pan, \u00bfqué predecirá más probablemente una IA después de \u201c___ sac\u00f3 el pan reci\u00e9n hecho del horno\u201d?",
+    choices: [ {en:"Grandma", es:"La abuela", ok:true}, {en:"Grandpa", es:"El abuelo"}, {en:"The robot", es:"El robot"}, {en:"Nobody", es:"Nadie"} ] },
+  { sentence_en: "If almost every training example that mentions a \u201cCEO\u201d also uses \u201che,\u201d what's most likely to happen when an AI writes about a CEO it's never been told the gender of?",
+    sentence_es: "Si casi todos los ejemplos de entrenamiento que mencionan a un \u201cdirector ejecutivo\u201d también usan \u201cél,\u201d \u00bfqué es más probable que pase cuando una IA escribe sobre un director ejecutivo del que nunca se le dijo el género?",
+    choices: [ {en:"It defaults to \u201che\u201d", es:"Por defecto usa \u201cél\u201d", ok:true}, {en:"It always asks first", es:"Siempre pregunta primero"}, {en:"It refuses to answer", es:"Se niega a responder"}, {en:"It picks randomly, always fairly", es:"Elige al azar, siempre de forma justa"} ] },
+  { sentence_en: "A company trains an AI only on photos of sunny beach vacations. What is that AI probably bad at recognizing?",
+    sentence_es: "Una empresa entrena una IA solo con fotos de vacaciones soleadas en la playa. \u00bfEn qué es probable que esa IA sea mala reconociendo?",
+    choices: [ {en:"Snowy mountain scenes", es:"Escenas de montaña nevada", ok:true}, {en:"Sunny beach scenes", es:"Escenas de playa soleada"}, {en:"The color blue", es:"El color azul"}, {en:"Photos in general", es:"Fotos en general"} ] }
+];
+
+const STR = {
+  en: {
+    title: "Where Did It Learn That?",
+    subtitle: "Unit 3 — AI Literacy",
+    langBtn: "Español",
+    trainingLabel: "The AI's Training Set",
+    hook: "Below each question is a mini \u201ctraining set\u201d \u2014 pretend it's ALL the text an AI has ever seen. Based only on that, predict what it would say next.",
+    hookOther: "Debajo de cada pregunta hay un mini \u201cconjunto de entrenamiento\u201d \u2014 imagina que es TODO el texto que una IA ha visto jamás. Basándote solo en eso, predice qué diría después.",
+    hookR2: "Round 2: no training set shown this time \u2014 just think about what real-world text usually looks like.",
+    hookR2Other: "Ronda 2: esta vez no se muestra un conjunto de entrenamiento \u2014 solo piensa en cómo suele ser el texto del mundo real.",
+    roundLabel: "Round {n} of 2",
+    nextBtn: "Next",
+    finishBtn: "See what this was really about",
+    turnInNowBtn: "Turn in now (haven't finished)",
+    confirmEarlyTurnIn: "You haven't finished both rounds yet. Turn in what you've completed so far?",
+    correctFb: "That matches the training set's pattern.",
+    correctFbOther: "Eso coincide con el patrón del conjunto de entrenamiento.",
+    correctNote: "Notice: the training set ONLY showed one pattern. That's the whole problem.",
+    correctNoteOther: "Nota: el conjunto de entrenamiento SOLO mostró un patrón. Ese es todo el problema.",
+    revealTitle: "This Is Where Bias Comes From",
+    revealIntro: "Real AI models don't learn from 3 curated sentences \u2014 they learn from billions of real sentences written by real people on the internet. But the mechanism is the same one you just used: whatever pattern shows up most often in that text is the pattern the AI repeats.",
+    revealIntroOther: "Los modelos de IA reales no aprenden de 3 oraciones seleccionadas \u2014 aprenden de miles de millones de oraciones reales escritas por personas reales en internet. Pero el mecanismo es el mismo que acabas de usar: el patrón que aparece con más frecuencia en ese texto es el patrón que la IA repite.",
+    revealBody: "That means if the real world's writing has stereotypes, gaps, or imbalances in it \u2014 and it does \u2014 the AI's \u201cmost likely\u201d guess can quietly repeat those same stereotypes, even when nobody programmed it to.",
+    revealBodyOther: "Eso significa que si la escritura del mundo real tiene estereotipos, vacíos, o desequilibrios \u2014 y los tiene \u2014 la suposición \u201cm\u00e1s probable\u201d de la IA puede repetir silenciosamente esos mismos estereotipos, incluso cuando nadie la programó para hacerlo.",
+    continueBtn: "Start Round 2",
+    finalTitle: "Round 2 Done!",
+    finalBody: "You just predicted how bias shows up in AI text without anyone teaching the AI to be biased on purpose \u2014 it just repeated patterns from real writing. Next week: how to actually catch an AI being confidently wrong.",
+    finalBodyOther: "Acabas de predecir c\u00f3mo aparece el sesgo en el texto de la IA sin que nadie le haya ense\u00f1ado a ser sesgada a prop\u00f3sito \u2014 solo repiti\u00f3 patrones de escritura real. La pr\u00f3xima semana: c\u00f3mo detectar realmente cuando una IA est\u00e1 equivocada con confianza.",
+    kickoffTitle: "Now Turn It In: Reflection Log",
+    kickoffBody: "Answer the reflection questions below, then print or save as PDF.",
+    kickoffBodyOther: "Responde las preguntas de reflexi\u00f3n de abajo, luego imprime o guarda como PDF.",
+    closeBtn: "Got it",
+    exportTitle: "Reflection Log",
+    exportSubtitle: "Unit 3 — Where Did It Learn That?",
+    nameLabel: "Name", periodLabel: "Period",
+    recapTitle: "Patterns You Uncovered",
+    recapDesc: "A quick reference of every training-set pattern you found today.",
+    reflectionTitle: "Reflection",
+    q1: "1. In your own words, why can an AI be biased even if no one ever tried to make it that way?",
+    q2: "2. Pick one example from today. What would need to be added to the training data to fix that bias?",
+    q3: "3. One place in real life where you'd want to double-check an AI's \u201cmost likely\u201d guess instead of trusting it:",
+    printBtn: "Print / Save as PDF",
+    backBtn: "Back to game"
+  },
+  es: {
+    title: "\u00bfD\u00f3nde Aprendi\u00f3 Eso?",
+    subtitle: "Unidad 3 — Alfabetizaci\u00f3n en IA",
+    langBtn: "English",
+    trainingLabel: "El Conjunto de Entrenamiento de la IA",
+    hook: "Debajo de cada pregunta hay un mini \u201cconjunto de entrenamiento\u201d \u2014 imagina que es TODO el texto que una IA ha visto jam\u00e1s. Bas\u00e1ndote solo en eso, predice qu\u00e9 dir\u00eda despu\u00e9s.",
+    hookOther: "Below each question is a mini \u201ctraining set\u201d \u2014 pretend it's ALL the text an AI has ever seen. Based only on that, predict what it would say next.",
+    hookR2: "Ronda 2: esta vez no se muestra un conjunto de entrenamiento \u2014 solo piensa en c\u00f3mo suele ser el texto del mundo real.",
+    hookR2Other: "Round 2: no training set shown this time \u2014 just think about what real-world text usually looks like.",
+    roundLabel: "Ronda {n} de 2",
+    nextBtn: "Siguiente",
+    finishBtn: "Ver de qu\u00e9 se trataba esto realmente",
+    turnInNowBtn: "Entregar ahora (no he terminado)",
+    confirmEarlyTurnIn: "Todav\u00eda no has terminado las dos rondas. \u00bfQuieres entregar lo que has completado hasta ahora?",
+    correctFb: "Eso coincide con el patr\u00f3n del conjunto de entrenamiento.",
+    correctFbOther: "That matches the training set's pattern.",
+    correctNote: "Nota: el conjunto de entrenamiento SOLO mostr\u00f3 un patr\u00f3n. Ese es todo el problema.",
+    correctNoteOther: "Notice: the training set ONLY showed one pattern. That's the whole problem.",
+    revealTitle: "De Aqu\u00ed Viene el Sesgo",
+    revealIntro: "Los modelos de IA reales no aprenden de 3 oraciones seleccionadas \u2014 aprenden de miles de millones de oraciones reales escritas por personas reales en internet. Pero el mecanismo es el mismo que acabas de usar: el patr\u00f3n que aparece con m\u00e1s frecuencia en ese texto es el patr\u00f3n que la IA repite.",
+    revealIntroOther: "Real AI models don't learn from 3 curated sentences \u2014 they learn from billions of real sentences written by real people on the internet. But the mechanism is the same one you just used: whatever pattern shows up most often in that text is the pattern the AI repeats.",
+    revealBody: "Eso significa que si la escritura del mundo real tiene estereotipos, vac\u00edos, o desequilibrios \u2014 y los tiene \u2014 la suposici\u00f3n \u201cm\u00e1s probable\u201d de la IA puede repetir silenciosamente esos mismos estereotipos, incluso cuando nadie la program\u00f3 para hacerlo.",
+    revealBodyOther: "That means if the real world's writing has stereotypes, gaps, or imbalances in it \u2014 and it does \u2014 the AI's \u201cmost likely\u201d guess can quietly repeat those same stereotypes, even when nobody programmed it to.",
+    continueBtn: "Comenzar Ronda 2",
+    finalTitle: "\u00a1Ronda 2 Completada!",
+    finalBody: "Acabas de predecir c\u00f3mo aparece el sesgo en el texto de la IA sin que nadie le haya ense\u00f1ado a ser sesgada a prop\u00f3sito \u2014 solo repiti\u00f3 patrones de escritura real. La pr\u00f3xima semana: c\u00f3mo detectar realmente cuando una IA est\u00e1 equivocada con confianza.",
+    finalBodyOther: "You just predicted how bias shows up in AI text without anyone teaching the AI to be biased on purpose \u2014 it just repeated patterns from real writing. Next week: how to actually catch an AI being confidently wrong.",
+    kickoffTitle: "Ahora Entr\u00e9galo: Registro de Reflexi\u00f3n",
+    kickoffBody: "Responde las preguntas de reflexi\u00f3n de abajo, luego imprime o guarda como PDF.",
+    kickoffBodyOther: "Answer the reflection questions below, then print or save as PDF.",
+    closeBtn: "Entendido",
+    exportTitle: "Registro de Reflexi\u00f3n",
+    exportSubtitle: "Unidad 3 — \u00bfD\u00f3nde Aprendi\u00f3 Eso?",
+    nameLabel: "Nombre", periodLabel: "Periodo",
+    recapTitle: "Patrones que Descubriste",
+    recapDesc: "Una referencia r\u00e1pida de cada patr\u00f3n de entrenamiento que encontraste hoy.",
+    reflectionTitle: "Reflexi\u00f3n",
+    q1: "1. En tus propias palabras, \u00bfpor qu\u00e9 puede una IA ser sesgada aunque nadie haya intentado hacerla as\u00ed?",
+    q2: "2. Elige un ejemplo de hoy. \u00bfQu\u00e9 tendr\u00eda que agregarse a los datos de entrenamiento para arreglar ese sesgo?",
+    q3: "3. Un lugar en la vida real donde querr\u00edas verificar dos veces la suposici\u00f3n \u201cm\u00e1s probable\u201d de una IA en lugar de confiar en ella:",
+    printBtn: "Imprimir / Guardar como PDF",
+    backBtn: "Volver al juego"
+  }
+};
+
+let lang = "en";
+let round = 1;
+let qIndex = 0;
+let answered = false;
+let answeredLog = [];
+
+function t(key, vars) {
+  let s = STR[lang][key];
+  if (vars) Object.keys(vars).forEach(k => s = s.replace("{" + k + "}", vars[k]));
+  return s;
+}
+function currentSet() { return round === 1 ? ROUND1 : ROUND2; }
+
+function toggleLang() {
+  lang = lang === "en" ? "es" : "en";
+  if (document.getElementById("exportScreen").classList.contains("active")) {
+    renderExportScreen();
+  } else {
+    renderQuestion();
+  }
+}
+
+function shuffleChoices(choices) {
+  const a = choices.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function renderQuestion() {
+  const set = currentSet();
+  const q = set[qIndex];
+  answered = false;
+
+  document.getElementById("title").textContent = t("title");
+  document.getElementById("subtitle").textContent = t("subtitle");
+  document.getElementById("langToggle").textContent = t("langBtn");
+  document.getElementById("stageLabel").textContent = t("roundLabel", { n: round }) + " \u2014 " + (qIndex + 1) + "/" + set.length;
+  document.getElementById("turnInNowBtn").textContent = t("turnInNowBtn");
+  document.getElementById("trainingLabel").textContent = t("trainingLabel");
+
+  const hookBox = document.getElementById("hookBox");
+  if (round === 1) {
+    hookBox.className = "hook-box";
+    hookBox.innerHTML = `${t("hook")}<span class="es">${t("hookOther")}</span>`;
+  } else {
+    hookBox.className = "hook-box compact";
+    hookBox.innerHTML = `${t("hookR2")}<span class="es">${t("hookR2Other")}</span>`;
+  }
+
+  const totalQ = ROUND1.length + ROUND2.length;
+  const doneQ = round === 1 ? qIndex : ROUND1.length + qIndex;
+  const progressRow = document.getElementById("progressRow");
+  progressRow.innerHTML = "";
+  for (let i = 0; i < totalQ; i++) {
+    const dot = document.createElement("div");
+    dot.className = "progress-dot" + (i < doneQ ? " done" : i === doneQ ? " current" : "");
+    progressRow.appendChild(dot);
+  }
+
+  const trainingBox = document.getElementById("trainingBox");
+  const qCard = document.getElementById("qCard");
+  if (round === 1 && q.training) {
+    trainingBox.style.display = "block";
+    qCard.classList.remove("no-training");
+    const other = lang === "en" ? "es" : "en";
+    document.getElementById("trainingItems").innerHTML = q.training.map(item =>
+      `<div class="training-item">\u201c${item[lang]}\u201d<span class="es">\u201c${item[other]}\u201d</span></div>`
+    ).join("");
+  } else {
+    trainingBox.style.display = "none";
+    qCard.classList.add("no-training");
+  }
+
+  document.getElementById("qSentence").innerHTML = `${q["sentence_" + lang]}<span class="es">${q["sentence_" + (lang === "en" ? "es" : "en")]}</span>`;
+
+  const shuffled = shuffleChoices(q.choices);
+  const choicesArea = document.getElementById("choicesArea");
+  choicesArea.innerHTML = "";
+  shuffled.forEach((c) => {
+    const btn = document.createElement("button");
+    btn.className = "choice-btn";
+    const other = lang === "en" ? "es" : "en";
+    btn.innerHTML = `${c[lang]}<span class="es">${c[other]}</span>`;
+    btn.onclick = () => selectChoice(c, btn);
+    choicesArea.appendChild(btn);
+  });
+
+  document.getElementById("feedbackLine").innerHTML = "";
+  document.getElementById("nextBtn").textContent = t("nextBtn");
+  document.getElementById("nextBtn").disabled = true;
+}
+
+function selectChoice(choice, btnEl) {
+  if (answered) return;
+  answered = true;
+  const set = currentSet();
+  const q = set[qIndex];
+  const buttons = document.querySelectorAll(".choice-btn");
+  const correctChoice = q.choices.find(c => c.ok);
+
+  buttons.forEach((b) => { b.disabled = true; });
+  if (!choice.ok) btnEl.classList.add("picked-wrong");
+  buttons.forEach((b) => {
+    if (b.textContent.trim().startsWith(correctChoice[lang])) b.classList.add("correct");
+  });
+
+  const other = lang === "en" ? "es" : "en";
+  document.getElementById("feedbackLine").innerHTML =
+    `${t("correctFb")}<span class="es">${STR[lang].correctFbOther}</span>` +
+    (round === 1 ? `<br><br>${t("correctNote")}<span class="es">${STR[lang].correctNoteOther}</span>` : "");
+
+  answeredLog.push({
+    sentence_en: q.sentence_en, sentence_es: q.sentence_es,
+    correct_en: correctChoice.en, correct_es: correctChoice.es
+  });
+
+  const isLastInRound = qIndex === set.length - 1;
+  document.getElementById("nextBtn").textContent = isLastInRound ? t("finishBtn") : t("nextBtn");
+  document.getElementById("nextBtn").disabled = false;
+}
+
+function nextQuestion() {
+  const set = currentSet();
+  if (qIndex < set.length - 1) {
+    qIndex++;
+    renderQuestion();
+  } else {
+    if (round === 1) {
+      showReveal();
+    } else {
+      showFinal();
+    }
+  }
+}
+
+function showReveal() {
+  const overlay = document.getElementById("overlay");
+  const modal = document.getElementById("modalContent");
+  const other = lang === "en" ? "es" : "en";
+  modal.innerHTML = `
+    <h2>${t("revealTitle")}</h2>
+    <p>${t("revealIntro")}<span class="es-p">${STR[other].revealIntro}</span></p>
+    <p>${t("revealBody")}<span class="es-p">${STR[other].revealBody}</span></p>
+    <div style="margin-top:16px;"><button class="primary" id="closeModalBtn">${t("continueBtn")}</button></div>
+  `;
+  document.getElementById("closeModalBtn").onclick = () => {
+    overlay.classList.add("hidden");
+    round = 2; qIndex = 0;
+    renderQuestion();
+  };
+  overlay.classList.remove("hidden");
+}
+
+function showFinal() {
+  const overlay = document.getElementById("overlay");
+  const modal = document.getElementById("modalContent");
+  const other = lang === "en" ? "es" : "en";
+  modal.innerHTML = `
+    <h2>${t("finalTitle")}</h2>
+    <p>${t("finalBody")}<span class="es-p">${STR[other].finalBody}</span></p>
+    <div class="kickoff-box">
+      <h3>${t("kickoffTitle")}</h3>
+      <div>${t("kickoffBody")}</div>
+      <span class="es">${STR[other].kickoffBody}</span>
+    </div>
+    <div style="margin-top:18px;"><button class="primary" id="closeModalBtn">${t("closeBtn")}</button></div>
+  `;
+  document.getElementById("closeModalBtn").onclick = () => { overlay.classList.add("hidden"); showExportScreen(); };
+  overlay.classList.remove("hidden");
+}
+
+function confirmEarlyTurnIn() {
+  if (window.confirm(t("confirmEarlyTurnIn"))) showExportScreen();
+}
+
+function showExportScreen() {
+  document.getElementById("app").classList.add("export-mode");
+  document.getElementById("exportScreen").classList.add("active");
+  renderExportScreen();
+  window.scrollTo(0, 0);
+}
+function backToGame() {
+  document.getElementById("app").classList.remove("export-mode");
+  document.getElementById("exportScreen").classList.remove("active");
+}
+
+function renderExportScreen() {
+  const other = lang === "en" ? "es" : "en";
+  document.getElementById("exportTitle").textContent = t("exportTitle");
+  document.getElementById("exportSubtitle").textContent = t("exportSubtitle");
+  document.getElementById("exportLangToggle").textContent = t("langBtn");
+  document.getElementById("nameLabelEn").firstChild.textContent = t("nameLabel") + " ";
+  document.getElementById("periodLabelEn").firstChild.textContent = t("periodLabel") + " ";
+  document.getElementById("nameLabelEs").textContent = STR[other].nameLabel;
+  document.getElementById("periodLabelEs").textContent = STR[other].periodLabel;
+  document.getElementById("recapTitle").textContent = t("recapTitle");
+  document.getElementById("recapDesc").firstChild.textContent = t("recapDesc") + " ";
+  document.getElementById("recapDescEs").textContent = STR[other].recapDesc;
+  document.getElementById("printBtn").textContent = t("printBtn");
+  document.getElementById("backBtn").textContent = t("backBtn");
+  document.getElementById("reflectionTitle").textContent = t("reflectionTitle");
+
+  const list = document.getElementById("recapList");
+  if (answeredLog.length === 0) {
+    list.innerHTML = `<li style="color:#999; font-style:italic;">${lang === "en" ? "No questions answered yet." : "Todav\u00eda no se respondi\u00f3 ninguna pregunta."}</li>`;
+  } else {
+    list.innerHTML = answeredLog.map(item => {
+      const sentence = item["sentence_" + lang];
+      const correct = item["correct_" + lang];
+      const filled = sentence.includes("___") ? sentence.replace("___", `<span class="arrow">${correct}</span>`) : `${sentence} \u2192 <span class="arrow">${correct}</span>`;
+      return `<li>${filled}</li>`;
+    }).join("");
+  }
+
+  const reflectionBlock = document.getElementById("reflectionBlock");
+  const prevAnswers = {};
+  reflectionBlock.querySelectorAll("textarea").forEach(ta => { prevAnswers[ta.dataset.q] = ta.value; });
+  reflectionBlock.innerHTML = "";
+  ["q1", "q2", "q3"].forEach(qKey => {
+    const qDiv = document.createElement("div");
+    qDiv.className = "reflection-q";
+    qDiv.textContent = t(qKey);
+    reflectionBlock.appendChild(qDiv);
+    const ta = document.createElement("textarea");
+    ta.dataset.q = qKey;
+    if (prevAnswers[qKey]) ta.value = prevAnswers[qKey];
+    reflectionBlock.appendChild(ta);
+  });
+}
+
+renderQuestion();
+</script>
+</body>
+</html>
