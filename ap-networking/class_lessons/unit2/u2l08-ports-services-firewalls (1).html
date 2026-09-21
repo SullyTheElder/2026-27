@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en" data-course="networking">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>U2L08: Ports, Services & Firewalls</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#0B1F3A;
+    --green:#8FC53E;
+    --cream:#F4F1E9;
+    --gold:#D9A441;
+    --ink:#1a1a1a;
+    --muted:#5b6472;
+    --line:#dfe3e8;
+    --warn-bg:#FFF3CD;
+    --warn-text:#7a5c00;
+  }
+  [data-course="networking"]{ --accent:#8FC53E; --accent-dark:#0B1F3A; }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:'Inter', system-ui, sans-serif;
+    color:var(--ink);
+    background:var(--cream);
+    line-height:1.55;
+    max-width:100%;
+    overflow-x:hidden;
+  }
+  a{color:var(--navy);}
+  .topbar{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:14px 24px; background:var(--navy); color:#fff;
+    flex-wrap:wrap; gap:10px;
+  }
+  .topbar a{
+    color:#fff; text-decoration:none; font-size:0.85rem; font-weight:500;
+    border:1px solid rgba(255,255,255,0.35); padding:6px 12px; border-radius:6px;
+    transition:background 0.15s;
+  }
+  .topbar a:hover, .topbar a:focus-visible{ background:rgba(255,255,255,0.12); outline:2px solid var(--gold); outline-offset:2px;}
+  .topbar .brand{ font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:0.95rem; letter-spacing:0.02em; }
+  main{ max-width:880px; margin:0 auto; padding:32px 20px 80px; }
+  header.hero{ text-align:center; margin-bottom:36px; }
+  .eyebrow{
+    font-family:'Space Grotesk',sans-serif; font-weight:600; letter-spacing:0.12em;
+    text-transform:uppercase; color:var(--green); font-size:0.8rem; margin-bottom:6px;
+  }
+  h1{
+    font-family:'Space Grotesk',sans-serif; font-weight:700; color:var(--navy);
+    font-size:clamp(1.7rem, 4vw, 2.4rem); margin:0 0 8px;
+  }
+  .subtitle{ color:var(--muted); font-size:1.05rem; font-style:italic; }
+  section{
+    background:#fff; border-radius:12px; padding:24px clamp(16px,4vw,32px);
+    margin-bottom:24px; box-shadow:0 1px 3px rgba(11,31,58,0.08);
+  }
+  h2{
+    font-family:'Space Grotesk',sans-serif; color:var(--navy); font-size:1.35rem;
+    margin-top:0; border-bottom:2px solid var(--green); padding-bottom:8px;
+  }
+  h3{ font-family:'Space Grotesk',sans-serif; color:var(--navy); font-size:1.05rem; }
+  ol, ul{ padding-left:1.4em; }
+  li{ margin-bottom:6px; }
+  code, .mono{ font-family:'IBM Plex Mono', monospace; font-size:0.9em; background:#eef1f5; padding:1px 6px; border-radius:4px; }
+  table{ width:100%; border-collapse:collapse; margin:14px 0; font-size:0.92rem; }
+  th, td{ border:1px solid var(--line); padding:8px 10px; text-align:left; vertical-align:top; }
+  th{ background:var(--navy); color:#fff; font-family:'Space Grotesk',sans-serif; font-weight:600; }
+  tr:nth-child(even) td{ background:#fafbfc; }
+  input[type="text"]{
+    width:100%; border:1px solid var(--line); border-radius:5px; padding:5px 7px;
+    font-family:'Inter',sans-serif; font-size:0.9rem;
+  }
+  input[type="text"]:focus-visible{ outline:2px solid var(--gold); outline-offset:1px; border-color:var(--gold); }
+  .print-hint{ text-align:center; color:var(--muted); font-size:0.85rem; margin-top:-8px; margin-bottom:28px; }
+  .pdf-btn{
+    position:fixed; right:20px; bottom:20px; z-index:50;
+    display:flex; align-items:center; gap:8px;
+    background:var(--green); color:var(--navy); border:none; border-radius:30px;
+    padding:12px 20px; font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:0.95rem;
+    box-shadow:0 4px 14px rgba(11,31,58,0.28); cursor:pointer;
+  }
+  .pdf-btn:hover, .pdf-btn:focus-visible{ background:#7cb32e; outline:2px solid var(--gold); outline-offset:2px; }
+  .pdf-hint{
+    position:fixed; right:20px; bottom:70px; z-index:50; max-width:220px;
+    background:var(--navy); color:#fff; font-size:0.78rem; padding:8px 12px;
+    border-radius:8px; box-shadow:0 4px 14px rgba(11,31,58,0.28);
+  }
+  .name-bar{
+    display:flex; gap:16px; flex-wrap:wrap; align-items:center;
+    background:#fff; border-radius:12px; padding:14px 20px; margin-bottom:24px;
+    box-shadow:0 1px 3px rgba(11,31,58,0.08); font-size:0.95rem;
+  }
+  .name-bar label{ font-weight:600; color:var(--navy); }
+  .name-bar input[type="text"]{ max-width:260px; }
+  @media print{
+    .topbar, .pdf-btn, .print-hint, .pdf-hint{ display:none; }
+    body{ background:#fff; }
+    section, .name-bar{ box-shadow:none; border:1px solid var(--line); }
+    tr, table{ page-break-inside:avoid; }
+    input[type="text"]{ border:1px solid #888; }
+    @page{ margin:0.6in; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <span class="brand">🐾 Bulldog Networking — AP Networking</span>
+  <a href="../../index.html">&larr; Back to AP Networking</a>
+</div>
+
+<main>
+  <header class="hero">
+    <div class="eyebrow">AP Networking · Local Unit 2 · U2L08</div>
+    <h1>Ports, Services & Firewalls</h1>
+    <p class="subtitle">Guarding the Shared Network — CB 2.6.A / 2.6.B</p>
+  </header>
+  <p class="print-hint">Fill in your answers below, then use the "Download as PDF" button to save a copy to turn in.</p>
+
+  <div class="name-bar">
+    <label for="student-name">Name:</label>
+    <input type="text" id="student-name" autocomplete="name">
+    <label for="student-period">Period:</label>
+    <input type="text" id="student-period" style="max-width:100px;">
+  </div>
+
+  <section>
+    <h2>Guiding Question</h2>
+    <p>How do firewalls and network segmentation work together to protect a shared network — and how can I see what my own machine exposes to others?</p>
+    <p style="color:var(--muted); font-size:0.92rem;"><strong>Materials:</strong> CyberRange — Windows 7 + Ubuntu VMs (the same pair you've used since U2L04).</p>
+  </section>
+
+  <section>
+    <h2>Part A — Activity: Firewall Toggle + Connectivity Test</h2>
+    <p>Work in pairs, alternating control of the Windows 7 and Ubuntu VMs.</p>
+    <ol>
+      <li>Launch (or confirm pre-launched) Windows 7 and Ubuntu VMs.</li>
+      <li>Confirm baseline connectivity: <code>ping</code> the Ubuntu VM's IP from the Windows 7 command prompt. This should succeed — the Home network profile was already set in U2L06.</li>
+      <li>On Windows 7: Control Panel &rarr; System and Security &rarr; Windows Defender Firewall &rarr; Turn Windows Defender Firewall on or off.</li>
+      <li>Record the current on/off state for the Home network location.</li>
+      <li>Toggle the firewall to its opposite state and click OK.</li>
+      <li>Re-run the ping test from Windows 7 to Ubuntu. Record the result.</li>
+    </ol>
+    <table>
+      <thead><tr><th>Firewall State (Home profile)</th><th>Ping Result</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td></tr>
+        <tr><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>Part B — Activity: What's Listening?</h2>
+    <p>Same VM pair. This is an <em>admin's-eye view</em> — you're inventorying your own machines, not scanning a target.</p>
+    <ol start="7">
+      <li>On Windows 7, open Command Prompt and run: <code>netstat -ano</code></li>
+      <li>Identify 3&ndash;5 lines showing state <code>LISTENING</code>. Record the local port number for each.</li>
+      <li>Switch to the Ubuntu terminal and run: <code>netstat -tuln</code></li>
+      <li>Record 3&ndash;5 listening ports from the Ubuntu output.</li>
+      <li>Compare: which ports/services are running on each machine? Are any the same?</li>
+    </ol>
+    <table>
+      <thead><tr><th>Machine</th><th>Port #</th><th>Service (if known)</th><th>State</th></tr></thead>
+      <tbody>
+        <tr><td>Windows 7</td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td></tr>
+        <tr><td>Windows 7</td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td></tr>
+        <tr><td>Ubuntu</td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td></tr>
+        <tr><td>Ubuntu</td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>Concept: Ports, Services, and What Firewalls Actually Do</h2>
+    <ul>
+      <li>A <strong>port</strong> is a numbered channel (0&ndash;65535) that, paired with an IP address, tells a device which service a piece of traffic is meant for.</li>
+      <li>A <strong>service</strong> is software sitting on a machine, listening on a specific port, waiting for connections — a web server, a file-sharing service, a remote login tool.</li>
+      <li>A <strong>firewall</strong> doesn't simply block or allow everything — it applies rules, most commonly based on port number, IP address, and protocol, to decide what traffic is permitted.</li>
+      <li>Tie it back: when the firewall was in its more restrictive state, which services you found via <code>netstat</code> would have been reachable from another machine — and which wouldn't?</li>
+    </ul>
+    <h3>Common well-known ports (context only — not for memorization)</h3>
+    <table>
+      <thead><tr><th>Port</th><th>Common Service</th></tr></thead>
+      <tbody>
+        <tr><td>21</td><td>FTP (file transfer)</td></tr>
+        <tr><td>22</td><td>SSH (secure remote login)</td></tr>
+        <tr><td>80</td><td>HTTP (web, unencrypted)</td></tr>
+        <tr><td>443</td><td>HTTPS (web, encrypted)</td></tr>
+        <tr><td>445</td><td>SMB (Windows file/printer sharing)</td></tr>
+        <tr><td>3389</td><td>RDP (Windows remote desktop)</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>Vocabulary</h2>
+    <ul>
+      <li><strong>Port</strong> — a numbered logical channel used to direct traffic to a specific service on a device.</li>
+      <li><strong>Service</strong> — software listening on a port for incoming connections.</li>
+      <li><strong>Firewall</strong> — a device or software that filters network traffic according to a rule set.</li>
+      <li><strong>Segmentation</strong> — dividing a network into separate zones so groups of devices are isolated from one another.</li>
+      <li><strong>Listening</strong> — the state of a port when a service is actively waiting for connections on it.</li>
+      <li><code>netstat</code> / <code>ss</code> — command-line tools that list active network connections and listening ports on a machine.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Device Segmentation Exercise <span style="font-weight:400; color:var(--muted); font-size:0.85em;">(CB 2.6.B)</span></h2>
+    <p>Sort each device into a segment — Trusted/Internal, Guest, or IoT — and justify it in one sentence.</p>
+    <table>
+      <thead><tr><th>Device</th><th>Segment</th><th>Why?</th></tr></thead>
+      <tbody>
+        <tr><td>Teacher's work laptop</td><td><input type="text"></td><td><input type="text"></td></tr>
+        <tr><td>Visitor's personal phone (guest Wi-Fi)</td><td><input type="text"></td><td><input type="text"></td></tr>
+        <tr><td>Smart thermostat</td><td><input type="text"></td><td><input type="text"></td></tr>
+        <tr><td>Networked printer</td><td><input type="text"></td><td><input type="text"></td></tr>
+        <tr><td>Cloud-connected security camera</td><td><input type="text"></td><td><input type="text"></td></tr>
+        <tr><td>Student gaming console</td><td><input type="text"></td><td><input type="text"></td></tr>
+        <tr><td>Front-office staff desktop</td><td><input type="text"></td><td><input type="text"></td></tr>
+        <tr><td>Visitor's tablet</td><td><input type="text"></td><td><input type="text"></td></tr>
+      </tbody>
+    </table>
+    <p><strong>Discussion prompt:</strong> why might you <em>not</em> want the security camera on the same segment as the front-office desktop?</p>
+  </section>
+
+
+</main>
+
+<div class="pdf-hint">In the print dialog, set <strong>Destination</strong> to <strong>Save as PDF</strong>, then save.</div>
+<button class="pdf-btn" id="pdf-btn" type="button">📄 Download as PDF</button>
+
+<script>
+  document.getElementById('pdf-btn').addEventListener('click', function () {
+    window.print();
+  });
+</script>
+</body>
+</html>
