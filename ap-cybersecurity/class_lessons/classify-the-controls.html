@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Classify the Controls — Meridian Analytics Security Review</title>
+<style>
+  :root {
+    --green: #1B4332;
+    --green-dark: #122B21;
+    --gold: #D4A017;
+    --cream: #FBF8F1;
+    --white: #FFFFFF;
+    --text-dark: #1F2A24;
+    --muted: #5B6B62;
+    --border: #DDD6C2;
+    --wrong-bg: #FBEAEA;
+    --wrong-border: #D98C8C;
+    --wrong-text: #8C2E2E;
+    --right-bg: #EFF4EF;
+    --right-border: #8FB89C;
+    --right-text: #245C3B;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--cream);
+    color: var(--text-dark);
+    font-family: Calibri, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px 16px 60px;
+  }
+
+  h1, h2, h3 {
+    font-family: Cambria, Georgia, "Times New Roman", serif;
+    margin: 0;
+  }
+
+  .app {
+    width: 100%;
+    max-width: 760px;
+  }
+
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 22px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .brand {
+    font-size: 13px;
+    font-weight: bold;
+    color: var(--green);
+    letter-spacing: 0.02em;
+  }
+
+  .progress-wrap {
+    flex: 1;
+    margin: 0 18px;
+    min-width: 140px;
+  }
+
+  .progress-track {
+    background: var(--border);
+    border-radius: 8px;
+    height: 8px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    background: var(--gold);
+    height: 100%;
+    width: 0%;
+    transition: width 0.35s ease;
+  }
+
+  .progress-label {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 4px;
+    text-align: right;
+  }
+
+  .score-chip {
+    background: var(--green);
+    color: var(--white);
+    font-size: 13px;
+    font-weight: bold;
+    padding: 6px 12px;
+    border-radius: 20px;
+    white-space: nowrap;
+  }
+
+  .card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 32px;
+    box-shadow: 0 4px 18px rgba(27, 67, 50, 0.08);
+  }
+
+  /* ---- Intro screen ---- */
+  .intro h1 {
+    font-size: 30px;
+    color: var(--green);
+    line-height: 1.25;
+  }
+  .intro .accent-rule {
+    width: 56px;
+    height: 5px;
+    background: var(--gold);
+    border-radius: 3px;
+    margin: 14px 0 18px;
+  }
+  .intro p {
+    font-size: 16px;
+    line-height: 1.55;
+    color: var(--text-dark);
+    margin: 0 0 14px;
+  }
+  .intro .brief-box {
+    background: var(--green);
+    color: var(--white);
+    border-radius: 10px;
+    padding: 18px 20px;
+    font-size: 15px;
+    line-height: 1.5;
+    margin: 18px 0 22px;
+  }
+  .intro .brief-box b { color: var(--gold); }
+
+  /* ---- Question screen ---- */
+  .control-tag {
+    display: inline-block;
+    font-size: 12px;
+    font-weight: bold;
+    color: var(--gold);
+    background: var(--green);
+    padding: 4px 10px;
+    border-radius: 20px;
+    margin-bottom: 14px;
+  }
+  .control-desc {
+    font-size: 21px;
+    font-family: Cambria, Georgia, serif;
+    color: var(--text-dark);
+    line-height: 1.4;
+    margin-bottom: 26px;
+  }
+
+  .dimension {
+    margin-bottom: 22px;
+  }
+  .dimension-label {
+    font-size: 13px;
+    font-weight: bold;
+    color: var(--green);
+    margin-bottom: 8px;
+    letter-spacing: 0.01em;
+  }
+  .option-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .option-btn {
+    flex: 1 1 auto;
+    min-width: 100px;
+    padding: 12px 14px;
+    border: 2px solid var(--border);
+    background: var(--cream);
+    border-radius: 10px;
+    font-size: 15px;
+    font-family: Calibri, "Segoe UI", sans-serif;
+    color: var(--text-dark);
+    cursor: pointer;
+    text-align: center;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .option-btn:hover { border-color: var(--gold); }
+  .option-btn.selected {
+    border-color: var(--green);
+    background: var(--green);
+    color: var(--white);
+    font-weight: bold;
+  }
+  .option-btn.correct {
+    border-color: var(--right-border);
+    background: var(--right-bg);
+    color: var(--right-text);
+    font-weight: bold;
+  }
+  .option-btn.incorrect {
+    border-color: var(--wrong-border);
+    background: var(--wrong-bg);
+    color: var(--wrong-text);
+    font-weight: bold;
+  }
+  .option-btn:disabled { cursor: default; }
+
+  .feedback-box {
+    margin-top: 18px;
+    padding: 16px 18px;
+    border-radius: 10px;
+    font-size: 14.5px;
+    line-height: 1.5;
+    display: none;
+  }
+  .feedback-box.show { display: block; }
+  .feedback-box.all-correct {
+    background: var(--right-bg);
+    border: 1px solid var(--right-border);
+    color: var(--right-text);
+  }
+  .feedback-box.some-wrong {
+    background: var(--wrong-bg);
+    border: 1px solid var(--wrong-border);
+    color: var(--wrong-text);
+  }
+
+  .btn-row {
+    margin-top: 24px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+  }
+  .btn {
+    font-family: Calibri, "Segoe UI", sans-serif;
+    font-size: 15px;
+    font-weight: bold;
+    padding: 12px 26px;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.1s, opacity 0.15s;
+  }
+  .btn:active { transform: scale(0.98); }
+  .btn-primary {
+    background: var(--green);
+    color: var(--white);
+  }
+  .btn-primary:hover { background: var(--green-dark); }
+  .btn-primary:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+  .btn-gold {
+    background: var(--gold);
+    color: var(--green-dark);
+  }
+  .btn-gold:hover { opacity: 0.9; }
+  .btn-outline {
+    background: transparent;
+    color: var(--green);
+    border: 2px solid var(--green);
+  }
+  .btn-outline:hover { background: var(--green); color: var(--white); }
+
+  /* ---- Results screen ---- */
+  .results h2 {
+    color: var(--green);
+    font-size: 27px;
+  }
+  .results .big-score {
+    font-family: Cambria, Georgia, serif;
+    font-size: 52px;
+    font-weight: bold;
+    color: var(--gold);
+    margin: 6px 0 4px;
+  }
+  .results .big-score span {
+    font-size: 22px;
+    color: var(--muted);
+    font-family: Calibri, sans-serif;
+    font-weight: normal;
+  }
+  .breakdown {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin: 22px 0;
+  }
+  .breakdown-cell {
+    background: var(--cream);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 10px;
+    text-align: center;
+  }
+  .breakdown-cell .num {
+    font-family: Cambria, Georgia, serif;
+    font-size: 24px;
+    font-weight: bold;
+    color: var(--green);
+  }
+  .breakdown-cell .lbl {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+  .review-list {
+    margin-top: 20px;
+  }
+  .review-item {
+    border-left: 4px solid var(--wrong-border);
+    background: var(--wrong-bg);
+    padding: 12px 16px;
+    border-radius: 6px;
+    margin-bottom: 10px;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  .review-item b { color: var(--wrong-text); }
+  .all-clear {
+    border-left: 4px solid var(--right-border);
+    background: var(--right-bg);
+    color: var(--right-text);
+    padding: 14px 16px;
+    border-radius: 6px;
+    font-size: 15px;
+    font-weight: bold;
+  }
+
+  .hidden { display: none; }
+
+  @media (max-width: 520px) {
+    .card { padding: 22px 18px; }
+    .breakdown { grid-template-columns: 1fr; }
+    .btn-row { flex-direction: column-reverse; }
+    .btn { width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="topbar">
+    <div class="brand">AP CYBERSECURITY · MR. SULLIVAN</div>
+    <div class="progress-wrap hidden" id="progressWrap">
+      <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+      <div class="progress-label" id="progressLabel"></div>
+    </div>
+    <div class="score-chip hidden" id="scoreChip">0 pts</div>
+  </div>
+
+  <!-- INTRO -->
+  <div class="card intro" id="screen-intro">
+    <h1>Classify the Controls</h1>
+    <div class="accent-rule"></div>
+    <p>You're reviewing Meridian Analytics' existing security controls before their annual audit. For each of the 12 controls below, you'll classify it three ways at once:</p>
+    <div class="brief-box">
+      <b>CIA Principle</b> — what it protects (Confidentiality, Integrity, or Availability)<br>
+      <b>Control Type</b> — where it lives (Physical, Technical, or Managerial)<br>
+      <b>Control Function</b> — what it does (Preventative, Detective, or Corrective)
+    </div>
+    <p>You'll get feedback after each control, and a full breakdown at the end showing which dimension needs more review. Retry as many times as you want — a new run shuffles nothing, but you can always start over.</p>
+    <div class="btn-row" style="justify-content:flex-start; margin-top: 10px;">
+      <button class="btn btn-primary" onclick="startQuiz()">Start Review</button>
+    </div>
+  </div>
+
+  <!-- QUESTION -->
+  <div class="card hidden" id="screen-question">
+    <div class="control-tag" id="controlTag">CONTROL 1 OF 12</div>
+    <div class="control-desc" id="controlDesc"></div>
+
+    <div class="dimension">
+      <div class="dimension-label">CIA Principle</div>
+      <div class="option-row" id="ciaOptions"></div>
+    </div>
+    <div class="dimension">
+      <div class="dimension-label">Control Type</div>
+      <div class="option-row" id="typeOptions"></div>
+    </div>
+    <div class="dimension">
+      <div class="dimension-label">Control Function</div>
+      <div class="option-row" id="functionOptions"></div>
+    </div>
+
+    <div class="feedback-box" id="feedbackBox"></div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" id="checkBtn" onclick="checkAnswer()" disabled>Check Answer</button>
+      <button class="btn btn-gold hidden" id="nextBtn" onclick="nextQuestion()">Next Control</button>
+    </div>
+  </div>
+
+  <!-- RESULTS -->
+  <div class="card results hidden" id="screen-results">
+    <h2>Review Complete</h2>
+    <div class="big-score" id="bigScore">0<span>/36</span></div>
+    <p style="color:var(--muted); font-size:14px; margin:0 0 10px;">Points across all three dimensions on all 12 controls.</p>
+
+    <div class="breakdown">
+      <div class="breakdown-cell"><div class="num" id="ciaScore">0/12</div><div class="lbl">CIA Principle</div></div>
+      <div class="breakdown-cell"><div class="num" id="typeScore">0/12</div><div class="lbl">Control Type</div></div>
+      <div class="breakdown-cell"><div class="num" id="functionScore">0/12</div><div class="lbl">Control Function</div></div>
+    </div>
+
+    <div class="review-list" id="reviewList"></div>
+
+    <div class="btn-row" style="justify-content:flex-start; margin-top: 22px;">
+      <button class="btn btn-outline" onclick="restartQuiz()">Start Over</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const CONTROLS = [
+    { desc: "Padlock securing the server room door", cia: "Confidentiality", type: "Physical", fn: "Preventative" },
+    { desc: "Fire suppression system in the data center", cia: "Availability", type: "Physical", fn: "Corrective" },
+    { desc: "Security guard checking badges at the entrance", cia: "Confidentiality", type: "Physical", fn: "Preventative" },
+    { desc: "Tamper-evident seal on a ballot box", cia: "Integrity", type: "Physical", fn: "Detective" },
+    { desc: "Firewall blocking unauthorized network traffic", cia: "Confidentiality", type: "Technical", fn: "Preventative" },
+    { desc: "Automatic nightly backups stored off-site", cia: "Availability", type: "Technical", fn: "Corrective" },
+    { desc: "Checksum verification on a downloaded software update", cia: "Integrity", type: "Technical", fn: "Detective" },
+    { desc: "Full-disk encryption on company laptops", cia: "Confidentiality", type: "Technical", fn: "Preventative" },
+    { desc: "Password policy requiring regular updates", cia: "Confidentiality", type: "Managerial", fn: "Preventative" },
+    { desc: "Quarterly access review for the finance system", cia: "Confidentiality", type: "Managerial", fn: "Detective" },
+    { desc: "Written incident response plan for a ransomware attack", cia: "Availability", type: "Managerial", fn: "Corrective" },
+    { desc: "Two-person approval required before changing payroll records", cia: "Integrity", type: "Managerial", fn: "Preventative" },
+  ];
+
+  const CIA_OPTS = ["Confidentiality", "Integrity", "Availability"];
+  const TYPE_OPTS = ["Physical", "Technical", "Managerial"];
+  const FN_OPTS = ["Preventative", "Detective", "Corrective"];
+
+  let current = 0;
+  let selections = {};
+  let checked = false;
+  let totalScore = 0;
+  let dimScore = { cia: 0, type: 0, fn: 0 };
+  let missed = [];
+
+  function el(id) { return document.getElementById(id); }
+
+  function buildOptions(containerId, options, dimension) {
+    const container = el(containerId);
+    container.innerHTML = "";
+    options.forEach(opt => {
+      const btn = document.createElement("button");
+      btn.className = "option-btn";
+      btn.textContent = opt;
+      btn.onclick = () => selectOption(dimension, opt, btn, containerId);
+      container.appendChild(btn);
+    });
+  }
+
+  function selectOption(dimension, value, btnEl, containerId) {
+    if (checked) return;
+    selections[dimension] = value;
+    document.querySelectorAll(`#${containerId} .option-btn`).forEach(b => b.classList.remove("selected"));
+    btnEl.classList.add("selected");
+    updateCheckButton();
+  }
+
+  function updateCheckButton() {
+    const ready = selections.cia && selections.type && selections.fn;
+    el("checkBtn").disabled = !ready;
+  }
+
+  function startQuiz() {
+    current = 0;
+    totalScore = 0;
+    dimScore = { cia: 0, type: 0, fn: 0 };
+    missed = [];
+    el("screen-intro").classList.add("hidden");
+    el("screen-results").classList.add("hidden");
+    el("screen-question").classList.remove("hidden");
+    el("progressWrap").classList.remove("hidden");
+    el("scoreChip").classList.remove("hidden");
+    loadQuestion();
+  }
+
+  function loadQuestion() {
+    checked = false;
+    selections = {};
+    const c = CONTROLS[current];
+    el("controlTag").textContent = `CONTROL ${current + 1} OF ${CONTROLS.length}`;
+    el("controlDesc").textContent = c.desc;
+    buildOptions("ciaOptions", CIA_OPTS, "cia");
+    buildOptions("typeOptions", TYPE_OPTS, "type");
+    buildOptions("functionOptions", FN_OPTS, "fn");
+    el("feedbackBox").className = "feedback-box";
+    el("feedbackBox").textContent = "";
+    el("checkBtn").classList.remove("hidden");
+    el("checkBtn").disabled = true;
+    el("nextBtn").classList.add("hidden");
+    updateProgress();
+    updateScoreChip();
+  }
+
+  function updateProgress() {
+    const pct = (current / CONTROLS.length) * 100;
+    el("progressFill").style.width = pct + "%";
+    el("progressLabel").textContent = `Control ${current + 1} of ${CONTROLS.length}`;
+  }
+
+  function updateScoreChip() {
+    el("scoreChip").textContent = `${totalScore} pts`;
+  }
+
+  function checkAnswer() {
+    if (checked) return;
+    checked = true;
+    const c = CONTROLS[current];
+    const dims = [
+      { key: "cia", correct: c.cia, containerId: "ciaOptions" },
+      { key: "type", correct: c.type, containerId: "typeOptions" },
+      { key: "fn", correct: c.fn, containerId: "functionOptions" },
+    ];
+
+    let allCorrect = true;
+    let wrongDims = [];
+
+    dims.forEach(d => {
+      const buttons = document.querySelectorAll(`#${d.containerId} .option-btn`);
+      const userAnswer = selections[d.key];
+      const isRight = userAnswer === d.correct;
+      if (isRight) { totalScore += 1; dimScore[d.key] += 1; }
+      else { allCorrect = false; wrongDims.push(d.key); }
+
+      buttons.forEach(b => {
+        b.disabled = true;
+        if (b.textContent === d.correct) b.classList.add("correct");
+        else if (b.textContent === userAnswer && !isRight) b.classList.add("incorrect");
+      });
+    });
+
+    const fb = el("feedbackBox");
+    fb.classList.add("show");
+    if (allCorrect) {
+      fb.className = "feedback-box show all-correct";
+      fb.textContent = "All three correct. Nice work.";
+    } else {
+      fb.className = "feedback-box show some-wrong";
+      const names = { cia: "CIA Principle", type: "Control Type", fn: "Control Function" };
+      fb.textContent = "Double-check: " + wrongDims.map(k => names[k]).join(" and ") +
+        ` — correct answer${wrongDims.length > 1 ? "s are" : " is"} highlighted above.`;
+      missed.push({ desc: c.desc, cia: c.cia, type: c.type, fn: c.fn, wrongDims: wrongDims.map(k => names[k]) });
+    }
+
+    updateScoreChip();
+    el("checkBtn").classList.add("hidden");
+    el("nextBtn").classList.remove("hidden");
+  }
+
+  function nextQuestion() {
+    current += 1;
+    if (current >= CONTROLS.length) {
+      showResults();
+    } else {
+      loadQuestion();
+    }
+  }
+
+  function showResults() {
+    el("screen-question").classList.add("hidden");
+    el("progressWrap").classList.add("hidden");
+    el("screen-results").classList.remove("hidden");
+
+    el("bigScore").innerHTML = `${totalScore}<span>/36</span>`;
+    el("ciaScore").textContent = `${dimScore.cia}/12`;
+    el("typeScore").textContent = `${dimScore.type}/12`;
+    el("functionScore").textContent = `${dimScore.fn}/12`;
+
+    const list = el("reviewList");
+    list.innerHTML = "";
+    if (missed.length === 0) {
+      const div = document.createElement("div");
+      div.className = "all-clear";
+      div.textContent = "Perfect score across all three dimensions — all 12 controls correctly classified.";
+      list.appendChild(div);
+    } else {
+      const heading = document.createElement("h3");
+      heading.style.color = "var(--green)";
+      heading.style.fontSize = "16px";
+      heading.style.marginBottom = "10px";
+      heading.textContent = "Controls to review:";
+      list.appendChild(heading);
+      missed.forEach(m => {
+        const div = document.createElement("div");
+        div.className = "review-item";
+        div.innerHTML = `<b>${m.desc}</b><br>Missed: ${m.wrongDims.join(", ")} &nbsp;·&nbsp; Correct: ${m.cia} / ${m.type} / ${m.fn}`;
+        list.appendChild(div);
+      });
+    }
+    el("scoreChip").classList.add("hidden");
+  }
+
+  function restartQuiz() {
+    el("screen-results").classList.add("hidden");
+    el("screen-intro").classList.remove("hidden");
+    el("scoreChip").classList.add("hidden");
+  }
+</script>
+
+</body>
+</html>
