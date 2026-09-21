@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spot the Hallucination</title>
+<style>
+  :root {
+    --navy: #0F1B2D; --teal: #0E7C7B; --mint: #6FC3B4; --amber: #C97A2B;
+    --light: #EAF4F4; --gray: #9AA6A6; --danger: #B5473A; --revealed: #7A6FB0; --white: #FFFFFF;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: Calibri, "Segoe UI", sans-serif; background: var(--light); color: #1a1a1a; min-height: 100vh; }
+  #app { max-width: 1050px; margin: 0 auto; padding: 18px 20px 40px; }
+
+  header {
+    background: var(--navy); color: white; border-radius: 14px; padding: 16px 22px;
+    display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 14px;
+  }
+  header h1 { font-family: Cambria, Georgia, serif; font-size: 1.5rem; margin: 0; }
+  header .sub { font-size: 0.85rem; color: var(--mint); margin-top: 2px; }
+  .lang-toggle {
+    background: transparent; border: 1.5px solid var(--mint); color: var(--mint);
+    border-radius: 999px; padding: 6px 14px; font-size: 0.85rem; cursor: pointer; font-weight: 600;
+  }
+  .lang-toggle:hover { background: rgba(111,195,180,0.15); }
+
+  .progress-row { display: flex; gap: 8px; margin-bottom: 6px; }
+  .progress-dot { flex: 1; height: 8px; border-radius: 4px; background: #D7E4E4; }
+  .progress-dot.done { background: var(--teal); }
+  .progress-dot.current { background: var(--amber); }
+  .attempt-indicator { font-size: 0.82rem; color: var(--amber); font-weight: 700; margin-bottom: 14px; text-align: right; }
+  .attempt-indicator.final { color: var(--danger); }
+
+  .hook-box {
+    background: white; border-left: 4px solid var(--amber); border-radius: 10px;
+    padding: 14px 18px; margin-bottom: 16px; font-size: 0.98rem; line-height: 1.5;
+  }
+  .hook-box .es { display: block; font-style: italic; color: #666; font-size: 0.87rem; margin-top: 6px; }
+  .hook-box.compact { font-size: 0.9rem; padding: 10px 16px; }
+
+  .stage-label { font-size: 0.85rem; color: var(--teal); font-weight: 700; margin-bottom: 6px; }
+
+  .bins { display: grid; gap: 16px; margin-bottom: 16px; grid-template-columns: 1fr 1fr; }
+  @media (max-width: 700px) { .bins { grid-template-columns: 1fr; } }
+  .bin {
+    background: white; border: 2px dashed #C7D6D6; border-radius: 14px; padding: 14px;
+    min-height: 170px; cursor: pointer; transition: all 0.15s ease;
+  }
+  .bin.has-selected { border-color: var(--amber); background: #FFF6EC; }
+  .bin h3 { margin: 0 0 10px; font-size: 1.0rem; color: var(--navy); font-family: Cambria, Georgia, serif; }
+  .bin .es-h { display: block; font-style: italic; color: #777; font-size: 0.78rem; font-weight: normal; margin-top: 2px; }
+  .bin-items { display: flex; flex-wrap: wrap; gap: 8px; }
+  .placed-item { background: var(--light); border-radius: 8px; padding: 8px 12px; font-size: 0.85rem; cursor: pointer; max-width: 100%; }
+  .placed-item .es { display: block; font-style: italic; color: #777; font-size: 0.76rem; margin-top: 2px; }
+  .placed-item.correct { background: #EAF6EA; border: 1.5px solid #3F9142; }
+  .placed-item.wrong { background: #FBEAE8; border: 1.5px solid var(--danger); }
+  .placed-item.revealed { background: #EFECF9; border: 1.5px solid var(--revealed); cursor: default; }
+  .placed-item.revealed .tag { display: block; color: var(--revealed); font-weight: 700; font-size: 0.72rem; margin-top: 3px; }
+
+  .pool-card-wrap { background: white; border-radius: 14px; padding: 16px; box-shadow: 0 1px 3px rgba(15,27,45,0.08); margin-bottom: 16px; }
+  .pool { display: flex; flex-wrap: wrap; gap: 10px; }
+  .pool-card {
+    background: var(--light); border: 2px solid transparent; border-radius: 10px;
+    padding: 12px 16px; font-size: 0.88rem; cursor: pointer; transition: all 0.15s ease; max-width: 340px;
+  }
+  .pool-card:hover { border-color: var(--teal); background: white; }
+  .pool-card.selected { border-color: var(--amber); background: #FFF6EC; }
+  .pool-card .es { display: block; font-style: italic; color: #777; font-size: 0.78rem; margin-top: 3px; }
+
+  button.primary {
+    background: var(--teal); color: white; border: none; border-radius: 8px;
+    padding: 11px 20px; font-size: 0.98rem; font-weight: 700; cursor: pointer;
+  }
+  button.primary:hover { background: #0b6362; }
+  button.primary:disabled { background: #C9D6D6; cursor: not-allowed; }
+  button.secondary {
+    background: transparent; color: var(--teal); border: 1.5px solid var(--teal);
+    border-radius: 8px; padding: 9px 16px; font-size: 0.9rem; font-weight: 600; cursor: pointer;
+  }
+  .action-row { display: flex; gap: 10px; margin-top: 4px; flex-wrap: wrap; align-items: center; }
+  .feedback { font-size: 0.92rem; color: #444; }
+  .feedback.error { color: var(--danger); font-weight: 600; }
+
+  .overlay { position: fixed; inset: 0; background: rgba(15,27,45,0.55); display: flex; align-items: center; justify-content: center; padding: 20px; z-index: 20; }
+  .overlay.hidden { display: none; }
+  .modal { background: white; border-radius: 16px; max-width: 640px; width: 100%; padding: 28px 26px; max-height: 86vh; overflow-y: auto; }
+  .modal h2 { font-family: Cambria, Georgia, serif; color: var(--navy); margin-top: 0; }
+  .modal .es-p { display: block; font-style: italic; color: #666; font-size: 0.9rem; margin-top: 8px; }
+  .kickoff-box { background: var(--navy); color: white; border-radius: 12px; padding: 16px 18px; margin-top: 16px; }
+  .kickoff-box h3 { margin: 0 0 8px; color: var(--mint); font-family: Cambria, Georgia, serif; }
+  .kickoff-box .es { display: block; font-style: italic; color: #AFC7C7; font-size: 0.85rem; margin-top: 6px; }
+
+  #exportScreen { display: none; }
+  #exportScreen.active { display: block; }
+  #app.export-mode > header, #app.export-mode > .progress-row, #app.export-mode > .attempt-indicator, #app.export-mode > .hook-box,
+  #app.export-mode > .stage-label, #app.export-mode > .bins, #app.export-mode > .pool-card-wrap, #app.export-mode > .action-row, #app.export-mode > .feedback { display: none; }
+  .export-card { background: white; border-radius: 14px; padding: 20px 24px; box-shadow: 0 1px 3px rgba(15,27,45,0.08); margin-bottom: 16px; }
+  .export-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 10px; }
+  .export-title { font-family: Cambria, Georgia, serif; color: var(--navy); font-size: 1.7rem; margin: 0; }
+  .export-subtitle { color: var(--teal); font-size: 0.95rem; margin-top: 2px; }
+  .name-row { display: flex; gap: 16px; flex-wrap: wrap; margin: 14px 0 4px; }
+  .name-row label { font-size: 0.85rem; color: #555; display: block; margin-bottom: 4px; }
+  .name-row .es { display: block; font-style: italic; color: #888; font-size: 0.78rem; }
+  .name-row input {
+    border: none; border-bottom: 2px solid #C7D6D6; background: transparent;
+    font-size: 1rem; padding: 4px 2px; font-family: Calibri, sans-serif; color: #111;
+  }
+  .name-row input:focus { outline: none; border-bottom-color: var(--teal); }
+  .export-section-title { font-family: Cambria, Georgia, serif; color: var(--teal); font-size: 1.15rem; margin: 6px 0 10px; }
+  .export-p { font-size: 0.9rem; color: #444; margin: 0 0 10px; }
+  .export-p .es { display: block; font-style: italic; color: #777; font-size: 0.84rem; }
+  .attempt-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 14px; }
+  .attempt-stat { background: var(--light); border-radius: 10px; padding: 12px; text-align: center; }
+  .attempt-stat .num { font-size: 1.6rem; font-weight: 700; color: var(--navy); }
+  .attempt-stat .lbl { font-size: 0.75rem; color: #666; margin-top: 2px; }
+  .attempt-stat .lbl .es { display: block; font-style: italic; }
+  .recap-table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+  .recap-table th, .recap-table td { border: 1px solid #DCE6E6; padding: 8px 10px; text-align: left; font-size: 0.83rem; vertical-align: top; }
+  .recap-table th { background: var(--navy); color: white; font-weight: 700; }
+  .recap-chip { display: inline-block; border-radius: 6px; padding: 3px 8px; margin: 2px 3px 2px 0; font-size: 0.76rem; }
+  .recap-chip.a1 { background: #EAF6EA; color: #256029; }
+  .recap-chip.a2 { background: #FFF3E0; color: #8a5a00; }
+  .recap-chip.rev { background: #EFECF9; color: #4B3F8C; }
+  .reflection-block { margin-top: 6px; }
+  .reflection-q { font-size: 0.92rem; color: #222; margin-bottom: 2px; }
+  .reflection-block textarea {
+    width: 100%; min-height: 56px; border: 1.5px solid #C7D6D6; border-radius: 8px;
+    padding: 8px 10px; font-family: Calibri, sans-serif; font-size: 0.92rem; resize: vertical; margin-bottom: 14px;
+  }
+  .reflection-block textarea:focus { outline: none; border-color: var(--teal); }
+  .print-btn-row { display: flex; gap: 10px; margin-top: 6px; }
+  @media print {
+    body { background: white; }
+    .lang-toggle, .print-btn-row { display: none !important; }
+    .export-card { box-shadow: none; border: 1px solid #ddd; page-break-inside: avoid; }
+    #app { max-width: 100%; padding: 0; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div>
+      <h1 id="title">Spot the Hallucination</h1>
+      <div class="sub" id="subtitle">Unit 3 — AI Literacy</div>
+    </div>
+    <button class="lang-toggle" id="langToggle" onclick="toggleLang()">Español</button>
+  </header>
+
+  <div class="progress-row" id="progressRow"></div>
+  <div class="attempt-indicator" id="attemptIndicator"></div>
+  <div class="hook-box" id="hookBox"></div>
+  <div class="stage-label" id="stageLabel"></div>
+
+  <div class="bins" id="binsArea"></div>
+  <div class="pool-card-wrap">
+    <div class="pool" id="poolArea"></div>
+  </div>
+
+  <div class="action-row">
+    <button class="primary" id="checkBtn" onclick="checkRound()" disabled></button>
+    <button class="secondary" id="resetBtn" onclick="resetRound()"></button>
+    <button class="secondary" id="turnInNowBtn" onclick="confirmEarlyTurnIn()" style="border-color: var(--amber); color: var(--amber); margin-left: auto;"></button>
+  </div>
+  <div class="feedback" id="feedbackBox"></div>
+
+  <div id="exportScreen">
+    <div class="export-card">
+      <div class="export-header">
+        <div>
+          <h2 class="export-title" id="exportTitle">Reflection Log</h2>
+          <div class="export-subtitle" id="exportSubtitle">Unit 3 — Spot the Hallucination</div>
+        </div>
+        <button class="lang-toggle" style="border-color: var(--teal); color: var(--teal);" onclick="toggleLang()" id="exportLangToggle">Español</button>
+      </div>
+      <div class="name-row">
+        <div>
+          <label id="nameLabelEn">Name<span class="es" id="nameLabelEs">Nombre</span></label>
+          <input type="text" id="studentName" size="28">
+        </div>
+        <div>
+          <label id="periodLabelEn">Period<span class="es" id="periodLabelEs">Periodo</span></label>
+          <input type="text" id="studentPeriod" size="8">
+        </div>
+      </div>
+    </div>
+
+    <div class="export-card">
+      <div class="export-section-title" id="summaryTitle">How You Did</div>
+      <div class="attempt-summary" id="attemptSummary"></div>
+      <table class="recap-table" id="recapTable"></table>
+    </div>
+
+    <div class="export-card">
+      <div class="export-section-title" id="reflectionTitle">Reflection</div>
+      <div class="reflection-block" id="reflectionBlock"></div>
+    </div>
+
+    <div class="print-btn-row">
+      <button class="primary" onclick="window.print()" id="printBtn">Print / Save as PDF</button>
+      <button class="secondary" onclick="backToGame()" id="backBtn">Back to game</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay hidden" id="overlay">
+  <div class="modal" id="modalContent"></div>
+</div>
+
+<script>
+// Item data lives in flat arrays independent of UI strings, each item carrying {id, en, es, cat}.
+const ROUND1_ITEMS = [
+  { id: "r1_capital", en: "Q: What is the capital of Australia?\nAI: Sydney.", es: "P: \u00bfCu\u00e1l es la capital de Australia?\nIA: Sydney.", cat: "off" },
+  { id: "r1_continents", en: "Q: How many continents are there?\nAI: Seven.", es: "P: \u00bfCu\u00e1ntos continentes hay?\nIA: Siete.", cat: "ok" },
+  { id: "r1_romeo", en: "Q: Who wrote Romeo and Juliet?\nAI: William Shakespeare.", es: "P: \u00bfQui\u00e9n escribi\u00f3 Romeo y Julieta?\nIA: William Shakespeare.", cat: "ok" },
+  { id: "r1_mountain", en: "Q: What is the tallest mountain in the world?\nAI: Mount Kilimanjaro.", es: "P: \u00bfCu\u00e1l es la monta\u00f1a m\u00e1s alta del mundo?\nIA: El Monte Kilimanjaro.", cat: "off" },
+  { id: "r1_gold", en: "Q: What's the chemical symbol for gold?\nAI: Au.", es: "P: \u00bfCu\u00e1l es el s\u00edmbolo qu\u00edmico del oro?\nIA: Au.", cat: "ok" },
+  { id: "r1_moon", en: "Q: Who was the first person to walk on the moon?\nAI: Buzz Aldrin.", es: "P: \u00bfQui\u00e9n fue la primera persona en caminar en la luna?\nIA: Buzz Aldrin.", cat: "off" },
+  { id: "r1_boiling", en: "Q: What's the boiling point of water at sea level, in Celsius?\nAI: 100 degrees.", es: "P: \u00bfCu\u00e1l es el punto de ebullici\u00f3n del agua al nivel del mar, en Celsius?\nIA: 100 grados.", cat: "ok" },
+  { id: "r1_monalisa", en: "Q: Who painted the Mona Lisa?\nAI: Vincent van Gogh.", es: "P: \u00bfQui\u00e9n pint\u00f3 la Mona Lisa?\nIA: Vincent van Gogh.", cat: "off" }
+];
+
+const ROUND2_ITEMS = [
+  { id: "r2_citation", en: "Q: Give a source about ocean plastic pollution.\nAI: According to a 2021 study in the Journal of Marine Science by Dr. A. Ramirez, 8 million tons of plastic enter the ocean each year.", es: "P: Dame una fuente sobre la contaminaci\u00f3n pl\u00e1stica oce\u00e1nica.\nIA: Seg\u00fan un estudio de 2021 en el Journal of Marine Science por la Dra. A. Ram\u00edrez, 8 millones de toneladas de pl\u00e1stico entran al oc\u00e9ano cada a\u00f1o.", cat: "hallucination" },
+  { id: "r2_wwii", en: "Q: What year did World War II end?\nAI: 1945.", es: "P: \u00bfEn qu\u00e9 a\u00f1o termin\u00f3 la Segunda Guerra Mundial?\nIA: 1945.", cat: "accurate" },
+  { id: "r2_planet", en: "Q: What's the largest planet in our solar system?\nAI: Jupiter.", es: "P: \u00bfCu\u00e1l es el planeta m\u00e1s grande de nuestro sistema solar?\nIA: J\u00fapiter.", cat: "accurate" },
+  { id: "r2_play", en: "Q: Summarize the plot of Shakespeare's play \u201cThe Winter's Dream.\u201d\nAI: The play follows a king who, after a prophetic dream, exiles his daughter, leading to a tragic reunion years later\u2026", es: "P: Resume la trama de la obra de Shakespeare \u201cEl Sue\u00f1o de Invierno.\u201d\nIA: La obra sigue a un rey que, despu\u00e9s de un sue\u00f1o profundo, destierra a su hija, lo que lleva a un reencuentro tr\u00e1gico a\u00f1os despu\u00e9s\u2026", cat: "hallucination" },
+  { id: "r2_bones", en: "Q: How many bones are in the adult human body?\nAI: 206.", es: "P: \u00bfCu\u00e1ntos huesos hay en el cuerpo humano adulto?\nIA: 206.", cat: "accurate" },
+  { id: "r2_population", en: "Q: What's the population of Millbrook Falls, a small fictional-sounding town?\nAI: 14,382 people, as of the most recent census.", es: "P: \u00bfCu\u00e1l es la poblaci\u00f3n de Millbrook Falls, un pueblo peque\u00f1o que suena inventado?\nIA: 14,382 personas, seg\u00fan el censo m\u00e1s reciente.", cat: "hallucination" },
+  { id: "r2_freezing", en: "Q: What is the freezing point of water in Fahrenheit?\nAI: 32 degrees.", es: "P: \u00bfCu\u00e1l es el punto de congelaci\u00f3n del agua en Fahrenheit?\nIA: 32 grados.", cat: "accurate" }
+];
+
+const STR = {
+  en: {
+    title: "Spot the Hallucination",
+    subtitle: "Unit 3 — AI Literacy",
+    langBtn: "Español",
+    roundLabel: "Round {n} of 2",
+    checkIdle: "Check my sort",
+    resetBtn: "Reset this round",
+    turnInNowBtn: "Turn in now (haven't finished)",
+    confirmEarlyTurnIn: "You haven't finished both rounds yet. Turn in what you've completed so far?",
+    needAll: "Sort every item before checking.",
+    correctCount: "{n} of {t} correct. Click a red one to try again \u2014 you have one more check.",
+    allCorrect: "All correct!",
+    selectPrompt: "Click an item below, then click where it belongs.",
+    attempt1of2: "First check \u2014 you'll get one more chance after this.",
+    attempt2of2: "Final check \u2014 anything still wrong will be revealed.",
+    hook: "AI can sound completely confident while being completely wrong. For each AI answer below, decide: does it check out, or is something off?",
+    hookOther: "La IA puede sonar completamente segura mientras est\u00e1 completamente equivocada. Para cada respuesta de la IA de abajo, decide: \u00bfse ve bien, o algo est\u00e1 mal?",
+    hookR2: "Round 2: same idea, trickier cases \u2014 including the kind of AI answer you might actually use in a real assignment.",
+    hookR2Other: "Ronda 2: la misma idea, casos m\u00e1s dif\u00edciles \u2014 incluyendo el tipo de respuesta de IA que realmente podr\u00edas usar en una tarea real.",
+    binOk: "Checks Out",
+    binOff: "Something's Off",
+    binAccurate: "Accurate",
+    binHallucination: "Hallucination",
+    revealedTag: "revealed",
+    revealTitle: "Now It Has a Name: Hallucination",
+    revealIntro: "When an AI confidently states something false, that's called a hallucination. It's not lying on purpose \u2014 remember Weeks 1-2: AI predicts the most likely-SOUNDING next words based on patterns, it doesn't fact-check itself.",
+    revealIntroOther: "Cuando una IA afirma algo falso con confianza, eso se llama alucinaci\u00f3n. No est\u00e1 mintiendo a prop\u00f3sito \u2014 recuerda las Semanas 1-2: la IA predice las palabras siguientes que SUENAN m\u00e1s probables seg\u00fan patrones, no se autoverifica.",
+    revealBody: "\u201cSydney\u201d sounds like a very plausible answer for an Australian capital \u2014 it's just wrong. That's exactly how hallucinations work: confident, fluent, and sometimes completely made up.",
+    revealBodyOther: "\u201cSydney\u201d suena como una respuesta muy plausible para una capital australiana \u2014 solo que est\u00e1 mal. As\u00ed es exactamente como funcionan las alucinaciones: seguras, fluidas, y a veces completamente inventadas.",
+    continueBtn: "Start Round 2",
+    finalTitle: "Round 2 Done!",
+    finalBody: "Notice Round 2's trickiest cases \u2014 a fake citation and a fabricated statistic. Those are the hallucinations that actually matter in real life: the ones that sound exactly like something you'd trust in a research paper.",
+    finalBodyOther: "Nota los casos m\u00e1s dif\u00edciles de la Ronda 2 \u2014 una cita falsa y una estad\u00edstica inventada. Esas son las alucinaciones que realmente importan en la vida real: las que suenan exactamente como algo en lo que confiar\u00edas en un trabajo de investigaci\u00f3n.",
+    kickoffTitle: "Now Turn It In: Reflection Log",
+    kickoffBody: "Your results are already filled in below. Answer the reflection questions, then print or save as PDF.",
+    kickoffBodyOther: "Tus resultados ya est\u00e1n completados abajo. Responde las preguntas de reflexi\u00f3n, luego imprime o guarda como PDF.",
+    closeBtn: "Got it",
+    colScenario: "AI Answer", colYourAnswer: "Your Answer",
+    exportTitle: "Reflection Log",
+    exportSubtitle: "Unit 3 — Spot the Hallucination",
+    nameLabel: "Name", periodLabel: "Period",
+    summaryTitle: "How You Did",
+    statFirst: "Correct, first try", statSecond: "Needed a second guess", statRevealed: "Had to be revealed",
+    reflectionTitle: "Reflection",
+    q1: "1. Pick one hallucination from today. What made it sound believable?",
+    q2: "2. What's one habit you could use in real life to catch a hallucination before trusting it?",
+    q3: "3. If any answers were revealed instead of solved, what do you think tripped you up?",
+    printBtn: "Print / Save as PDF",
+    backBtn: "Back to game"
+  },
+  es: {
+    title: "Encuentra la Alucinaci\u00f3n",
+    subtitle: "Unidad 3 — Alfabetizaci\u00f3n en IA",
+    langBtn: "English",
+    roundLabel: "Ronda {n} de 2",
+    checkIdle: "Revisar mi organizaci\u00f3n",
+    resetBtn: "Reiniciar esta ronda",
+    turnInNowBtn: "Entregar ahora (no he terminado)",
+    confirmEarlyTurnIn: "Todav\u00eda no has terminado las dos rondas. \u00bfQuieres entregar lo que has completado hasta ahora?",
+    needAll: "Organiza todo antes de revisar.",
+    correctCount: "{n} de {t} correctos. Haz clic en uno rojo para intentar de nuevo \u2014 tienes una revisi\u00f3n m\u00e1s.",
+    allCorrect: "\u00a1Todos correctos!",
+    selectPrompt: "Haz clic en un elemento de abajo, luego haz clic en d\u00f3nde pertenece.",
+    attempt1of2: "Primera revisi\u00f3n \u2014 tendr\u00e1s una oportunidad m\u00e1s despu\u00e9s de esta.",
+    attempt2of2: "Revisi\u00f3n final \u2014 lo que siga mal se revelar\u00e1.",
+    hook: "La IA puede sonar completamente segura mientras est\u00e1 completamente equivocada. Para cada respuesta de la IA de abajo, decide: \u00bfse ve bien, o algo est\u00e1 mal?",
+    hookOther: "AI can sound completely confident while being completely wrong. For each AI answer below, decide: does it check out, or is something off?",
+    hookR2: "Ronda 2: la misma idea, casos m\u00e1s dif\u00edciles \u2014 incluyendo el tipo de respuesta de IA que realmente podr\u00edas usar en una tarea real.",
+    hookR2Other: "Round 2: same idea, trickier cases \u2014 including the kind of AI answer you might actually use in a real assignment.",
+    binOk: "Se Ve Bien",
+    binOff: "Algo Est\u00e1 Mal",
+    binAccurate: "Preciso",
+    binHallucination: "Alucinaci\u00f3n",
+    revealedTag: "revelado",
+    revealTitle: "Ahora Tiene un Nombre: Alucinaci\u00f3n",
+    revealIntro: "Cuando una IA afirma algo falso con confianza, eso se llama alucinaci\u00f3n. No est\u00e1 mintiendo a prop\u00f3sito \u2014 recuerda las Semanas 1-2: la IA predice las palabras siguientes que SUENAN m\u00e1s probables seg\u00fan patrones, no se autoverifica.",
+    revealIntroOther: "When an AI confidently states something false, that's called a hallucination. It's not lying on purpose \u2014 remember Weeks 1-2: AI predicts the most likely-SOUNDING next words based on patterns, it doesn't fact-check itself.",
+    revealBody: "\u201cSydney\u201d suena como una respuesta muy plausible para una capital australiana \u2014 solo que est\u00e1 mal. As\u00ed es exactamente como funcionan las alucinaciones: seguras, fluidas, y a veces completamente inventadas.",
+    revealBodyOther: "\u201cSydney\u201d sounds like a very plausible answer for an Australian capital \u2014 it's just wrong. That's exactly how hallucinations work: confident, fluent, and sometimes completely made up.",
+    continueBtn: "Comenzar Ronda 2",
+    finalTitle: "\u00a1Ronda 2 Completada!",
+    finalBody: "Nota los casos m\u00e1s dif\u00edciles de la Ronda 2 \u2014 una cita falsa y una estad\u00edstica inventada. Esas son las alucinaciones que realmente importan en la vida real: las que suenan exactamente como algo en lo que confiar\u00edas en un trabajo de investigaci\u00f3n.",
+    finalBodyOther: "Notice Round 2's trickiest cases \u2014 a fake citation and a fabricated statistic. Those are the hallucinations that actually matter in real life: the ones that sound exactly like something you'd trust in a research paper.",
+    kickoffTitle: "Ahora Entr\u00e9galo: Registro de Reflexi\u00f3n",
+    kickoffBody: "Tus resultados ya est\u00e1n completados abajo. Responde las preguntas de reflexi\u00f3n, luego imprime o guarda como PDF.",
+    kickoffBodyOther: "Your results are already filled in below. Answer the reflection questions, then print or save as PDF.",
+    closeBtn: "Entendido",
+    colScenario: "Respuesta de la IA", colYourAnswer: "Tu Respuesta",
+    exportTitle: "Registro de Reflexi\u00f3n",
+    exportSubtitle: "Unidad 3 — Encuentra la Alucinaci\u00f3n",
+    nameLabel: "Nombre", periodLabel: "Periodo",
+    summaryTitle: "C\u00f3mo te Fue",
+    statFirst: "Correcto a la primera", statSecond: "Necesit\u00f3 un segundo intento", statRevealed: "Tuvo que revelarse",
+    reflectionTitle: "Reflexi\u00f3n",
+    q1: "1. Elige una alucinaci\u00f3n de hoy. \u00bfQu\u00e9 la hizo sonar creible?",
+    q2: "2. \u00bfCu\u00e1l es un h\u00e1bito que podr\u00edas usar en la vida real para detectar una alucinaci\u00f3n antes de confiar en ella?",
+    q3: "3. Si alguna respuesta se revel\u00f3 en lugar de resolverse, \u00bfqu\u00e9 crees que te confundi\u00f3?",
+    printBtn: "Imprimir / Guardar como PDF",
+    backBtn: "Volver al juego"
+  }
+};
+
+let lang = "en";
+let round = 1; // 1 or 2
+let checkCount = 0; // resets each round, max 2
+let resultsLog = {}; // round -> { itemId: 'a1' | 'a2' | 'revealed' }
+
+const ROUND_CONFIG = {
+  1: { items: ROUND1_ITEMS, binKeys: ["ok", "off"], titleKeys: ["binOk", "binOff"] },
+  2: { items: ROUND2_ITEMS, binKeys: ["accurate", "hallucination"], titleKeys: ["binAccurate", "binHallucination"] }
+};
+
+let state = { poolOrder: [], bins: {}, checked: false, status: {}, selected: null, revealedIds: [] };
+
+function t(key, vars) {
+  let s = STR[lang][key];
+  if (vars) Object.keys(vars).forEach(k => s = s.replace("{" + k + "}", vars[k]));
+  return s;
+}
+function currentItems() { return ROUND_CONFIG[round].items; }
+function findItem(id) { return currentItems().find(i => i.id === id); }
+function correctCatFor(id) { const item = findItem(id); return item ? item.cat : null; }
+
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function toggleLang() {
+  lang = lang === "en" ? "es" : "en";
+  if (document.getElementById("exportScreen").classList.contains("active")) {
+    renderExportScreen();
+  } else {
+    render();
+  }
+}
+
+function initRound(n) {
+  round = n;
+  checkCount = 0;
+  const cfg = ROUND_CONFIG[n];
+  const ids = cfg.items.map(i => i.id);
+  const bins = {};
+  cfg.binKeys.forEach(k => bins[k] = []);
+  state = { poolOrder: shuffle(ids), bins, checked: false, status: {}, selected: null, revealedIds: [] };
+  render();
+}
+function resetRound() { initRound(round); }
+
+function handlePoolClick(id) { state.selected = state.selected === id ? null : id; render(); }
+function handleBinClick(binKey) {
+  if (!state.selected) return;
+  const id = state.selected;
+  state.poolOrder = state.poolOrder.filter(x => x !== id);
+  state.bins[binKey].push(id);
+  state.selected = null;
+  state.checked = false;
+  state.status = {};
+  setFeedback("");
+  render();
+}
+function handlePlacedClick(binKey, id) {
+  if (state.revealedIds.includes(id)) return; // locked
+  state.bins[binKey] = state.bins[binKey].filter(x => x !== id);
+  state.poolOrder.push(id);
+  state.checked = false;
+  state.status = {};
+  setFeedback("");
+  render();
+}
+function setFeedback(msg, isError) {
+  const box = document.getElementById("feedbackBox");
+  box.className = "feedback" + (isError ? " error" : "");
+  box.textContent = msg;
+}
+
+function checkRound() {
+  if (state.poolOrder.length > 0) { setFeedback(t("needAll"), true); return; }
+  checkCount++;
+  const cfg = ROUND_CONFIG[round];
+  let total = 0, correct = 0;
+  const status = {};
+  cfg.binKeys.forEach(binKey => {
+    state.bins[binKey].forEach(id => {
+      total++;
+      const ok = correctCatFor(id) === binKey;
+      if (ok) correct++;
+      status[id] = ok ? "correct" : "wrong";
+    });
+  });
+  state.status = status;
+  state.checked = true;
+
+  // record attempt outcome for newly-correct items not already logged
+  if (!resultsLog[round]) resultsLog[round] = {};
+  Object.keys(status).forEach(id => {
+    if (status[id] === "correct" && !resultsLog[round][id]) {
+      resultsLog[round][id] = checkCount === 1 ? "a1" : "a2";
+    }
+  });
+
+  if (correct === total) {
+    setFeedback(t("allCorrect"));
+    render();
+    setTimeout(() => advanceRound(), 700);
+    return;
+  }
+
+  if (checkCount >= 2) {
+    // Compute the list of wrong items first (snapshot), then apply moves — avoids mutating
+    // a bin array while still iterating over it, which was silently dropping items.
+    const toReveal = [];
+    cfg.binKeys.forEach(binKey => {
+      state.bins[binKey].forEach(id => {
+        if (status[id] === "wrong") toReveal.push(id);
+      });
+    });
+    // Remove each revealed id from wherever it currently sits
+    cfg.binKeys.forEach(binKey => {
+      state.bins[binKey] = state.bins[binKey].filter(id => !toReveal.includes(id));
+    });
+    // Now place each into its correct bin, once
+    toReveal.forEach(id => {
+      const correctBin = correctCatFor(id);
+      state.bins[correctBin].push(id);
+      state.revealedIds.push(id);
+      resultsLog[round][id] = "revealed";
+    });
+    render();
+    setTimeout(() => advanceRound(), 900);
+  } else {
+    setFeedback(t("correctCount", { n: correct, t: total }));
+    render();
+  }
+}
+
+function advanceRound() {
+  if (round === 1) {
+    showReveal();
+  } else {
+    showFinal();
+  }
+}
+
+function confirmEarlyTurnIn() {
+  if (window.confirm(t("confirmEarlyTurnIn"))) showExportScreen();
+}
+
+function showReveal() {
+  const overlay = document.getElementById("overlay");
+  const modal = document.getElementById("modalContent");
+  modal.innerHTML = `
+    <h2>${t("revealTitle")}</h2>
+    <p>${t("revealIntro")}<span class="es-p">${t("revealIntroOther")}</span></p>
+    <p>${t("revealBody")}<span class="es-p">${t("revealBodyOther")}</span></p>
+    <div style="margin-top:16px;"><button class="primary" id="closeModalBtn">${t("continueBtn")}</button></div>
+  `;
+  document.getElementById("closeModalBtn").onclick = () => { overlay.classList.add("hidden"); initRound(2); };
+  overlay.classList.remove("hidden");
+}
+
+function showFinal() {
+  const overlay = document.getElementById("overlay");
+  const modal = document.getElementById("modalContent");
+  modal.innerHTML = `
+    <h2>${t("finalTitle")}</h2>
+    <p>${t("finalBody")}<span class="es-p">${t("finalBodyOther")}</span></p>
+    <div class="kickoff-box">
+      <h3>${t("kickoffTitle")}</h3>
+      <div>${t("kickoffBody")}</div>
+      <span class="es">${t("kickoffBodyOther")}</span>
+    </div>
+    <div style="margin-top:18px;"><button class="primary" id="closeModalBtn">${t("closeBtn")}</button></div>
+  `;
+  document.getElementById("closeModalBtn").onclick = () => { overlay.classList.add("hidden"); showExportScreen(); };
+  overlay.classList.remove("hidden");
+}
+
+function showExportScreen() {
+  document.getElementById("app").classList.add("export-mode");
+  document.getElementById("exportScreen").classList.add("active");
+  renderExportScreen();
+  window.scrollTo(0, 0);
+}
+function backToGame() {
+  document.getElementById("app").classList.remove("export-mode");
+  document.getElementById("exportScreen").classList.remove("active");
+}
+
+function labelForCat(cat) {
+  if (cat === "ok") return t("binOk");
+  if (cat === "off") return t("binOff");
+  if (cat === "accurate") return t("binAccurate");
+  return t("binHallucination");
+}
+
+function renderExportScreen() {
+  const other = lang === "en" ? "es" : "en";
+  document.getElementById("exportTitle").textContent = t("exportTitle");
+  document.getElementById("exportSubtitle").textContent = t("exportSubtitle");
+  document.getElementById("exportLangToggle").textContent = t("langBtn");
+  document.getElementById("nameLabelEn").firstChild.textContent = t("nameLabel") + " ";
+  document.getElementById("periodLabelEn").firstChild.textContent = t("periodLabel") + " ";
+  document.getElementById("nameLabelEs").textContent = STR[other].nameLabel;
+  document.getElementById("periodLabelEs").textContent = STR[other].periodLabel;
+  document.getElementById("summaryTitle").textContent = t("summaryTitle");
+  document.getElementById("printBtn").textContent = t("printBtn");
+  document.getElementById("backBtn").textContent = t("backBtn");
+  document.getElementById("reflectionTitle").textContent = t("reflectionTitle");
+
+  // attempt summary counts across both rounds
+  let a1 = 0, a2 = 0, rev = 0;
+  [1, 2].forEach(rn => {
+    const log = resultsLog[rn];
+    if (!log) return;
+    Object.values(log).forEach(v => {
+      if (v === "a1") a1++;
+      else if (v === "a2") a2++;
+      else if (v === "revealed") rev++;
+    });
+  });
+  const summaryEl = document.getElementById("attemptSummary");
+  summaryEl.innerHTML = `
+    <div class="attempt-stat"><div class="num">${a1}</div><div class="lbl">${STR[lang].statFirst}<span class="es">${STR[other].statFirst}</span></div></div>
+    <div class="attempt-stat"><div class="num">${a2}</div><div class="lbl">${STR[lang].statSecond}<span class="es">${STR[other].statSecond}</span></div></div>
+    <div class="attempt-stat"><div class="num">${rev}</div><div class="lbl">${STR[lang].statRevealed}<span class="es">${STR[other].statRevealed}</span></div></div>
+  `;
+
+  const table = document.getElementById("recapTable");
+  let html = `<tr><th>${t("colScenario")}</th><th>${t("colYourAnswer")}</th></tr>`;
+  [1, 2].forEach(rn => {
+    const log = resultsLog[rn];
+    if (!log) return;
+    const items = ROUND_CONFIG[rn].items;
+    Object.keys(log).forEach(id => {
+      const item = items.find(i => i.id === id);
+      if (!item) return;
+      const attemptVal = log[id];
+      const chipClass = attemptVal === "a1" ? "a1" : attemptVal === "a2" ? "a2" : "rev";
+      const chipLabel = labelForCat(item.cat) + (attemptVal === "revealed" ? ` (${STR[lang].revealedTag})` : "");
+      const textDisplay = item[lang].replace(/\n/g, " — ");
+      html += `<tr><td>${textDisplay}</td><td><span class="recap-chip ${chipClass}">${chipLabel}</span></td></tr>`;
+    });
+  });
+  table.innerHTML = html;
+
+  const reflectionBlock = document.getElementById("reflectionBlock");
+  const prevAnswers = {};
+  reflectionBlock.querySelectorAll("textarea").forEach(ta => { prevAnswers[ta.dataset.q] = ta.value; });
+  reflectionBlock.innerHTML = "";
+  ["q1", "q2", "q3"].forEach(qKey => {
+    const qDiv = document.createElement("div");
+    qDiv.className = "reflection-q";
+    qDiv.textContent = t(qKey);
+    reflectionBlock.appendChild(qDiv);
+    const ta = document.createElement("textarea");
+    ta.dataset.q = qKey;
+    if (prevAnswers[qKey]) ta.value = prevAnswers[qKey];
+    reflectionBlock.appendChild(ta);
+  });
+}
+
+function render() {
+  document.getElementById("title").textContent = t("title");
+  document.getElementById("subtitle").textContent = t("subtitle");
+  document.getElementById("langToggle").textContent = t("langBtn");
+  document.getElementById("stageLabel").textContent = t("roundLabel", { n: round });
+  document.getElementById("turnInNowBtn").textContent = t("turnInNowBtn");
+
+  const progressRow = document.getElementById("progressRow");
+  progressRow.innerHTML = "";
+  for (let i = 1; i <= 2; i++) {
+    const dot = document.createElement("div");
+    dot.className = "progress-dot" + (i < round ? " done" : i === round ? " current" : "");
+    progressRow.appendChild(dot);
+  }
+
+  const attemptEl = document.getElementById("attemptIndicator");
+  if (checkCount >= 1 && !state.checked) {
+    attemptEl.textContent = "";
+  } else if (checkCount === 0) {
+    attemptEl.className = "attempt-indicator";
+    attemptEl.textContent = t("attempt1of2");
+  } else {
+    attemptEl.className = "attempt-indicator final";
+    attemptEl.textContent = t("attempt2of2");
+  }
+
+  const hookBox = document.getElementById("hookBox");
+  if (round === 1) {
+    hookBox.className = "hook-box";
+    hookBox.innerHTML = `${t("hook")}<span class="es">${t("hookOther")}</span>`;
+  } else {
+    hookBox.className = "hook-box compact";
+    hookBox.innerHTML = `${t("hookR2")}<span class="es">${t("hookR2Other")}</span>`;
+  }
+
+  const cfg = ROUND_CONFIG[round];
+  const binsArea = document.getElementById("binsArea");
+  binsArea.innerHTML = "";
+  cfg.binKeys.forEach((binKey, idx) => {
+    const bin = document.createElement("div");
+    bin.className = "bin" + (state.selected ? " has-selected" : "");
+    bin.onclick = () => handleBinClick(binKey);
+    const titleKey = cfg.titleKeys[idx];
+    const other = lang === "en" ? "es" : "en";
+    const h3 = document.createElement("h3");
+    h3.innerHTML = t(titleKey) + `<span class="es-h">${STR[other][titleKey]}</span>`;
+    bin.appendChild(h3);
+    const itemsWrap = document.createElement("div");
+    itemsWrap.className = "bin-items";
+    state.bins[binKey].forEach(id => {
+      const item = findItem(id);
+      const chip = document.createElement("div");
+      let cls = "placed-item";
+      const isRevealed = state.revealedIds.includes(id);
+      if (isRevealed) cls += " revealed";
+      else if (state.checked) cls += state.status[id] === "correct" ? " correct" : " wrong";
+      chip.className = cls;
+      const other2 = lang === "en" ? "es" : "en";
+      chip.innerHTML = `${item[lang].replace(/\n/g, "<br>")}<span class="es">${item[other2].replace(/\n/g, "<br>")}</span>` +
+        (isRevealed ? `<span class="tag">${STR[lang].revealedTag}</span>` : "");
+      chip.onclick = (e) => { e.stopPropagation(); handlePlacedClick(binKey, id); };
+      itemsWrap.appendChild(chip);
+    });
+    bin.appendChild(itemsWrap);
+    binsArea.appendChild(bin);
+  });
+
+  const pool = document.getElementById("poolArea");
+  pool.innerHTML = "";
+  state.poolOrder.forEach(id => {
+    const item = findItem(id);
+    const other = lang === "en" ? "es" : "en";
+    const card = document.createElement("div");
+    card.className = "pool-card" + (state.selected === id ? " selected" : "");
+    card.innerHTML = `${item[lang].replace(/\n/g, "<br>")}<span class="es">${item[other].replace(/\n/g, "<br>")}</span>`;
+    card.onclick = (e) => { e.stopPropagation(); handlePoolClick(id); };
+    pool.appendChild(card);
+  });
+  if (state.poolOrder.length > 0) {
+    const hint = document.createElement("div");
+    hint.style.cssText = "width:100%;font-size:0.85rem;color:#888;font-style:italic;margin-top:4px;";
+    hint.textContent = t("selectPrompt");
+    pool.appendChild(hint);
+  }
+
+  document.getElementById("checkBtn").textContent = t("checkIdle");
+  document.getElementById("checkBtn").disabled = state.poolOrder.length > 0;
+  document.getElementById("resetBtn").textContent = t("resetBtn");
+}
+
+initRound(1);
+</script>
+</body>
+</html>
