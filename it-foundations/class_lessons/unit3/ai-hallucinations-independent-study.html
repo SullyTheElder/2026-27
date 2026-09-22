@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Hallucinations: Real Cases, Real Consequences</title>
+<style>
+  :root {
+    --navy: #0F1B2D; --teal: #0E7C7B; --mint: #6FC3B4; --amber: #C97A2B;
+    --light: #EAF4F4; --gray: #9AA6A6; --white: #FFFFFF;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: Calibri, "Segoe UI", sans-serif; background: var(--light); color: #1a1a1a; }
+  #app { max-width: 900px; margin: 0 auto; padding: 18px 20px 60px; }
+
+  header {
+    background: var(--navy); color: white; border-radius: 14px; padding: 18px 24px;
+    display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 16px;
+  }
+  header .title-block .bi .en { font-family: Cambria, Georgia, serif; font-size: 1.35rem; font-weight: 700; }
+  header .title-block .bi .es { font-family: Cambria, Georgia, serif; font-size: 1.1rem; }
+  header .sub { color: var(--mint); font-size: 0.85rem; margin-top: 4px; }
+  .lang-toggle {
+    background: transparent; border: 1.5px solid var(--mint); color: var(--mint);
+    border-radius: 999px; padding: 7px 16px; font-size: 0.85rem; cursor: pointer; font-weight: 600; flex-shrink: 0;
+  }
+  .lang-toggle:hover { background: rgba(111,195,180,0.15); }
+
+  /* Dual-visible bilingual: both always shown, order+style swap on toggle */
+  .bi { display: flex; flex-direction: column; }
+  .bi .en { order: 1; }
+  .bi .es { order: 2; font-style: italic; color: #666; font-size: 0.85em; margin-top: 3px; }
+  body.lang-es .bi .en { order: 2; font-style: italic; color: #666; font-size: 0.85em; margin-top: 3px; }
+  body.lang-es .bi .es { order: 1; font-style: normal; color: inherit; font-size: 1em; margin-top: 0; }
+  /* headings need their own bold-preserving variant */
+  .bi.heading .en { font-weight: 700; }
+  .bi.heading .es { font-weight: 700; font-style: italic; }
+  body.lang-es .bi.heading .en { font-weight: 700; }
+  body.lang-es .bi.heading .es { font-weight: 700; font-style: normal; }
+
+  .card { background: white; border-radius: 14px; padding: 22px 26px; box-shadow: 0 1px 3px rgba(15,27,45,0.08); margin-bottom: 16px; }
+  .card h2.bi .en, .card h2.bi .es { font-family: Cambria, Georgia, serif; color: var(--teal); font-size: 1.25rem; margin: 0; }
+  .card h2 { margin: 0 0 14px; }
+
+  .name-row { display: flex; gap: 20px; flex-wrap: wrap; }
+  .name-row .field { flex: 1; min-width: 200px; }
+  .name-row label.bi .en, .name-row label.bi .es { font-size: 0.85rem; color: #555; }
+  .name-row input {
+    width: 100%; border: none; border-bottom: 2px solid #C7D6D6; background: transparent;
+    font-size: 1rem; padding: 6px 2px; font-family: Calibri, sans-serif; color: #111; margin-top: 4px;
+  }
+  .name-row input:focus { outline: none; border-bottom-color: var(--teal); }
+
+  .case-banner {
+    background: var(--navy); border-radius: 10px; padding: 14px 18px; margin: -22px -26px 18px -26px;
+    border-radius: 14px 14px 0 0;
+  }
+  .case-banner .bi .en, .case-banner .bi .es { color: white; font-family: Cambria, Georgia, serif; font-size: 1.15rem; font-weight: 700; }
+  .case-banner .bi .es { color: var(--mint); }
+  body.lang-es .case-banner .bi .en { color: var(--mint); }
+  body.lang-es .case-banner .bi .es { color: white; }
+
+  .reading p.bi { margin-bottom: 14px; }
+  .reading p.bi .en, .reading p.bi .es { font-size: 0.98rem; line-height: 1.55; }
+  .source-line.bi .en, .source-line.bi .es { font-size: 0.83rem; color: #888; font-style: italic; }
+
+  .q-block { margin-top: 18px; }
+  .q-block label.bi .en, .q-block label.bi .es { font-size: 0.95rem; font-weight: 600; color: #222; }
+  .q-block textarea {
+    width: 100%; min-height: 64px; border: 1.5px solid #C7D6D6; border-radius: 8px;
+    padding: 10px 12px; font-family: Calibri, sans-serif; font-size: 0.95rem; resize: vertical; margin-top: 8px;
+  }
+  .q-block textarea:focus { outline: none; border-color: var(--teal); }
+
+  .toolkit-prompt.bi .en, .toolkit-prompt.bi .es { font-size: 0.95rem; color: #222; }
+
+  .instructions-box {
+    background: white; border-left: 4px solid var(--amber); border-radius: 10px;
+    padding: 16px 20px; margin-bottom: 16px;
+  }
+  .instructions-box .bi .en, .instructions-box .bi .es { font-size: 0.95rem; line-height: 1.5; }
+
+  .print-btn-row { display: flex; gap: 10px; margin-top: 8px; position: sticky; bottom: 16px; }
+  button.primary {
+    background: var(--teal); color: white; border: none; border-radius: 8px;
+    padding: 13px 24px; font-size: 1rem; font-weight: 700; cursor: pointer; box-shadow: 0 2px 8px rgba(15,27,45,0.25);
+  }
+  button.primary:hover { background: #0b6362; }
+
+  @media print {
+    body { background: white; }
+    .lang-toggle, .print-btn-row { display: none !important; }
+    .card { box-shadow: none; border: 1px solid #ddd; page-break-inside: avoid; }
+    #app { max-width: 100%; padding: 0; }
+    textarea { border: 1px solid #999; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="title-block">
+      <div class="bi heading">
+        <span class="en">AI Hallucinations: Real Cases, Real Consequences</span>
+        <span class="es">Alucinaciones de IA: Casos Reales, Consecuencias Reales</span>
+      </div>
+      <div class="sub">Independent Study — U3L05 · Nuevos Casos</div>
+    </div>
+    <button class="lang-toggle" onclick="document.body.classList.toggle('lang-es')">Español / English</button>
+  </header>
+
+  <div class="instructions-box">
+    <div class="bi">
+      <span class="en">Work through this on your own, in order, right here on the screen — no printing needed. Read each case, then type your answers directly into the boxes below. When you're done, use the button at the bottom to save this page as a PDF and turn it in on Canvas.</span>
+      <span class="es">Trabaja esto por tu cuenta, en orden, aquí mismo en la pantalla — no se necesita imprimir. Lee cada caso, luego escribe tus respuestas directamente en los cuadros de abajo. Cuando termines, usa el botón de abajo para guardar esta página como PDF y entregarla en Canvas.</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="name-row">
+      <div class="field">
+        <label class="bi"><span class="en">Name</span><span class="es">Nombre</span></label>
+        <input type="text" id="studentName">
+      </div>
+      <div class="field" style="flex: 0 0 140px;">
+        <label class="bi"><span class="en">Period</span><span class="es">Periodo</span></label>
+        <input type="text" id="studentPeriod">
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="case-banner">
+      <div class="bi"><span class="en">Case 1: Google Bard's $100 Billion Mistake</span><span class="es">Caso 1: El Error de $100,000 Millones de Google Bard</span></div>
+    </div>
+    <div class="reading">
+      <p class="bi">
+        <span class="en">In February 2023, Google unveiled a new AI chatbot called Bard, hoping to compete with ChatGPT. In its very first public demo, someone asked Bard: "What new discoveries from the James Webb Space Telescope can I tell my 9-year-old about?" Bard confidently answered that the telescope had taken the very first pictures ever of a planet outside our solar system. It sounded impressive — and it was completely wrong.</span>
+        <span class="es">En febrero de 2023, Google presentó un nuevo chatbot de IA llamado Bard, con la esperanza de competir con ChatGPT. En su primera demostración pública, alguien le preguntó a Bard: "¿Qué nuevos descubrimientos del Telescopio Espacial James Webb le puedo contar a mi hijo de 9 años?" Bard respondió con confianza que el telescopio había tomado las primerísimas fotos de un planeta fuera de nuestro sistema solar. Sonaba impresionante — y estaba completamente equivocado.</span>
+      </p>
+      <p class="bi">
+        <span class="en">Scientists quickly pointed out that a different telescope, the European Very Large Telescope, had actually taken the first picture of a planet outside our solar system back in 2004 — nearly two decades earlier. Reporters watching the demo spotted the error almost immediately. Within a single day, shares of Google's parent company, Alphabet, dropped nearly 8%, wiping out about $100 billion of the company's value — all because of one wrong sentence in a promotional video.</span>
+        <span class="es">Los científicos rápidamente señalaron que un telescopio diferente, el Telescopio Muy Grande Europeo, en realidad había tomado la primera foto de un planeta fuera de nuestro sistema solar en el año 2004 — casi dos décadas antes. Los periodistas que observaban la demostración notaron el error casi de inmediato. En un solo día, las acciones de Alphabet, la empresa matriz de Google, cayeron casi un 8%, borrando cerca de $100,000 millones del valor de la empresa — todo por una oración equivocada en un video promocional.</span>
+      </p>
+      <p class="source-line bi">
+        <span class="en">Source: Reuters, CNN Business, and NPR reporting on Alphabet's stock drop, February 2023.</span>
+        <span class="es">Fuente: Reportajes de Reuters, CNN Business, y NPR sobre la caída de las acciones de Alphabet, febrero de 2023.</span>
+      </p>
+    </div>
+
+    <div class="q-block">
+      <label class="bi"><span class="en">1. In your own words, what did Bard get wrong, and how was the mistake discovered?</span><span class="es">1. En tus propias palabras, ¿qué se equivocó Bard, y cómo se descubrió el error?</span></label>
+      <textarea></textarea>
+    </div>
+    <div class="q-block">
+      <label class="bi"><span class="en">2. This wasn't a customer service chatbot or a legal document — it was one promotional demo video. Why do you think a single wrong sentence caused such a huge, immediate reaction?</span><span class="es">2. Esto no era un chatbot de servicio al cliente ni un documento legal — era un video promocional. ¿Por qué crees que una sola oración equivocada causó una reacción tan grande e inmediata?</span></label>
+      <textarea></textarea>
+    </div>
+    <div class="q-block">
+      <label class="bi"><span class="en">3. Based on this case, write ONE rule for your checklist about double-checking AI before you PUBLISH or SHARE something publicly.</span><span class="es">3. Basándote en este caso, escribe UNA regla para tu lista sobre revisar dos veces a la IA antes de PUBLICAR o COMPARTIR algo públicamente.</span></label>
+      <textarea></textarea>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="case-banner">
+      <div class="bi"><span class="en">Case 2: The News Site That Quietly Let AI Write Its Money Advice</span><span class="es">Caso 2: El Sitio de Noticias que Dejó a la IA Escribir Silenciosamente sus Consejos Financieros</span></div>
+    </div>
+    <div class="reading">
+      <p class="bi">
+        <span class="en">Starting in late 2022, the tech website CNET began quietly publishing dozens of articles about personal finance — topics like compound interest, savings accounts, and credit cards — written almost entirely by an AI tool. The articles were published under a vague byline, and most readers had no way of knowing a human hadn't written them unless they clicked into the author's bio.</span>
+        <span class="es">A partir de finales de 2022, el sitio web de tecnología CNET comenzó a publicar silenciosamente docenas de artículos sobre finanzas personales — temas como interés compuesto, cuentas de ahorro, y tarjetas de crédito — escritos casi completamente por una herramienta de IA. Los artículos se publicaban bajo un crédito de autor vago, y la mayoría de los lectores no tenían forma de saber que un humano no los había escrito a menos que hicieran clic en la biografía del autor.</span>
+      </p>
+      <p class="bi">
+        <span class="en">In January 2023, another news site noticed the pattern and started fact-checking the articles. In one piece explaining compound interest, the AI made a basic math error: it claimed that $10,000 in a savings account earning 3% interest would grow to a total of $10,300 after a year — as if that whole amount were the interest earned, when the actual interest earned was just $300. After the errors went public, CNET reviewed all 77 of its AI-written articles and ended up issuing corrections on 41 of them — more than half.</span>
+        <span class="es">En enero de 2023, otro sitio de noticias notó el patrón y comenzó a verificar los hechos en los artículos. En una pieza que explicaba el interés compuesto, la IA cometió un error matemático básico: afirmó que $10,000 en una cuenta de ahorros con 3% de interés crecería a un total de $10,300 después de un año — como si esa cantidad completa fuera el interés ganado, cuando el interés real ganado era solo $300. Después de que los errores se hicieron públicos, CNET revisó los 77 artículos escritos por IA y terminó emitiendo correcciones en 41 de ellos — más de la mitad.</span>
+      </p>
+      <p class="source-line bi">
+        <span class="en">Source: Reporting from Futurism, The Washington Post, CNN Business, and Engadget, January 2023.</span>
+        <span class="es">Fuente: Reportajes de Futurism, The Washington Post, CNN Business, y Engadget, enero de 2023.</span>
+      </p>
+    </div>
+
+    <div class="q-block">
+      <label class="bi"><span class="en">1. In your own words, what went wrong with CNET's approach here — separate from the math error itself?</span><span class="es">1. En tus propias palabras, ¿qué salió mal con el enfoque de CNET aquí — aparte del error matemático en sí?</span></label>
+      <textarea></textarea>
+    </div>
+    <div class="q-block">
+      <label class="bi"><span class="en">2. More than half the AI-written articles needed corrections. What does that suggest about how much a human should double-check AI-written work before publishing it?</span><span class="es">2. Más de la mitad de los artículos escritos por IA necesitaron correcciones. ¿Qué sugiere eso sobre cuánto debería un humano revisar dos veces el trabajo escrito por IA antes de publicarlo?</span></label>
+      <textarea></textarea>
+    </div>
+    <div class="q-block">
+      <label class="bi"><span class="en">3. Based on this case, write ONE rule for your checklist about a SPECIFIC KIND of AI mistake — like a math or logic error, not just a made-up fact.</span><span class="es">3. Basándote en este caso, escribe UNA regla para tu lista sobre un TIPO ESPECÍFICO de error de IA — como un error matemático o lógico, no solo un dato inventado.</span></label>
+      <textarea></textarea>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2 class="bi"><span class="en">Build Your Own Detection Toolkit</span><span class="es">Construye tu Propio Kit de Detección</span></h2>
+    <p class="bi" style="margin-top:-8px; margin-bottom:16px;">
+      <span class="en" style="font-size:0.9rem; color:#555;">You already wrote two rules above. Use these prompts to round your list out to at least five.</span>
+      <span class="es" style="font-size:0.85rem; color:#666; font-style:italic;">Ya escribiste dos reglas arriba. Usa estas indicaciones para completar tu lista a por lo menos cinco.</span>
+    </p>
+
+    <div class="q-block">
+      <label class="bi toolkit-prompt"><span class="en">What's a red flag involving SPEED or being FIRST to publish something — before it's been checked?</span><span class="es">¿Cuál es una señal de alerta relacionada con la VELOCIDAD o ser el PRIMERO en publicar algo — antes de que se haya revisado?</span></label>
+      <textarea></textarea>
+    </div>
+    <div class="q-block">
+      <label class="bi toolkit-prompt"><span class="en">What's a habit about WHO should review AI's work before it goes public?</span><span class="es">¿Cuál es un hábito sobre QUIÉN debería revisar el trabajo de la IA antes de que se haga público?</span></label>
+      <textarea></textarea>
+    </div>
+    <div class="q-block">
+      <label class="bi toolkit-prompt"><span class="en">How should the SIZE of your audience (one person vs. millions of readers) change how carefully you check AI's work?</span><span class="es">¿Cómo debería el TAMAÑO de tu audiencia (una persona vs. millones de lectores) cambiar qué tan cuidadosamente revisas el trabajo de la IA?</span></label>
+      <textarea></textarea>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2 class="bi"><span class="en">Reflection</span><span class="es">Reflexión</span></h2>
+    <div class="q-block">
+      <label class="bi"><span class="en">1. Pick one case from today. What should that person or company have actually done differently?</span><span class="es">1. Elige un caso de hoy. ¿Qué debería haber hecho esa persona o empresa de forma diferente?</span></label>
+      <textarea></textarea>
+    </div>
+    <div class="q-block">
+      <label class="bi"><span class="en">2. Name one item from your detection toolkit you'll actually use — and where in real life.</span><span class="es">2. Nombra un elemento de tu kit de detección que realmente usarás — y en dónde en la vida real.</span></label>
+      <textarea></textarea>
+    </div>
+  </div>
+
+  <div class="print-btn-row">
+    <button class="primary" onclick="window.print()">
+      <span style="display:block;">Print / Save as PDF</span>
+      <span style="display:block; font-size:0.75rem; font-weight:normal; font-style:italic; opacity:0.85;">Imprimir / Guardar como PDF</span>
+    </button>
+  </div>
+</div>
+</body>
+</html>
