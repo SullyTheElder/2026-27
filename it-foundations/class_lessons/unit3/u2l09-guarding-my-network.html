@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en" data-course="networking">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>U2L09: Guarding My Network</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#0B1F3A; --green:#8FC53E; --cream:#F4F1E9; --gold:#D9A441;
+    --ink:#1a1a1a; --muted:#5b6472; --line:#dfe3e8;
+    --panel-bg:#20242b; --panel-line:#3a4150; --panel-text:#e7eaf0; --panel-bad:#ff6b6b; --panel-ok:#8FC53E;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{ font-family:'Inter', system-ui, sans-serif; color:var(--ink); background:var(--cream); line-height:1.55; overflow-x:hidden; }
+  .topbar{ display:flex; align-items:center; justify-content:space-between; padding:14px 24px; background:var(--navy); color:#fff; flex-wrap:wrap; gap:10px; }
+  .topbar a{ color:#fff; text-decoration:none; font-size:0.85rem; font-weight:500; border:1px solid rgba(255,255,255,0.35); padding:6px 12px; border-radius:6px; }
+  .topbar a:hover, .topbar a:focus-visible{ background:rgba(255,255,255,0.12); outline:2px solid var(--gold); outline-offset:2px; }
+  .topbar .brand{ font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:0.95rem; }
+  main{ max-width:900px; margin:0 auto; padding:32px 20px 80px; }
+  header.hero{ text-align:center; margin-bottom:20px; }
+  .eyebrow{ font-family:'Space Grotesk',sans-serif; font-weight:600; letter-spacing:0.12em; text-transform:uppercase; color:var(--green); font-size:0.8rem; margin-bottom:6px; }
+  h1{ font-family:'Space Grotesk',sans-serif; font-weight:700; color:var(--navy); font-size:clamp(1.7rem, 4vw, 2.4rem); margin:0 0 8px; }
+  .subtitle{ color:var(--muted); font-size:1.05rem; font-style:italic; }
+  section{ background:#fff; border-radius:12px; padding:24px clamp(16px,4vw,32px); margin-bottom:24px; box-shadow:0 1px 3px rgba(11,31,58,0.08); }
+  h2{ font-family:'Space Grotesk',sans-serif; color:var(--navy); font-size:1.35rem; margin-top:0; border-bottom:2px solid var(--green); padding-bottom:8px; }
+  h3{ font-family:'Space Grotesk',sans-serif; color:var(--navy); font-size:1.05rem; }
+  ol, ul{ padding-left:1.4em; }
+  li{ margin-bottom:6px; }
+  code{ font-family:'IBM Plex Mono', monospace; font-size:0.9em; background:#eef1f5; padding:1px 6px; border-radius:4px; }
+  table{ width:100%; border-collapse:collapse; margin:14px 0; font-size:0.92rem; }
+  th, td{ border:1px solid var(--line); padding:8px 10px; text-align:left; vertical-align:top; }
+  th{ background:var(--navy); color:#fff; font-family:'Space Grotesk',sans-serif; font-weight:600; }
+  tr:nth-child(even) td{ background:#fafbfc; }
+  input[type="text"]{ width:100%; border:1px solid var(--line); border-radius:5px; padding:5px 7px; font-family:'Inter',sans-serif; font-size:0.9rem; }
+  input[type="text"]:focus-visible{ outline:2px solid var(--gold); outline-offset:1px; border-color:var(--gold); }
+  .print-hint{ text-align:center; color:var(--muted); font-size:0.85rem; margin-top:-8px; margin-bottom:28px; }
+  .pdf-btn{ position:fixed; right:20px; bottom:20px; z-index:50; display:flex; align-items:center; gap:8px; background:var(--green); color:var(--navy); border:none; border-radius:30px; padding:12px 20px; font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:0.95rem; box-shadow:0 4px 14px rgba(11,31,58,0.28); cursor:pointer; }
+  .pdf-btn:hover, .pdf-btn:focus-visible{ background:#7cb32e; outline:2px solid var(--gold); outline-offset:2px; }
+  .pdf-hint{ position:fixed; right:20px; bottom:70px; z-index:50; max-width:220px; background:var(--navy); color:#fff; font-size:0.78rem; padding:8px 12px; border-radius:8px; box-shadow:0 4px 14px rgba(11,31,58,0.28); }
+  .name-bar{ display:flex; gap:16px; flex-wrap:wrap; align-items:center; background:#fff; border-radius:12px; padding:14px 20px; margin-bottom:24px; box-shadow:0 1px 3px rgba(11,31,58,0.08); font-size:0.95rem; }
+  .name-bar label{ font-weight:600; color:var(--navy); }
+  .name-bar input[type="text"]{ max-width:260px; }
+
+  /* --- Mock router admin panel --- */
+  .panel-wrap{ background:var(--panel-bg); border-radius:10px; padding:0; overflow:hidden; margin:16px 0 20px; box-shadow:0 6px 18px rgba(0,0,0,0.25); font-family:'Inter',sans-serif; }
+  .panel-titlebar{ background:#161a20; color:var(--panel-text); padding:10px 16px; font-family:'IBM Plex Mono',monospace; font-size:0.8rem; display:flex; justify-content:space-between; align-items:center; }
+  .panel-dots{ display:flex; gap:6px; }
+  .panel-dots span{ width:9px; height:9px; border-radius:50%; display:inline-block; background:#555; }
+  .panel-body{ padding:18px 20px 22px; color:var(--panel-text); }
+  .panel-h{ font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:1.1rem; color:#fff; margin:0 0 4px; }
+  .panel-sub{ color:#9aa4b5; font-size:0.8rem; margin-bottom:16px; }
+  .panel-section-label{ text-transform:uppercase; letter-spacing:0.08em; font-size:0.7rem; color:#7c8699; margin:18px 0 6px; border-top:1px solid var(--panel-line); padding-top:14px; }
+  .panel-row{ display:flex; justify-content:space-between; align-items:center; padding:7px 0; border-bottom:1px dashed var(--panel-line); font-size:0.88rem; gap:10px; }
+  .panel-row:last-child{ border-bottom:none; }
+  .panel-key{ color:#aeb6c4; }
+  .panel-val{ font-family:'IBM Plex Mono',monospace; font-weight:500; text-align:right; }
+  .flag{ display:inline-block; font-size:0.68rem; font-weight:600; padding:2px 7px; border-radius:10px; margin-left:8px; vertical-align:middle; }
+  .dev-list{ margin-top:6px; }
+  .dev-row{ display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px dashed var(--panel-line); font-size:0.85rem; }
+  .dev-row:last-child{ border-bottom:none; }
+  .dev-name{ color:#e7eaf0; }
+  .dev-meta{ font-family:'IBM Plex Mono',monospace; color:#9aa4b5; font-size:0.78rem; text-align:right; }
+
+  @media print{
+    .topbar, .pdf-btn, .print-hint, .pdf-hint{ display:none; }
+    body{ background:#fff; }
+    section, .name-bar{ box-shadow:none; border:1px solid var(--line); }
+    tr, table{ page-break-inside:avoid; }
+    input[type="text"]{ border:1px solid #888; }
+    .panel-wrap{ box-shadow:none; border:1px solid #333; }
+    @page{ margin:0.6in; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <span class="brand">🐾 Bulldog Networking — AP Networking</span>
+  <a href="../../index.html">&larr; Back to AP Networking</a>
+</div>
+
+<main>
+  <header class="hero">
+    <div class="eyebrow">AP Networking · Local Unit 2 · U2L09</div>
+    <h1>Guarding My Network</h1>
+    <p class="subtitle">Identifying Security Needs — CB 2.5.A / 2.5.B</p>
+  </header>
+  <p class="print-hint">Fill in your answers below, then use the "Download as PDF" button to save a copy to turn in.</p>
+
+  <div class="name-bar">
+    <label for="student-name">Name:</label>
+    <input type="text" id="student-name" autocomplete="name">
+    <label for="student-period">Period:</label>
+    <input type="text" id="student-period" style="max-width:100px;">
+  </div>
+
+  <section>
+    <h2>Guiding Question</h2>
+    <p>What makes a home network vulnerable — and how do you spot it before something goes wrong?</p>
+    <p style="color:var(--muted); font-size:0.92rem;">You've already built the defenses (firewalls, segmentation, in U2L08). Today you're identifying exactly what those defenses are meant to protect against.</p>
+  </section>
+
+  <section>
+    <h2>Activity: Audit This Router</h2>
+    <p>Below is the admin settings panel for a neighbor's home router. You've been asked to do a quick security walkthrough — <strong>before</strong> we define any formal vocabulary, look through it yourself and note anything that looks like it could be a security risk.</p>
+
+    <div class="panel-wrap">
+      <div class="panel-titlebar">
+        <span class="panel-dots"><span></span><span></span><span></span></span>
+        <span>192.168.1.1 — admin panel</span>
+        <span></span>
+      </div>
+      <div class="panel-body">
+        <p class="panel-h">GreenLeaf Home Router — GL-WR2400</p>
+        <p class="panel-sub">Admin Settings</p>
+
+        <div class="panel-section-label">System</div>
+        <div class="panel-row"><span class="panel-key">Firmware Version</span><span class="panel-val">v1.0.2 <span style="color:#9aa4b5;">(released 2019)</span></span></div>
+        <div class="panel-row"><span class="panel-key">Update Available</span><span class="panel-val" style="color:var(--panel-bad);">v3.4.1 — not installed</span></div>
+        <div class="panel-row"><span class="panel-key">Admin Username</span><span class="panel-val">admin</span></div>
+        <div class="panel-row"><span class="panel-key">Admin Password</span><span class="panel-val">admin</span></div>
+
+        <div class="panel-section-label">Wireless</div>
+        <div class="panel-row"><span class="panel-key">Network Name (SSID)</span><span class="panel-val">GreenLeaf_Home</span></div>
+        <div class="panel-row"><span class="panel-key">Security Mode</span><span class="panel-val" style="color:var(--panel-bad);">WEP</span></div>
+        <div class="panel-row"><span class="panel-key">WPS (Wi-Fi Protected Setup)</span><span class="panel-val" style="color:var(--panel-bad);">Enabled</span></div>
+        <div class="panel-row"><span class="panel-key">Guest Network</span><span class="panel-val" style="color:var(--panel-bad);">Not Configured</span></div>
+
+        <div class="panel-section-label">Connected Devices (5)</div>
+        <div class="dev-list">
+          <div class="dev-row"><span class="dev-name">Living Room TV</span><span class="dev-meta">192.168.1.10 &middot; known</span></div>
+          <div class="dev-row"><span class="dev-name">Mom's Laptop</span><span class="dev-meta">192.168.1.11 &middot; known</span></div>
+          <div class="dev-row"><span class="dev-name">Smart Thermostat</span><span class="dev-meta">192.168.1.24 &middot; IoT</span></div>
+          <div class="dev-row"><span class="dev-name">Security Camera (cloud-connected)</span><span class="dev-meta">192.168.1.25 &middot; IoT</span></div>
+          <div class="dev-row"><span class="dev-name" style="color:var(--panel-bad);">Unknown Device</span><span class="dev-meta" style="color:var(--panel-bad);">192.168.1.47 &middot; first seen 3 days ago</span></div>
+        </div>
+      </div>
+    </div>
+
+    <p><strong>Your turn:</strong> list everything above that looks like a potential security risk, and briefly explain why in your own words.</p>
+    <table>
+      <thead><tr><th>What did you notice?</th><th>Why might this be a risk?</th></tr></thead>
+      <tbody>
+        <tr><td><input type="text"></td><td><input type="text"></td></tr>
+        <tr><td><input type="text"></td><td><input type="text"></td></tr>
+        <tr><td><input type="text"></td><td><input type="text"></td></tr>
+        <tr><td><input type="text"></td><td><input type="text"></td></tr>
+        <tr><td><input type="text"></td><td><input type="text"></td></tr>
+        <tr><td><input type="text"></td><td><input type="text"></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>Concept: Four Ways a SOHO Network Gets Exposed</h2>
+    <p>Match these back to what you found in the panel above — you likely already flagged examples of every category.</p>
+    <ul>
+      <li><strong>Default configurations.</strong> Routers and access points shipped with widely known default usernames, passwords, or settings let anyone who recognizes the defaults get in and change things.</li>
+      <li><strong>Outdated firmware.</strong> A device that hasn't been updated is missing security patches for vulnerabilities that are often publicly known — leaving it open to compromise or malware.</li>
+      <li><strong>Unmonitored or unknown devices.</strong> A device on the network that nobody recognizes could be an intruder who's already gotten in.</li>
+      <li><strong>Insecure IoT devices.</strong> Smart devices (thermostats, cameras) are often weakly secured. If they share a network with trusted devices, an attacker who compromises one can move laterally to reach the others.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Vocabulary</h2>
+    <ul>
+      <li><strong>Vulnerability</strong> — a weakness in a device or network's configuration that could be exploited.</li>
+      <li><strong>Default credentials</strong> — the username/password a device ships with, before an owner changes them.</li>
+      <li><strong>Firmware</strong> — the built-in software that runs a device like a router; needs updates just like an OS.</li>
+      <li><strong>WPS (Wi-Fi Protected Setup)</strong> — a convenience feature for connecting devices quickly that is also a known weak point attackers can target.</li>
+      <li><strong>Lateral movement</strong> — an attacker using one compromised device to reach others on the same network.</li>
+      <li><strong>Guest network isolation</strong> — keeping visitor or untrusted devices on a separate network from trusted devices and data.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Matching: Vulnerability &rarr; Control</h2>
+    <p>For each vulnerability on the left, write the letter of the security control that best addresses it.</p>
+    <table>
+      <thead><tr><th style="width:55%;">Vulnerability</th><th>Control (write a letter)</th></tr></thead>
+      <tbody>
+        <tr><td>Admin username/password left as "admin" / "admin"</td><td><input type="text" style="max-width:60px;"></td></tr>
+        <tr><td>WPS is enabled</td><td><input type="text" style="max-width:60px;"></td></tr>
+        <tr><td>Firmware hasn't been updated since 2019</td><td><input type="text" style="max-width:60px;"></td></tr>
+        <tr><td>Wireless security mode is set to WEP</td><td><input type="text" style="max-width:60px;"></td></tr>
+        <tr><td>Unknown device connected to the main network</td><td><input type="text" style="max-width:60px;"></td></tr>
+        <tr><td>IoT devices share the network with trusted devices</td><td><input type="text" style="max-width:60px;"></td></tr>
+      </tbody>
+    </table>
+    <p><strong>Word bank:</strong></p>
+    <ol type="A">
+      <li>Change the default login credentials</li>
+      <li>Disable WPS</li>
+      <li>Install the latest firmware update</li>
+      <li>Enable WPA2 or WPA3 encryption</li>
+      <li>Set up a separate guest network and investigate the unknown device</li>
+      <li>Isolate IoT devices on their own network segment</li>
+    </ol>
+  </section>
+</main>
+
+<div class="pdf-hint">In the print dialog, set <strong>Destination</strong> to <strong>Save as PDF</strong>, then save.</div>
+<button class="pdf-btn" id="pdf-btn" type="button">📄 Download as PDF</button>
+
+<script>
+  document.getElementById('pdf-btn').addEventListener('click', function () {
+    window.print();
+  });
+</script>
+</body>
+</html>
