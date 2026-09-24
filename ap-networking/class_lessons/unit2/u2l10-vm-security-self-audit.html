@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en" data-course="networking">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>U2L10: VM Security Self-Audit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#0B1F3A; --green:#8FC53E; --cream:#F4F1E9; --gold:#D9A441;
+    --ink:#1a1a1a; --muted:#5b6472; --line:#dfe3e8;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{ font-family:'Inter', system-ui, sans-serif; color:var(--ink); background:var(--cream); line-height:1.55; overflow-x:hidden; }
+  .topbar{ display:flex; align-items:center; justify-content:space-between; padding:14px 24px; background:var(--navy); color:#fff; flex-wrap:wrap; gap:10px; }
+  .topbar a{ color:#fff; text-decoration:none; font-size:0.85rem; font-weight:500; border:1px solid rgba(255,255,255,0.35); padding:6px 12px; border-radius:6px; }
+  .topbar a:hover, .topbar a:focus-visible{ background:rgba(255,255,255,0.12); outline:2px solid var(--gold); outline-offset:2px; }
+  .topbar .brand{ font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:0.95rem; }
+  main{ max-width:900px; margin:0 auto; padding:32px 20px 80px; }
+  header.hero{ text-align:center; margin-bottom:20px; }
+  .eyebrow{ font-family:'Space Grotesk',sans-serif; font-weight:600; letter-spacing:0.12em; text-transform:uppercase; color:var(--green); font-size:0.8rem; margin-bottom:6px; }
+  h1{ font-family:'Space Grotesk',sans-serif; font-weight:700; color:var(--navy); font-size:clamp(1.6rem, 4vw, 2.2rem); margin:0 0 8px; }
+  .subtitle{ color:var(--muted); font-size:1.05rem; font-style:italic; }
+  section{ background:#fff; border-radius:12px; padding:24px clamp(16px,4vw,32px); margin-bottom:24px; box-shadow:0 1px 3px rgba(11,31,58,0.08); }
+  h2{ font-family:'Space Grotesk',sans-serif; color:var(--navy); font-size:1.3rem; margin-top:0; border-bottom:2px solid var(--green); padding-bottom:8px; }
+  ol, ul{ padding-left:1.4em; }
+  li{ margin-bottom:6px; }
+  code{ font-family:'IBM Plex Mono', monospace; font-size:0.9em; background:#eef1f5; padding:1px 6px; border-radius:4px; }
+  table{ width:100%; border-collapse:collapse; margin:14px 0; font-size:0.92rem; }
+  th, td{ border:1px solid var(--line); padding:8px 10px; text-align:left; vertical-align:top; }
+  th{ background:var(--navy); color:#fff; font-family:'Space Grotesk',sans-serif; font-weight:600; }
+  tr:nth-child(even) td{ background:#fafbfc; }
+  input[type="text"]{ width:100%; border:1px solid var(--line); border-radius:5px; padding:5px 7px; font-family:'Inter',sans-serif; font-size:0.9rem; }
+  input[type="text"]:focus-visible{ outline:2px solid var(--gold); outline-offset:1px; border-color:var(--gold); }
+  .print-hint{ text-align:center; color:var(--muted); font-size:0.85rem; margin-top:-8px; margin-bottom:28px; }
+  .pdf-btn{ position:fixed; right:20px; bottom:20px; z-index:50; display:flex; align-items:center; gap:8px; background:var(--green); color:var(--navy); border:none; border-radius:30px; padding:12px 20px; font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:0.95rem; box-shadow:0 4px 14px rgba(11,31,58,0.28); cursor:pointer; }
+  .pdf-btn:hover, .pdf-btn:focus-visible{ background:#7cb32e; outline:2px solid var(--gold); outline-offset:2px; }
+  .pdf-hint{ position:fixed; right:20px; bottom:70px; z-index:50; max-width:220px; background:var(--navy); color:#fff; font-size:0.78rem; padding:8px 12px; border-radius:8px; box-shadow:0 4px 14px rgba(11,31,58,0.28); }
+  .name-bar{ display:flex; gap:16px; flex-wrap:wrap; align-items:center; background:#fff; border-radius:12px; padding:14px 20px; margin-bottom:24px; box-shadow:0 1px 3px rgba(11,31,58,0.08); font-size:0.95rem; }
+  .name-bar label{ font-weight:600; color:var(--navy); }
+  .name-bar input[type="text"]{ max-width:260px; }
+  @media print{
+    .topbar, .pdf-btn, .print-hint, .pdf-hint{ display:none; }
+    body{ background:#fff; }
+    section, .name-bar{ box-shadow:none; border:1px solid var(--line); }
+    tr, table{ page-break-inside:avoid; }
+    input[type="text"]{ border:1px solid #888; }
+    @page{ margin:0.6in; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <span class="brand">🐾 Bulldog Networking — AP Networking</span>
+  <a href="../../index.html">&larr; Back to AP Networking</a>
+</div>
+
+<main>
+  <header class="hero">
+    <div class="eyebrow">AP Networking · Local Unit 2 · U2L10</div>
+    <h1>VM Security Self-Audit</h1>
+    <p class="subtitle">Applying U2L08 + U2L09 to your own CyberRange VMs</p>
+  </header>
+  <p class="print-hint">Fill in your answers below, then use the "Download as PDF" button to save a copy to turn in.</p>
+
+  <div class="name-bar">
+    <label for="student-name">Name:</label>
+    <input type="text" id="student-name" autocomplete="name">
+    <label for="student-period">Period:</label>
+    <input type="text" id="student-period" style="max-width:100px;">
+  </div>
+
+  <section>
+    <h2>What You're Doing Today</h2>
+    <p>Two lessons ago (U2L08) you ran <code>netstat</code> on your own VMs to see which ports and services were listening. Last class (U2L09) you learned four categories of security vulnerability by auditing someone else's router.</p>
+    <p>Today you're combining both: you'll re-run the same inventory on your own machines, then reason about your own results the way you reasoned about the mock router panel — nothing new to learn, just applying it to a real target: you.</p>
+  </section>
+
+  <section>
+    <h2>Part 1 — Re-run the Inventory</h2>
+    <ol>
+      <li>Log into CyberRange and launch your Windows 7 and Ubuntu VMs.</li>
+      <li>On Windows 7, open Command Prompt and run: <code>netstat -ano</code></li>
+      <li>On Ubuntu, open a terminal and run: <code>netstat -tuln</code></li>
+      <li>Record what you find below — same as U2L08, at least 3 listening ports per machine.</li>
+    </ol>
+    <table>
+      <thead><tr><th>Machine</th><th>Port #</th><th>Service (if known)</th><th>State</th></tr></thead>
+      <tbody>
+        <tr><td>Windows 7</td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td></tr>
+        <tr><td>Windows 7</td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td></tr>
+        <tr><td>Windows 7</td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td></tr>
+        <tr><td>Ubuntu</td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td></tr>
+        <tr><td>Ubuntu</td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td></tr>
+        <tr><td>Ubuntu</td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>Part 2 — Audit Yourself</h2>
+    <p>Remember the four vulnerability categories from U2L09: default configurations, outdated firmware, unmonitored/unknown devices, and insecure IoT devices sharing a network. Your VM isn't a router, but the same reasoning applies to any machine on a network.</p>
+    <p>Answer the following using your own results from Part 1:</p>
+    <ol>
+      <li>Pick one listening port/service you found. If you didn't already know what it was, look it up in one sentence — what does it do?</li>
+      <li>Is there anything in your results you wouldn't expect a typical user's machine to be running? If so, what, and why might an unexpected open service be a risk (think back to the vulnerability categories)?</li>
+      <li>If this VM were a real computer on a home network, would you consider any of what you found something worth investigating further? Why or why not?</li>
+    </ol>
+    <table>
+      <thead><tr><th>Question</th><th>Your Answer</th></tr></thead>
+      <tbody>
+        <tr><td>1. Service you looked up</td><td><input type="text"></td></tr>
+        <tr><td>2. Anything unexpected, and why it's a risk</td><td><input type="text"></td></tr>
+        <tr><td>3. Worth investigating further?</td><td><input type="text"></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>Part 3 — Quick Reflection</h2>
+    <p>In 2&ndash;3 sentences: how is auditing your own machine's open ports/services similar to auditing the router panel from U2L09? How is it different?</p>
+    <table>
+      <tbody>
+        <tr><td style="height:90px;"><input type="text"></td></tr>
+      </tbody>
+    </table>
+  </section>
+</main>
+
+<div class="pdf-hint">In the print dialog, set <strong>Destination</strong> to <strong>Save as PDF</strong>, then save.</div>
+<button class="pdf-btn" id="pdf-btn" type="button">📄 Download as PDF</button>
+
+<script>
+  document.getElementById('pdf-btn').addEventListener('click', function () {
+    window.print();
+  });
+</script>
+</body>
+</html>
