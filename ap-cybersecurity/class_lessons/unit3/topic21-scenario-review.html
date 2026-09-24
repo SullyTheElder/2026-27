@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Topic 2.1 Scenario Review | Meridian Analytics</title>
+<style>
+  :root {
+    --green: #1B4332;
+    --green-dark: #122B21;
+    --gold: #D4A017;
+    --cream: #FBF8F1;
+    --white: #FFFFFF;
+    --text-dark: #1F2A24;
+    --muted: #5B6B62;
+    --border: #DDD6C2;
+    --wrong-bg: #FBEAEA;
+    --wrong-border: #D98C8C;
+    --wrong-text: #8C2E2E;
+    --right-bg: #EFF4EF;
+    --right-border: #8FB89C;
+    --right-text: #245C3B;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--cream); color: var(--text-dark);
+    font-family: Calibri, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    min-height: 100vh; display: flex; flex-direction: column; align-items: center;
+    padding: 24px 16px 60px;
+  }
+  h1, h2, h3 { font-family: Cambria, Georgia, "Times New Roman", serif; margin: 0; }
+  .app { width: 100%; max-width: 760px; }
+  .topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; flex-wrap: wrap; gap: 10px; }
+  .brand { font-size: 13px; font-weight: bold; color: var(--green); letter-spacing: 0.02em; }
+  .progress-wrap { flex: 1; margin: 0 18px; min-width: 140px; }
+  .progress-track { background: var(--border); border-radius: 8px; height: 8px; overflow: hidden; }
+  .progress-fill { background: var(--gold); height: 100%; width: 0%; transition: width 0.35s ease; }
+  .progress-label { font-size: 12px; color: var(--muted); margin-top: 4px; text-align: right; }
+  .score-chip { background: var(--green); color: var(--white); font-size: 13px; font-weight: bold; padding: 6px 12px; border-radius: 20px; white-space: nowrap; }
+  .card { background: var(--white); border: 1px solid var(--border); border-radius: 14px; padding: 32px; box-shadow: 0 4px 18px rgba(27, 67, 50, 0.08); }
+
+  .intro h1 { font-size: 28px; color: var(--green); line-height: 1.25; }
+  .intro .accent-rule { width: 56px; height: 5px; background: var(--gold); border-radius: 3px; margin: 14px 0 18px; }
+  .intro p { font-size: 16px; line-height: 1.55; color: var(--text-dark); margin: 0 0 14px; }
+  .intro .brief-box { background: var(--green); color: var(--white); border-radius: 10px; padding: 18px 20px; font-size: 14.5px; line-height: 1.6; margin: 18px 0 22px; }
+  .intro .brief-box b { color: var(--gold); }
+
+  .name-fields { display: flex; gap: 14px; margin: 18px 0 6px; flex-wrap: wrap; }
+  .name-field { flex: 1 1 260px; }
+  .name-field-narrow { flex: 0 1 120px; }
+  .name-field label { display: block; font-size: 13px; font-weight: bold; color: var(--green); margin-bottom: 6px; }
+  .name-field input { width: 100%; padding: 11px 12px; border: 2px solid var(--border); border-radius: 8px; font-size: 15px; font-family: Calibri, "Segoe UI", sans-serif; color: var(--text-dark); background: var(--cream); }
+  .name-field input:focus { outline: none; border-color: var(--gold); }
+  .name-error { display: none; color: var(--wrong-text); background: var(--wrong-bg); border: 1px solid var(--wrong-border); padding: 10px 14px; border-radius: 8px; font-size: 13.5px; margin-top: 10px; }
+  .name-error.show { display: block; }
+  .pdf-note { font-size: 12.5px; color: var(--muted); margin-top: 10px; }
+
+  .category-tag { display: inline-block; font-size: 11.5px; font-weight: bold; color: var(--gold); background: var(--green); padding: 4px 10px; border-radius: 20px; margin-bottom: 12px; letter-spacing: 0.03em; }
+  .control-tag { display: inline-block; font-size: 12px; font-weight: bold; color: var(--muted); margin-bottom: 6px; margin-left: 8px; }
+  .scenario-desc { font-size: 19px; font-family: Cambria, Georgia, serif; color: var(--text-dark); line-height: 1.45; margin-bottom: 24px; }
+  .question-prompt { font-size: 14px; font-weight: bold; color: var(--green); margin-bottom: 10px; }
+  .option-row { display: flex; gap: 10px; flex-wrap: wrap; }
+  .option-btn { flex: 1 1 auto; min-width: 130px; padding: 13px 14px; border: 2px solid var(--border); background: var(--cream); border-radius: 10px; font-size: 15px; font-family: Calibri, "Segoe UI", sans-serif; color: var(--text-dark); cursor: pointer; text-align: center; transition: border-color 0.15s, background 0.15s; }
+  .option-btn:hover { border-color: var(--gold); }
+  .option-btn.selected { border-color: var(--green); background: var(--green); color: var(--white); font-weight: bold; }
+  .option-btn.correct { border-color: var(--right-border); background: var(--right-bg); color: var(--right-text); font-weight: bold; }
+  .option-btn.incorrect { border-color: var(--wrong-border); background: var(--wrong-bg); color: var(--wrong-text); font-weight: bold; }
+  .option-btn:disabled { cursor: default; }
+
+  .feedback-box { margin-top: 18px; padding: 16px 18px; border-radius: 10px; font-size: 14.5px; line-height: 1.5; display: none; }
+  .feedback-box.show { display: block; }
+  .feedback-box.all-correct { background: var(--right-bg); border: 1px solid var(--right-border); color: var(--right-text); }
+  .feedback-box.some-wrong { background: var(--wrong-bg); border: 1px solid var(--wrong-border); color: var(--wrong-text); }
+
+  .btn-row { margin-top: 24px; display: flex; justify-content: flex-end; gap: 10px; }
+  .btn { font-family: Calibri, "Segoe UI", sans-serif; font-size: 15px; font-weight: bold; padding: 12px 26px; border-radius: 10px; border: none; cursor: pointer; transition: transform 0.1s, opacity 0.15s; }
+  .btn:active { transform: scale(0.98); }
+  .btn-primary { background: var(--green); color: var(--white); }
+  .btn-primary:hover { background: var(--green-dark); }
+  .btn-primary:disabled { opacity: 0.45; cursor: not-allowed; }
+  .btn-gold { background: var(--gold); color: var(--green-dark); }
+  .btn-gold:hover { opacity: 0.9; }
+  .btn-outline { background: transparent; color: var(--green); border: 2px solid var(--green); }
+  .btn-outline:hover { background: var(--green); color: var(--white); }
+
+  .results h2 { color: var(--green); font-size: 27px; }
+  .results .big-score { font-family: Cambria, Georgia, serif; font-size: 52px; font-weight: bold; color: var(--gold); margin: 6px 0 4px; }
+  .results .big-score span { font-size: 22px; color: var(--muted); font-family: Calibri, sans-serif; font-weight: normal; }
+  .breakdown { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 22px 0; }
+  .breakdown-cell { background: var(--cream); border: 1px solid var(--border); border-radius: 10px; padding: 14px 8px; text-align: center; }
+  .breakdown-cell .num { font-family: Cambria, Georgia, serif; font-size: 21px; font-weight: bold; color: var(--green); }
+  .breakdown-cell .lbl { font-size: 10.5px; color: var(--muted); margin-top: 2px; }
+  .review-list { margin-top: 20px; }
+  .review-item { border-left: 4px solid var(--wrong-border); background: var(--wrong-bg); padding: 12px 16px; border-radius: 6px; margin-bottom: 10px; font-size: 14px; line-height: 1.5; }
+  .review-item b { color: var(--wrong-text); }
+  .all-clear { border-left: 4px solid var(--right-border); background: var(--right-bg); color: var(--right-text); padding: 14px 16px; border-radius: 6px; font-size: 15px; font-weight: bold; }
+  .hidden { display: none; }
+
+  .print-report { display: none; }
+  @media print {
+    body { background: #FFFFFF !important; }
+    body * { visibility: hidden; }
+    .print-report, .print-report * { visibility: visible; }
+    .print-report { display: block; position: absolute; top: 0; left: 0; width: 100%; padding: 0.3in; }
+    .print-report .pr-header { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 3px solid #1B4332; padding-bottom: 10px; margin-bottom: 16px; }
+    .print-report .pr-title { font-family: Cambria, Georgia, serif; font-size: 22px; font-weight: bold; color: #1B4332; }
+    .print-report .pr-sub { font-size: 12px; color: #5B6B62; margin-top: 2px; }
+    .print-report .pr-meta { text-align: right; font-size: 13px; color: #1F2A24; line-height: 1.5; }
+    .print-report .pr-score-row { display: flex; gap: 10px; margin: 14px 0 18px; flex-wrap: wrap; }
+    .print-report .pr-score-box { border: 1.5px solid #DDD6C2; border-radius: 6px; padding: 8px 10px; text-align: center; flex: 1; min-width: 70px; }
+    .print-report .pr-score-box .n { font-size: 17px; font-weight: bold; color: #1B4332; font-family: Cambria, Georgia, serif; }
+    .print-report .pr-score-box .l { font-size: 9.5px; color: #5B6B62; }
+    .print-report table { width: 100%; border-collapse: collapse; font-size: 11px; }
+    .print-report th { background: #1B4332 !important; color: #fff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; text-align: left; padding: 6px 8px; border: 1px solid #1B4332; }
+    .print-report td { padding: 6px 8px; border: 1px solid #DDD6C2; vertical-align: top; }
+    .print-report tr.pr-wrong td { background: #FBEAEA !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .print-report .pr-footer { margin-top: 16px; font-size: 10.5px; color: #5B6B62; }
+  }
+
+  @media (max-width: 520px) {
+    .card { padding: 22px 18px; }
+    .breakdown { grid-template-columns: repeat(2, 1fr); }
+    .btn-row { flex-direction: column-reverse; }
+    .btn { width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="topbar">
+    <div class="brand">AP CYBERSECURITY · MR. SULLIVAN</div>
+    <div class="progress-wrap hidden" id="progressWrap">
+      <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+      <div class="progress-label" id="progressLabel"></div>
+    </div>
+    <div class="score-chip hidden" id="scoreChip">0 pts</div>
+  </div>
+
+  <!-- INTRO -->
+  <div class="card intro" id="screen-intro">
+    <h1>Topic 2.1 Scenario Review</h1>
+    <div class="accent-rule"></div>
+    <p>You're reviewing security incidents from Meridian Analytics' case files. Each scenario tests a different corner of Topic 2.1 — tactics, adversaries, attack phases, risk strategies, and defense-in-depth layers, all mixed together.</p>
+    <div class="brief-box">
+      <b>16 scenarios</b>, each from a different part of Topic 2.1. Read the scenario, then pick the best answer from the category shown. You'll get feedback immediately, and a full breakdown at the end.
+    </div>
+    <p>This is graded on <b>completion, not accuracy</b> — submit your PDF when you finish. Still, review your breakdown carefully; it's good prep for what's ahead.</p>
+
+    <div class="name-fields">
+      <div class="name-field">
+        <label for="studentName">Name</label>
+        <input type="text" id="studentName" placeholder="Your full name" autocomplete="off">
+      </div>
+      <div class="name-field name-field-narrow">
+        <label for="studentPeriod">Period</label>
+        <input type="text" id="studentPeriod" placeholder="e.g. 3" autocomplete="off">
+      </div>
+    </div>
+    <div class="name-error" id="nameError">Enter your name and period before starting — they're needed on your submitted PDF.</div>
+
+    <div class="btn-row" style="justify-content:flex-start; margin-top: 10px;">
+      <button class="btn btn-primary" onclick="startQuiz()">Start Review</button>
+    </div>
+  </div>
+
+  <!-- QUESTION -->
+  <div class="card hidden" id="screen-question">
+    <div>
+      <span class="category-tag" id="categoryTag">CATEGORY</span>
+      <span class="control-tag" id="controlTag">SCENARIO 1 OF 16</span>
+    </div>
+    <div class="scenario-desc" id="scenarioDesc"></div>
+    <div class="question-prompt" id="questionPrompt">Which best fits this scenario?</div>
+    <div class="option-row" id="answerOptions"></div>
+
+    <div class="feedback-box" id="feedbackBox"></div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" id="checkBtn" onclick="checkAnswer()" disabled>Check Answer</button>
+      <button class="btn btn-gold hidden" id="nextBtn" onclick="nextQuestion()">Next Scenario</button>
+    </div>
+  </div>
+
+  <!-- RESULTS -->
+  <div class="card results hidden" id="screen-results">
+    <h2>Review Complete</h2>
+    <div class="big-score" id="bigScore">0<span>/16</span></div>
+    <p style="color:var(--muted); font-size:14px; margin:0 0 10px;">Correct answers across all 16 scenarios.</p>
+
+    <div class="breakdown">
+      <div class="breakdown-cell"><div class="num" id="tacticsScore">0/3</div><div class="lbl">TACTICS</div></div>
+      <div class="breakdown-cell"><div class="num" id="adversaryScore">0/4</div><div class="lbl">ADVERSARIES</div></div>
+      <div class="breakdown-cell"><div class="num" id="phaseScore">0/4</div><div class="lbl">PHASES</div></div>
+      <div class="breakdown-cell"><div class="num" id="riskScore">0/3</div><div class="lbl">RISK STRATEGY</div></div>
+      <div class="breakdown-cell"><div class="num" id="layerScore">0/2</div><div class="lbl">DEFENSE LAYERS</div></div>
+    </div>
+
+    <div class="review-list" id="reviewList"></div>
+
+    <div class="btn-row" style="justify-content:flex-start; margin-top: 22px; flex-wrap:wrap;">
+      <button class="btn btn-gold" onclick="downloadPDF()">Download as PDF</button>
+      <button class="btn btn-outline" onclick="restartQuiz()">Start Over</button>
+    </div>
+    <div class="pdf-note">"Download as PDF" opens your browser's print dialog — choose <b>Save as PDF</b> as the destination, then upload the file to Canvas.</div>
+  </div>
+</div>
+
+<!-- Printable report -->
+<div class="print-report" id="printReport">
+  <div class="pr-header">
+    <div>
+      <div class="pr-title">Topic 2.1 Scenario Review — Results</div>
+      <div class="pr-sub">AP Cybersecurity &nbsp;•&nbsp; Mr. Sullivan &nbsp;•&nbsp; Meridian Analytics Case Files</div>
+    </div>
+    <div class="pr-meta">
+      <div id="prName">Name: —</div>
+      <div id="prPeriod">Period: —</div>
+      <div id="prDate">Date: —</div>
+    </div>
+  </div>
+
+  <div class="pr-score-row">
+    <div class="pr-score-box"><div class="n" id="prTotal">0/16</div><div class="l">TOTAL</div></div>
+    <div class="pr-score-box"><div class="n" id="prTactics">0/3</div><div class="l">TACTICS</div></div>
+    <div class="pr-score-box"><div class="n" id="prAdversary">0/4</div><div class="l">ADVERSARIES</div></div>
+    <div class="pr-score-box"><div class="n" id="prPhase">0/4</div><div class="l">PHASES</div></div>
+    <div class="pr-score-box"><div class="n" id="prRisk">0/3</div><div class="l">RISK</div></div>
+    <div class="pr-score-box"><div class="n" id="prLayer">0/2</div><div class="l">LAYERS</div></div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th style="width:5%">#</th>
+        <th style="width:14%">Category</th>
+        <th style="width:45%">Scenario</th>
+        <th style="width:36%">Your Answer</th>
+      </tr>
+    </thead>
+    <tbody id="prTableBody"></tbody>
+  </table>
+
+  <div class="pr-footer">Rows highlighted in red were answered incorrectly, with the correct answer noted. Generated automatically by the Topic 2.1 Scenario Review tool.</div>
+</div>
+
+<script>
+  const SCENARIOS = [
+    { cat: "Tactics", desc: "An email claims your account will be permanently deleted in one hour unless you click the link now.", options: ["Pretexting", "Authority", "Consensus", "Scarcity", "Familiarity", "Urgency"], answer: "Urgency" },
+    { cat: "Tactics", desc: "A caller claims to be the IT director and instructs an employee to disable their firewall immediately.", options: ["Pretexting", "Authority", "Consensus", "Scarcity", "Familiarity", "Urgency"], answer: "Authority" },
+    { cat: "Tactics", desc: "A scammer pretends to be an old coworker reconnecting on social media to build trust before asking for a \u201csmall favor.\u201d", options: ["Pretexting", "Authority", "Consensus", "Scarcity", "Familiarity", "Urgency"], answer: "Familiarity" },
+
+    { cat: "Adversaries", desc: "A teenager downloads a pre-built hacking tool from an online forum and uses it without understanding how it works.", options: ["Script kiddie", "Hacktivist", "Insider", "Cyberterrorist", "Transnational criminal organization"], answer: "Script kiddie" },
+    { cat: "Adversaries", desc: "A group defaces a company's website to protest the company's environmental record.", options: ["Script kiddie", "Hacktivist", "Insider", "Cyberterrorist", "Transnational criminal organization"], answer: "Hacktivist" },
+    { cat: "Adversaries", desc: "A disgruntled employee with valid credentials leaks confidential files before quitting.", options: ["Script kiddie", "Hacktivist", "Insider", "Cyberterrorist", "Transnational criminal organization"], answer: "Insider" },
+    { cat: "Adversaries", desc: "A group attacks a regional water treatment facility to disrupt the community, motivated by political beliefs.", options: ["Script kiddie", "Hacktivist", "Insider", "Cyberterrorist", "Transnational criminal organization"], answer: "Cyberterrorist" },
+
+    { cat: "Phases", desc: "An adversary spends days researching a target company's employees on social media before attacking.", options: ["Reconnaissance", "Initial access", "Persistence", "Lateral movement", "Taking action", "Evading detection"], answer: "Reconnaissance" },
+    { cat: "Phases", desc: "An adversary installs a rootkit so they can regain access to a system without needing to re-exploit it.", options: ["Reconnaissance", "Initial access", "Persistence", "Lateral movement", "Taking action", "Evading detection"], answer: "Persistence" },
+    { cat: "Phases", desc: "After gaining access to a low-level account, an adversary pivots to an administrator account with broader permissions.", options: ["Reconnaissance", "Initial access", "Persistence", "Lateral movement", "Taking action", "Evading detection"], answer: "Lateral movement" },
+    { cat: "Phases", desc: "An adversary deletes log files to cover their tracks after completing an attack.", options: ["Reconnaissance", "Initial access", "Persistence", "Lateral movement", "Taking action", "Evading detection"], answer: "Evading detection" },
+
+    { cat: "Risk Strategy", desc: "A company stops offering a risky, rarely used feature entirely rather than trying to secure it.", options: ["Avoid", "Transfer", "Mitigate", "Accept"], answer: "Avoid" },
+    { cat: "Risk Strategy", desc: "A hospital buys a cyber-insurance policy to offset the potential cost of a future data breach.", options: ["Avoid", "Transfer", "Mitigate", "Accept"], answer: "Transfer" },
+    { cat: "Risk Strategy", desc: "After adding several controls, a business decides the small remaining risk isn't worth further spending.", options: ["Avoid", "Transfer", "Mitigate", "Accept"], answer: "Accept" },
+
+    { cat: "Defense Layers", desc: "Requiring all employees to complete annual security-awareness training.", options: ["Human", "Physical", "Network", "Device", "Application", "Data"], answer: "Human" },
+    { cat: "Defense Layers", desc: "Encrypting sensitive files so they're unreadable even if stolen.", options: ["Human", "Physical", "Network", "Device", "Application", "Data"], answer: "Data" },
+  ];
+
+  const CATEGORY_KEYS = {
+    "Tactics": "tactics", "Adversaries": "adversary", "Phases": "phase",
+    "Risk Strategy": "risk", "Defense Layers": "layer",
+  };
+
+  let current = 0;
+  let selected = null;
+  let checked = false;
+  let totalScore = 0;
+  let catScore = { tactics: 0, adversary: 0, phase: 0, risk: 0, layer: 0 };
+  let missed = [];
+  let allResults = [];
+  let studentName = "";
+  let studentPeriod = "";
+
+  function el(id) { return document.getElementById(id); }
+
+  function startQuiz() {
+    studentName = el("studentName").value.trim();
+    studentPeriod = el("studentPeriod").value.trim();
+    if (!studentName || !studentPeriod) {
+      el("nameError").classList.add("show");
+      return;
+    }
+    el("nameError").classList.remove("show");
+
+    current = 0; totalScore = 0;
+    catScore = { tactics: 0, adversary: 0, phase: 0, risk: 0, layer: 0 };
+    missed = []; allResults = [];
+
+    el("screen-intro").classList.add("hidden");
+    el("screen-results").classList.add("hidden");
+    el("screen-question").classList.remove("hidden");
+    el("progressWrap").classList.remove("hidden");
+    el("scoreChip").classList.remove("hidden");
+    loadQuestion();
+  }
+
+  function loadQuestion() {
+    checked = false;
+    selected = null;
+    const q = SCENARIOS[current];
+    el("categoryTag").textContent = q.cat.toUpperCase();
+    el("controlTag").textContent = `SCENARIO ${current + 1} OF ${SCENARIOS.length}`;
+    el("scenarioDesc").textContent = q.desc;
+
+    const container = el("answerOptions");
+    container.innerHTML = "";
+    q.options.forEach(opt => {
+      const btn = document.createElement("button");
+      btn.className = "option-btn";
+      btn.textContent = opt;
+      btn.onclick = () => selectOption(opt, btn);
+      container.appendChild(btn);
+    });
+
+    el("feedbackBox").className = "feedback-box";
+    el("feedbackBox").textContent = "";
+    el("checkBtn").classList.remove("hidden");
+    el("checkBtn").disabled = true;
+    el("nextBtn").classList.add("hidden");
+    updateProgress();
+    updateScoreChip();
+  }
+
+  function selectOption(value, btnEl) {
+    if (checked) return;
+    selected = value;
+    document.querySelectorAll("#answerOptions .option-btn").forEach(b => b.classList.remove("selected"));
+    btnEl.classList.add("selected");
+    el("checkBtn").disabled = false;
+  }
+
+  function updateProgress() {
+    const pct = (current / SCENARIOS.length) * 100;
+    el("progressFill").style.width = pct + "%";
+    el("progressLabel").textContent = `Scenario ${current + 1} of ${SCENARIOS.length}`;
+  }
+
+  function updateScoreChip() {
+    el("scoreChip").textContent = `${totalScore} pts`;
+  }
+
+  function checkAnswer() {
+    if (checked || !selected) return;
+    checked = true;
+    const q = SCENARIOS[current];
+    const key = CATEGORY_KEYS[q.cat];
+    const isRight = selected === q.answer;
+
+    if (isRight) { totalScore += 1; catScore[key] += 1; }
+    else { missed.push({ desc: q.desc, cat: q.cat, given: selected, correct: q.answer }); }
+
+    document.querySelectorAll("#answerOptions .option-btn").forEach(b => {
+      b.disabled = true;
+      if (b.textContent === q.answer) b.classList.add("correct");
+      else if (b.textContent === selected && !isRight) b.classList.add("incorrect");
+    });
+
+    allResults.push({ desc: q.desc, cat: q.cat, given: selected, correct: q.answer, isRight });
+
+    const fb = el("feedbackBox");
+    fb.classList.add("show");
+    if (isRight) {
+      fb.className = "feedback-box show all-correct";
+      fb.textContent = "Correct.";
+    } else {
+      fb.className = "feedback-box show some-wrong";
+      fb.textContent = `Not quite — the correct answer is highlighted above.`;
+    }
+
+    updateScoreChip();
+    el("checkBtn").classList.add("hidden");
+    el("nextBtn").classList.remove("hidden");
+  }
+
+  function nextQuestion() {
+    current += 1;
+    if (current >= SCENARIOS.length) showResults();
+    else loadQuestion();
+  }
+
+  function showResults() {
+    el("screen-question").classList.add("hidden");
+    el("progressWrap").classList.add("hidden");
+    el("screen-results").classList.remove("hidden");
+
+    el("bigScore").innerHTML = `${totalScore}<span>/${SCENARIOS.length}</span>`;
+    el("tacticsScore").textContent = `${catScore.tactics}/3`;
+    el("adversaryScore").textContent = `${catScore.adversary}/4`;
+    el("phaseScore").textContent = `${catScore.phase}/4`;
+    el("riskScore").textContent = `${catScore.risk}/3`;
+    el("layerScore").textContent = `${catScore.layer}/2`;
+
+    const list = el("reviewList");
+    list.innerHTML = "";
+    if (missed.length === 0) {
+      const div = document.createElement("div");
+      div.className = "all-clear";
+      div.textContent = "Perfect score — all 16 scenarios correctly identified.";
+      list.appendChild(div);
+    } else {
+      const heading = document.createElement("h3");
+      heading.style.color = "var(--green)"; heading.style.fontSize = "16px"; heading.style.marginBottom = "10px";
+      heading.textContent = "Scenarios to review:";
+      list.appendChild(heading);
+      missed.forEach(m => {
+        const div = document.createElement("div");
+        div.className = "review-item";
+        div.innerHTML = `<b>[${m.cat}]</b> ${m.desc}<br>You answered: ${m.given} &nbsp;·&nbsp; Correct: ${m.correct}`;
+        list.appendChild(div);
+      });
+    }
+    el("scoreChip").classList.add("hidden");
+    buildPrintReport();
+  }
+
+  function buildPrintReport() {
+    const today = new Date();
+    const dateStr = today.toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" });
+    el("prName").textContent = "Name: " + studentName;
+    el("prPeriod").textContent = "Period: " + studentPeriod;
+    el("prDate").textContent = "Date: " + dateStr;
+
+    el("prTotal").textContent = `${totalScore}/${SCENARIOS.length}`;
+    el("prTactics").textContent = `${catScore.tactics}/3`;
+    el("prAdversary").textContent = `${catScore.adversary}/4`;
+    el("prPhase").textContent = `${catScore.phase}/4`;
+    el("prRisk").textContent = `${catScore.risk}/3`;
+    el("prLayer").textContent = `${catScore.layer}/2`;
+
+    const body = el("prTableBody");
+    body.innerHTML = "";
+    allResults.forEach((r, i) => {
+      const tr = document.createElement("tr");
+      if (!r.isRight) tr.className = "pr-wrong";
+      tr.innerHTML = `
+        <td>${i + 1}</td>
+        <td>${r.cat}</td>
+        <td>${r.desc}</td>
+        <td>${r.given}${!r.isRight ? " (correct: " + r.correct + ")" : ""}</td>
+      `;
+      body.appendChild(tr);
+    });
+  }
+
+  function downloadPDF() { window.print(); }
+
+  function restartQuiz() {
+    el("screen-results").classList.add("hidden");
+    el("screen-intro").classList.remove("hidden");
+    el("scoreChip").classList.add("hidden");
+    el("studentName").value = "";
+    el("studentPeriod").value = "";
+  }
+</script>
+
+</body>
+</html>
