@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prompt It Better</title>
+<style>
+  :root {
+    --navy: #0F1B2D; --teal: #0E7C7B; --mint: #6FC3B4; --amber: #C97A2B;
+    --light: #EAF4F4; --gray: #9AA6A6; --danger: #B5473A; --white: #FFFFFF;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: Calibri, "Segoe UI", sans-serif; background: var(--light); color: #1a1a1a; min-height: 100vh; }
+  #app { max-width: 900px; margin: 0 auto; padding: 18px 20px 40px; }
+
+  /* Dual-visible bilingual: both always shown, order+style swap on toggle */
+  .bi { display: flex; flex-direction: column; }
+  .bi .en { order: 1; }
+  .bi .es { order: 2; font-style: italic; color: #777; font-size: 0.85em; margin-top: 3px; }
+  body.lang-es .bi .en { order: 2; font-style: italic; color: #777; font-size: 0.85em; margin-top: 3px; }
+  body.lang-es .bi .es { order: 1; font-style: normal; color: inherit; font-size: 1em; margin-top: 0; }
+  .bi.inline { flex-direction: row; gap: 6px; }
+  .bi.inline .es { margin-top: 0; }
+
+  header {
+    background: var(--navy); color: white; border-radius: 14px; padding: 16px 22px;
+    display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 14px;
+  }
+  header .bi .en, header .bi .es { font-family: Cambria, Georgia, serif; font-size: 1.5rem; font-weight: 700; }
+  header .sub { color: var(--mint); font-size: 0.85rem; margin-top: 2px; }
+  .lang-toggle {
+    background: transparent; border: 1.5px solid var(--mint); color: var(--mint);
+    border-radius: 999px; padding: 6px 14px; font-size: 0.85rem; cursor: pointer; font-weight: 600;
+  }
+  .lang-toggle:hover { background: rgba(111,195,180,0.15); }
+
+  .progress-row { display: flex; gap: 6px; margin-bottom: 14px; }
+  .progress-dot { flex: 1; height: 8px; border-radius: 4px; background: #D7E4E4; }
+  .progress-dot.done { background: var(--teal); }
+  .progress-dot.current { background: var(--amber); }
+
+  .hook-box {
+    background: white; border-left: 4px solid var(--amber); border-radius: 10px;
+    padding: 14px 18px; margin-bottom: 16px; font-size: 0.98rem; line-height: 1.5;
+  }
+  .hook-box.compact { font-size: 0.9rem; padding: 10px 16px; }
+  #hookRound1 { display: block; }
+  #hookRound2 { display: none; }
+  body.round2 #hookRound1 { display: none; }
+  body.round2 #hookRound2 { display: block; }
+
+  .stage-label { font-size: 0.85rem; color: var(--teal); font-weight: 700; margin-bottom: 10px; }
+
+  .q-card { background: white; border-radius: 14px; padding: 24px 26px; box-shadow: 0 1px 3px rgba(15,27,45,0.08); margin-bottom: 16px; }
+  .question { display: none; }
+  .question.current { display: block; }
+  .scenario-label { font-size: 0.78rem; color: var(--amber); font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 6px; }
+  .prompt-shown { background: var(--light); border-radius: 8px; padding: 10px 14px; margin-bottom: 8px; font-family: Cambria, Georgia, serif; font-style: italic; font-size: 1.02rem; }
+  .bad-result .bi .en, .bad-result .bi .es { font-size: 0.9rem; color: #666; }
+  .ask-line { margin: 14px 0 10px; font-weight: 600; }
+
+  .choices { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px; }
+  @media (max-width: 640px) { .choices { grid-template-columns: 1fr; } }
+  .choice-btn {
+    background: var(--light); border: 2px solid transparent; border-radius: 10px;
+    padding: 13px 15px; font-size: 0.95rem; cursor: pointer; text-align: left; transition: all 0.15s ease;
+  }
+  .choice-btn:hover { border-color: var(--teal); background: white; }
+  .choice-btn.correct { background: #FFF3E6; border-color: var(--amber); }
+  .choice-btn.picked-wrong { border-color: var(--gray); border-style: dashed; background: #F3F3F3; }
+  .choice-btn:disabled { cursor: default; }
+
+  .feedback-panel { margin-top: 14px; display: none; }
+  .feedback-panel.show { display: block; }
+  .feedback-panel .bi .en, .feedback-panel .bi .es { font-size: 0.92rem; color: #444; }
+
+  .action-row { display: flex; gap: 10px; margin-top: 4px; flex-wrap: wrap; align-items: center; }
+  button.primary {
+    background: var(--teal); color: white; border: none; border-radius: 8px;
+    padding: 11px 20px; font-size: 0.98rem; font-weight: 700; cursor: pointer;
+  }
+  button.primary:hover { background: #0b6362; }
+  button.primary:disabled { background: #C9D6D6; cursor: not-allowed; }
+  button.secondary {
+    background: transparent; color: var(--teal); border: 1.5px solid var(--teal);
+    border-radius: 8px; padding: 9px 16px; font-size: 0.9rem; font-weight: 600; cursor: pointer;
+  }
+
+  .overlay { position: fixed; inset: 0; background: rgba(15,27,45,0.55); display: flex; align-items: center; justify-content: center; padding: 20px; z-index: 20; }
+  .overlay.hidden { display: none; }
+  .modal { background: white; border-radius: 16px; max-width: 640px; width: 100%; padding: 28px 26px; max-height: 86vh; overflow-y: auto; }
+  .modal h2.bi .en, .modal h2.bi .es { font-family: Cambria, Georgia, serif; color: var(--navy); margin: 0; font-size: 1.5rem; }
+  .principle-card { background: var(--light); border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; display: flex; gap: 12px; align-items: flex-start; }
+  .principle-num { width: 30px; height: 30px; border-radius: 50%; background: var(--amber); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0; }
+  .principle-card .bi .en, .principle-card .bi .es { }
+  .kickoff-box { background: var(--navy); color: white; border-radius: 12px; padding: 16px 18px; margin-top: 16px; }
+  .kickoff-box .bi .en, .kickoff-box .bi .es { color: white; }
+  .kickoff-box h3.bi .en, .kickoff-box h3.bi .es { color: var(--mint); font-family: Cambria, Georgia, serif; margin: 0 0 8px; }
+
+  #exportScreen { display: none; }
+  #exportScreen.active { display: block; }
+  #app.export-mode > header, #app.export-mode > .progress-row, #app.export-mode > .hook-box,
+  #app.export-mode > .stage-label, #app.export-mode > .q-card, #app.export-mode > .action-row { display: none; }
+  .export-card { background: white; border-radius: 14px; padding: 20px 24px; box-shadow: 0 1px 3px rgba(15,27,45,0.08); margin-bottom: 16px; }
+  .export-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 10px; }
+  .export-title.bi .en, .export-title.bi .es { font-family: Cambria, Georgia, serif; color: var(--navy); font-size: 1.6rem; margin: 0; }
+  .name-row { display: flex; gap: 16px; flex-wrap: wrap; margin: 14px 0 4px; }
+  .name-row .field { flex: 1; min-width: 180px; }
+  .name-row label.bi .en, .name-row label.bi .es { font-size: 0.85rem; color: #555; }
+  .name-row input {
+    width: 100%; border: none; border-bottom: 2px solid #C7D6D6; background: transparent;
+    font-size: 1rem; padding: 6px 2px; font-family: Calibri, sans-serif; color: #111; margin-top: 4px;
+  }
+  .name-row input:focus { outline: none; border-bottom-color: var(--teal); }
+  .score-summary { background: var(--light); border-radius: 10px; padding: 14px 18px; font-size: 1rem; margin-top: 6px; }
+  .export-section-title.bi .en, .export-section-title.bi .es { font-family: Cambria, Georgia, serif; color: var(--teal); font-size: 1.1rem; margin: 6px 0 10px; }
+  .reflection-block textarea {
+    width: 100%; min-height: 60px; border: 1.5px solid #C7D6D6; border-radius: 8px;
+    padding: 8px 10px; font-family: Calibri, sans-serif; font-size: 0.92rem; resize: vertical; margin-bottom: 16px; margin-top: 6px;
+  }
+  .reflection-block textarea:focus { outline: none; border-color: var(--teal); }
+  .print-btn-row { display: flex; gap: 10px; margin-top: 6px; }
+  @media print {
+    body { background: white; }
+    .lang-toggle, .print-btn-row { display: none !important; }
+    .export-card { box-shadow: none; border: 1px solid #ddd; page-break-inside: avoid; }
+    #app { max-width: 100%; padding: 0; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div>
+      <div class="bi"><span class="en">Prompt It Better</span><span class="es">Mejora el Prompt</span></div>
+      <div class="sub">Unit 3 — Directing AI</div>
+    </div>
+    <button class="lang-toggle" onclick="document.body.classList.toggle('lang-es')">Español / English</button>
+  </header>
+
+  <div class="progress-row" id="progressRow"></div>
+  <div class="stage-label" id="stageLabel"></div>
+
+  <div class="hook-box">
+    <div id="hookRound1" class="bi">
+      <span class="en">You know AI can be biased and can hallucinate. Now: how do YOU get better results out of it? For each scenario, a vague prompt led to a bad result. Pick the revision most likely to fix it.</span>
+      <span class="es">Ya sabes que la IA puede tener sesgos y puede alucinar. Ahora: ¿cómo obtienes TÚ mejores resultados de ella? Para cada escenario, un prompt vago llevó a un mal resultado. Elige la revisión que más probablemente lo arregle.</span>
+    </div>
+    <div id="hookRound2" class="bi">
+      <span class="en">Round 2: harder cases. Some of these prompts are already pretty good — figure out what's still missing, if anything.</span>
+      <span class="es">Ronda 2: casos más difíciles. Algunos de estos prompts ya son bastante buenos — descubre qué falta todavía, si es que falta algo.</span>
+    </div>
+  </div>
+
+  <div class="q-card">
+    <!-- ROUND 1 QUESTIONS -->
+    <div class="question current" data-q="r1q1">
+      <div class="scenario-label bi"><span class="en">Scenario</span><span class="es">Escenario</span></div>
+      <div class="prompt-shown">"Tell me about dogs."</div>
+      <div class="bad-result bi"><span class="en">Result: a rambling paragraph mixing breeds, history, and care tips all at once, with no clear focus.</span><span class="es">Resultado: un párrafo desordenado que mezcla razas, historia, y consejos de cuidado a la vez, sin un enfoque claro.</span></div>
+      <div class="ask-line bi"><span class="en">Which revised prompt would most likely fix this?</span><span class="es">¿Qué prompt revisado probablemente arreglaría esto?</span></div>
+      <div class="choices">
+        <button class="choice-btn" data-correct="false" onclick="answer(this)"><div class="bi"><span class="en">"Tell me EVERYTHING about dogs"</span><span class="es">"Dime TODO sobre los perros"</span></div></button>
+        <button class="choice-btn" data-correct="true" onclick="answer(this)"><div class="bi"><span class="en">"What are 3 things to know before adopting a Labrador puppy?"</span><span class="es">"¿Cuáles son 3 cosas que saber antes de adoptar un cachorro Labrador?"</span></div></button>
+        <button class="choice-btn" data-correct="false" onclick="answer(this)"><div class="bi"><span class="en">"Dogs"</span><span class="es">"Perros"</span></div></button>
+        <button class="choice-btn" data-correct="false" onclick="answer(this)"><div class="bi"><span class="en">"Please give me information"</span><span class="es">"Por favor dame información"</span></div></button>
+      </div>
+      <div class="feedback-panel"><div class="bi"><span class="en">A specific, focused question beats a broad topic every time.</span><span class="es">Una pregunta específica y enfocada siempre le gana a un tema amplio.</span></div></div>
+    </div>
+
+    <div class="question" data-q="r1q2">
+      <div class="scenario-label bi"><span class="en">Scenario</span><span class="es">Escenario</span></div>
+      <div class="prompt-shown">"Write a story."</div>
+      <div class="bad-result bi"><span class="en">Result: a very long story with a tone and reading level that doesn't match what you needed at all.</span><span class="es">Resultado: una historia muy larga con un tono y nivel de lectura que no coincide para nada con lo que necesitabas.</span></div>
+      <div class="ask-line bi"><span class="en">Which revised prompt would most likely fix this?</span><span class="es">¿Qué prompt revisado probablemente arreglaría esto?</span></div>
+      <div class="choices">
+        <button class="choice-btn" data-correct="false" onclick="answer(this)"><div class="bi"><span class="en">"Write a short story"</span><span class="es">"Escribe una historia corta"</span></div></button>
+        <button class="choice-btn" data-correct="true" onclick="answer(this)"><div class="bi"><span class="en">"Write a 200-word bedtime story about a shy dragon, for a 7-year-old"</span><span class="es">"Escribe una historia de 200 palabras para dormir sobre un dragón tímido, para un niño de 7 años"</span></div></button>
+        <button class="choice-btn" data-correct="false" onclick="answer(this)"><div class="bi"><span class="en">"Write a good story"</span><span class="es">"Escribe una buena historia"</span></div></button>
+        <button class="choice-btn" data-correct="false" onclick="answer(this)"><div class="bi"><span class="en">"Story time"</span><span class="es">"Hora de historia"</span></div></button>
+      </div>
+      <div class="feedback-panel"><div class="bi"><span class="en">Length, topic, and audience — all three narrowed things down.</span><span class="es">Longitud, tema, y audiencia — los tres redujeron las opciones.</span></div></div>
+    </div>
+
+    <div class="question" data-q="r1q3">
+      <div class="scenario-label bi"><span class="en">Scenario</span><span class="es">Escenario</span></div>
+      <div class="prompt-shown">"Help me with my essay."</div>
+      <div class="bad-result bi"><span class="en">Result: the AI wrote a whole new generic essay instead of giving you feedback on yours.</span><span class="es">Resultado: la IA escribió un ensayo genérico completamente nuevo en lugar de darte retroalimentación sobre el tuyo.</span></div>
+      <div class="ask-line bi"><span class="en">Which revised prompt would most likely fix this?</span><span class="es">¿Qué prompt revisado probablemente arreglaría esto?</span></div>
+      <div class="choices">
+        <button class="choice-btn" data-correct="false" onclick="answer(this)"><div class="bi"><span class="en">"Please help"</span><span class="es">"Por favor ayuda"</span></div></button>
+        <button class="choice-btn" data-correct="true" onclick="answer(this)"><div class="bi"><span class="en">"Review my essay's intro paragraph and suggest 2 ways to make my thesis clearer"</span><span class="es">"Revisa el párrafo de introducción de mi ensayo y sugiere 2 formas de hacer mi tesis más clara"</span></div></button>
+        <button class="choice-btn" data-correct="false" onclick="answer(this)"><div class="bi"><span class="en">"Essay help"</span><span class="es">"Ayuda con ensayo"</span></div></button>
+        <button class="choice-btn" data-correct="false" onclick="answer(this)"><div class="bi"><span class="en">"Make my essay better"</span><span class="es">"Mejora mi ensayo"</span></div></button>
+      </div>
+      <div class="feedback-panel"><div class="bi"><span class="en">Saying exactly what KIND of help you want changes everything.</span><span class="es">Decir exactamente QUÉ TIPO de ayuda quieres lo cambia todo.</span></div></div>
+    </div>
+
+    <div class="question" data-q="r1q4">
+      <div class="scenario-label bi"><span class="en">Scenario</span><span class="es">Escenario</span></div>
+      <div class="prompt-shown">"Make a workout plan."</div>
+      <div class="bad-result bi"><span class="en">Result: a plan assuming full gym access, with exercises that would hurt your recently-injured knee.</span><span class="es">Resultado: un plan que asume acceso completo a un gimnasio, con ejercicios que lastimarían tu rodilla recién lesionada.</span></div>
+      <div class="ask-line bi"><span class="en">Which revised prompt would most likely fix this?</span><span class="es">¿Qué prompt revisado probablemente arreglaría esto?</span></div>
+      <div class="choices">
+        <button class="choice-btn" data-correct="true" onclick="answer(this)"><div class="bi"><span class="en">"Make a 20-min/day workout plan, no equipment, avoiding knee exercises due to injury"</span><span class="es">"Haz un plan de ejercicio de 20 min/día, sin equipo, evitando ejercicios de rodilla por lesión"</span></div></button>
+        <button class="choice-btn" data-correct="false" onclick="answer(this)"><div class="bi"><span class="en">"Best workout plan"</span><span class="es">"Mejor plan de ejercicio"</span></div></button>
+        <button class="choice-btn" data-correct="false" onclick="answer(this)"><div class="bi"><span class="en">"Workout"</span><span class="es">"Ejercicio"</span></div></button>
+        <button class="choice-btn" data-correct="false" onclick="answer(this)"><div class="bi"><span class="en">"Fitness tips"</span><span class="es">"Consejos de acondicionamiento"</span></div></button>
+      </div>
+      <div class="feedback-panel"><div class="bi"><span class="en">Your real-life constraints (equipment, injury) need to actually be in the prompt.</span><span class="es">Tus limitaciones de la vida real (equipo, lesión) necesitan estar realmente en el prompt.</span></div></div>
+    </div>
+
+    <div class="question" data-q="r1q5">
+      <div class="scenario-label bi"><span class="en">Scenario</span><span class="es">Escenario</span></div>
+      <div class="prompt-shown">"Explain photosynthesis."</div>
+      <div class="bad-result bi"><span class="en">Result: dense, jargon-heavy, college-level explanation you can't actually use for a 9th grade assignment.</span><span class="es">Resultado: una explicación densa, llena de jerga, de nivel universitario que no puedes usar para una tarea de 9° grado.</span></div>
+      <div class="ask-line bi"><span class="en">Which revised prompt would most likely fix this?</span><span class="es">¿Qué prompt revisado probablemente arreglaría esto?</span></div>
+      <div class="choices">
+        <button class="choice-btn" data-correct="true" onclick="answer(this)"><div class="bi"><span class="en">"Explain photosynthesis simply, for 9th grade biology, in 3 sentences"</span><span class="es">"Explica la fotosíntesis de forma sencilla, para biología de 9° grado, en 3 oraciones"</span></div></button>
+        <button class="choice-btn" data-correct="false" onclick="answer(this)"><div class="bi"><span class="en">"Explain photosynthesis in detail"</span><span class="es">"Explica la fotosíntesis en detalle"</span></div></button>
+        <button class="choice-btn" data-correct="false" onclick="answer(this)"><div class="bi"><span class="en">"Photosynthesis"</span><span class="es">"Fotosíntesis"</span></div></button>
+        <button class="choice-btn" data-correct="false" onclick="answer(this)"><div class="bi"><span class="en">"Science explanation"</span><span class="es">"Explicación de ciencia"</span></div></button>
+      </div>
+      <div class="feedback-panel"><div class="bi"><span class="en">Grade level AND sentence count both did real work here.</span><span class="es">El nivel de grado Y el número de oraciones hicieron trabajo real aquí.</span></div></div>
+    </div>
+
+    <!-- ROUND 2 QUESTIONS -->
+    <div class="question" data-q="r2q1">
+      <div class="scenario-label bi"><span class="en">What's Still Missing?</span><span class="es">¿Qué Falta Todavía?</span></div>
+      <div class="prompt-shown">"Write a 5-sentence summary of the water cycle."</div>
+      <div class="ask-line bi"><span class="en">This prompt has a topic AND a format. What's it still missing?</span><span class="es">Este prompt tiene un tema Y un formato. ¿Qué le falta todavía?</span></div>
+      <div class="choices">
+        <button class="choice-btn" data-correct="true" onclick="answer(this)"><div class="bi"><span class="en">Context — who is this for?</span><span class="es">Contexto — ¿para quién es esto?</span></div></button>
+        <button class="choice-btn" data-correct="false" onclick="answer(this)"><div class="bi"><span class="en">Format — length or structure</span><span class="es">Formato — longitud o estructura</span></div></button>
+        <button class="choice-btn" data-correct="false" onclick="answer(this)"><div class="bi"><span class="en">A specific topic</span><span class="es">Un tema específico</span></div></button>
+        <button class="choice-btn" data-correct="false" onclick="answer(this)"><div class="bi"><span class="en">Nothing — this is complete</span><span class="es">Nada — esto está completo</span></div></button>
+      </div>
+      <div class="feedback-panel"><div class="bi"><span class="en">A 5-sentence summary for a 9th grader reads very differently than one for a scientist.</span><span class="es">Un resumen de 5 oraciones para un estudiante de 9° grado se lee muy diferente que uno para un científico.</span></div></div>
+    </div>
+
+    <div class="question" data-q="r2q2">
+      <div class="scenario-label bi"><span class="en">What's Still Missing?</span><span class="es">¿Qué Falta Todavía?</span></div>
+      <div class="prompt-shown">"Explain how photosynthesis works to a 9th grader."</div>
+      <div class="ask-line bi"><span class="en">This prompt has a topic AND context (audience). What's it still missing?</span><span class="es">Este prompt tiene un tema Y contexto (audiencia). ¿Qué le falta todavía?</span></div>
+      <div class="choices">
+        <button class="choice-btn" data-correct="false" onclick="answer(this)"><div class="bi"><span class="en">Context — who it's for</span><span class="es">Contexto — para quién es</span></div></button>
+        <button class="choice-btn" data-correct="true" onclick="answer(this)"><div class="bi"><span class="en">Format — how long or how structured</span><span class="es">Formato — qué tan largo o qué tan estructurado</span></div></button>
+        <button class="choice-btn" data-correct="false" onclick="answer(this)"><div class="bi"><span class="en">A topic</span><span class="es">Un tema</span></div></button>
+        <button class="choice-btn" data-correct="false" onclick="answer(this)"><div class="bi"><span class="en">Nothing — this is complete</span><span class="es">Nada — esto está completo</span></div></button>
+      </div>
+      <div class="feedback-panel"><div class="bi"><span class="en">Without a length or structure, you might get 2 sentences or 2 pages.</span><span class="es">Sin una longitud o estructura, podrías obtener 2 oraciones o 2 páginas.</span></div></div>
+    </div>
+
+    <div class="question" data-q="r2q3">
+      <div class="scenario-label bi"><span class="en">What's Still Missing?</span><span class="es">¿Qué Falta Todavía?</span></div>
+      <div class="prompt-shown">"Give me 3 examples of Newton's third law, each in one sentence, appropriate for a middle schooler."</div>
+      <div class="ask-line bi"><span class="en">What's this prompt still missing?</span><span class="es">¿Qué le falta todavía a este prompt?</span></div>
+      <div class="choices">
+        <button class="choice-btn" data-correct="false" onclick="answer(this)"><div class="bi"><span class="en">Context</span><span class="es">Contexto</span></div></button>
+        <button class="choice-btn" data-correct="false" onclick="answer(this)"><div class="bi"><span class="en">Format</span><span class="es">Formato</span></div></button>
+        <button class="choice-btn" data-correct="false" onclick="answer(this)"><div class="bi"><span class="en">Specificity</span><span class="es">Especificidad</span></div></button>
+        <button class="choice-btn" data-correct="true" onclick="answer(this)"><div class="bi"><span class="en">Nothing — this hits all the principles</span><span class="es">Nada — esto cumple con todos los principios</span></div></button>
+      </div>
+      <div class="feedback-panel"><div class="bi"><span class="en">Specific topic, exact count, sentence-length format, and audience level — this is a strong prompt.</span><span class="es">Tema específico, cantidad exacta, formato de longitud de oración, y nivel de audiencia — este es un prompt fuerte.</span></div></div>
+    </div>
+
+    <div class="question" data-q="r2q4">
+      <div class="scenario-label bi"><span class="en">What's Still Missing?</span><span class="es">¿Qué Falta Todavía?</span></div>
+      <div class="prompt-shown">"Tell me about historical events."</div>
+      <div class="ask-line bi"><span class="en">What's this prompt still missing?</span><span class="es">¿Qué le falta todavía a este prompt?</span></div>
+      <div class="choices">
+        <button class="choice-btn" data-correct="false" onclick="answer(this)"><div class="bi"><span class="en">Just context</span><span class="es">Solo contexto</span></div></button>
+        <button class="choice-btn" data-correct="false" onclick="answer(this)"><div class="bi"><span class="en">Just format</span><span class="es">Solo formato</span></div></button>
+        <button class="choice-btn" data-correct="false" onclick="answer(this)"><div class="bi"><span class="en">Just specificity</span><span class="es">Solo especificidad</span></div></button>
+        <button class="choice-btn" data-correct="true" onclick="answer(this)"><div class="bi"><span class="en">All of the above</span><span class="es">Todo lo anterior</span></div></button>
+      </div>
+      <div class="feedback-panel"><div class="bi"><span class="en">No specific topic, no audience, no format — this needs a full rewrite, not a tweak.</span><span class="es">Sin tema específico, sin audiencia, sin formato — esto necesita una reescritura completa, no un ajuste.</span></div></div>
+    </div>
+  </div>
+
+  <div class="action-row">
+    <button class="primary" id="nextBtn" disabled>
+      <span class="bi inline"><span class="en">Next</span><span class="es">/ Siguiente</span></span>
+    </button>
+    <button class="secondary" onclick="confirmEarlyTurnIn()" style="border-color: var(--amber); color: var(--amber); margin-left: auto;">
+      <span class="bi inline"><span class="en">Turn in now (haven't finished)</span><span class="es">/ Entregar ahora (no he terminado)</span></span>
+    </button>
+  </div>
+
+  <div id="exportScreen">
+    <div class="export-card">
+      <div class="export-header">
+        <div class="export-title bi"><span class="en">Reflection Log</span><span class="es">Registro de Reflexión</span></div>
+        <button class="lang-toggle" style="border-color: var(--teal); color: var(--teal);" onclick="document.body.classList.toggle('lang-es')">Español / English</button>
+      </div>
+      <div class="name-row">
+        <div class="field">
+          <label class="bi"><span class="en">Name</span><span class="es">Nombre</span></label>
+          <input type="text" id="studentName">
+        </div>
+        <div class="field" style="flex: 0 0 140px;">
+          <label class="bi"><span class="en">Period</span><span class="es">Periodo</span></label>
+          <input type="text" id="studentPeriod">
+        </div>
+      </div>
+    </div>
+
+    <div class="export-card">
+      <div class="export-section-title bi"><span class="en">How You Did</span><span class="es">Cómo te Fue</span></div>
+      <div class="score-summary" id="scoreSummary"></div>
+    </div>
+
+    <div class="export-card">
+      <div class="export-section-title bi"><span class="en">Reflection</span><span class="es">Reflexión</span></div>
+      <div class="reflection-block">
+        <label class="bi"><span class="en">1. Pick one prompt from today. Rewrite it using all 4 principles — even better than the "correct" answer.</span><span class="es">1. Elige un prompt de hoy. Reescríbelo usando los 4 principios — incluso mejor que la respuesta "correcta."</span></label>
+        <textarea></textarea>
+        <label class="bi"><span class="en">2. Which of the 4 principles do you think you'll forget to use most often? Why?</span><span class="es">2. ¿Cuál de los 4 principios crees que olvidarás usar más seguido? ¿Por qué?</span></label>
+        <textarea></textarea>
+        <label class="bi"><span class="en">3. Think of something you'd actually want AI's help with. Write a strong prompt for it right now.</span><span class="es">3. Piensa en algo con lo que realmente querrías la ayuda de la IA. Escribe un prompt fuerte para eso ahora mismo.</span></label>
+        <textarea></textarea>
+      </div>
+    </div>
+
+    <div class="print-btn-row">
+      <button class="primary" onclick="window.print()">
+        <span class="bi inline"><span class="en">Print / Save as PDF</span><span class="es">/ Imprimir / Guardar como PDF</span></span>
+      </button>
+      <button class="secondary" onclick="backToGame()">
+        <span class="bi inline"><span class="en">Back to game</span><span class="es">/ Volver al juego</span></span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay hidden" id="revealOverlay">
+  <div class="modal">
+    <h2 class="bi"><span class="en">Four Ways to Prompt Better</span><span class="es">Cuatro Formas de Mejorar un Prompt</span></h2>
+    <p class="bi" style="margin-top:10px;"><span class="en">You just fixed 5 bad prompts using instinct. Here's what you were actually doing, with names.</span><span class="es">Acabas de arreglar 5 prompts malos usando el instinto. Esto es lo que realmente estabas haciendo, con nombres.</span></p>
+    <div class="principle-card"><div class="principle-num">1</div><div class="bi"><span class="en"><b>Be Specific</b> — say exactly what you want, not a broad topic.</span><span class="es"><b>Sé Específico</b> — di exactamente qué quieres, no un tema amplio.</span></div></div>
+    <div class="principle-card"><div class="principle-num">2</div><div class="bi"><span class="en"><b>Give Context</b> — who it's for, and why you need it.</span><span class="es"><b>Da Contexto</b> — para quién es, y por qué lo necesitas.</span></div></div>
+    <div class="principle-card"><div class="principle-num">3</div><div class="bi"><span class="en"><b>Set the Format</b> — length, tone, structure.</span><span class="es"><b>Define el Formato</b> — longitud, tono, estructura.</span></div></div>
+    <div class="principle-card"><div class="principle-num">4</div><div class="bi"><span class="en"><b>Add Constraints</b> — real-life limits or rules to follow.</span><span class="es"><b>Agrega Restricciones</b> — límites de la vida real o reglas a seguir.</span></div></div>
+    <div style="margin-top:16px;"><button class="primary" onclick="startRound2()"><span class="bi inline"><span class="en">Start Round 2</span><span class="es">/ Comenzar Ronda 2</span></span></button></div>
+  </div>
+</div>
+
+<div class="overlay hidden" id="finalOverlay">
+  <div class="modal">
+    <h2 class="bi"><span class="en">Nice Work!</span><span class="es">¡Buen Trabajo!</span></h2>
+    <p class="bi" style="margin-top:10px;"><span class="en">You now know the 4 principles well enough to spot when a "good-looking" prompt is still missing something. Next: you'll actually direct an AI to make something, using these on purpose.</span><span class="es">Ahora conoces los 4 principios lo suficientemente bien como para notar cuando a un prompt que "se ve bien" todavía le falta algo. Lo que sigue: vas a dirigir realmente a una IA para hacer algo, usando esto a propósito.</span></p>
+    <div class="kickoff-box">
+      <h3 class="bi"><span class="en">Now Turn It In</span><span class="es">Ahora Entrégalo</span></h3>
+      <div class="bi"><span class="en">Answer the reflection questions, then print or save as PDF.</span><span class="es">Responde las preguntas de reflexión, luego imprime o guarda como PDF.</span></div>
+    </div>
+    <div style="margin-top:16px;"><button class="primary" onclick="goToExport()"><span class="bi inline"><span class="en">Got it</span><span class="es">/ Entendido</span></span></button></div>
+  </div>
+</div>
+
+<script>
+const ROUND1_IDS = ["r1q1","r1q2","r1q3","r1q4","r1q5"];
+const ROUND2_IDS = ["r2q1","r2q2","r2q3","r2q4"];
+const ALL_IDS = ROUND1_IDS.concat(ROUND2_IDS);
+let currentIndex = 0;
+let answeredCount = 0;
+let correctCount = 0;
+let answered = false;
+
+function currentQEl() { return document.querySelector('.question[data-q="' + ALL_IDS[currentIndex] + '"]'); }
+
+function updateProgress() {
+  const row = document.getElementById("progressRow");
+  row.innerHTML = "";
+  ALL_IDS.forEach((id, i) => {
+    const dot = document.createElement("div");
+    dot.className = "progress-dot" + (i < currentIndex ? " done" : i === currentIndex ? " current" : "");
+    row.appendChild(dot);
+  });
+  const stage = document.getElementById("stageLabel");
+  const inRound2 = currentIndex >= ROUND1_IDS.length;
+  const posInRound = inRound2 ? currentIndex - ROUND1_IDS.length + 1 : currentIndex + 1;
+  const total = inRound2 ? ROUND2_IDS.length : ROUND1_IDS.length;
+  stage.textContent = (inRound2 ? "Round 2 of 2" : "Round 1 of 2") + " — " + posInRound + "/" + total;
+  document.body.classList.toggle("round2", inRound2);
+}
+
+function showQuestion(i) {
+  document.querySelectorAll(".question").forEach(q => q.classList.remove("current"));
+  const el = document.querySelector('.question[data-q="' + ALL_IDS[i] + '"]');
+  el.classList.add("current");
+  el.querySelectorAll(".choice-btn").forEach(b => { b.disabled = false; b.classList.remove("correct","picked-wrong"); });
+  el.querySelector(".feedback-panel").classList.remove("show");
+  answered = false;
+  document.getElementById("nextBtn").disabled = true;
+  updateProgress();
+}
+
+function answer(btnEl) {
+  if (answered) return;
+  answered = true;
+  const q = currentQEl();
+  const buttons = q.querySelectorAll(".choice-btn");
+  const isCorrect = btnEl.getAttribute("data-correct") === "true";
+  buttons.forEach(b => { b.disabled = true; });
+  if (!isCorrect) btnEl.classList.add("picked-wrong");
+  buttons.forEach(b => { if (b.getAttribute("data-correct") === "true") b.classList.add("correct"); });
+  q.querySelector(".feedback-panel").classList.add("show");
+  answeredCount++;
+  if (isCorrect) correctCount++;
+  document.getElementById("nextBtn").disabled = false;
+}
+
+document.getElementById("nextBtn").addEventListener("click", () => {
+  if (currentIndex === ROUND1_IDS.length - 1) {
+    document.getElementById("revealOverlay").classList.remove("hidden");
+    return;
+  }
+  if (currentIndex === ALL_IDS.length - 1) {
+    document.getElementById("finalOverlay").classList.remove("hidden");
+    return;
+  }
+  currentIndex++;
+  showQuestion(currentIndex);
+});
+
+function startRound2() {
+  document.getElementById("revealOverlay").classList.add("hidden");
+  currentIndex++;
+  showQuestion(currentIndex);
+}
+
+function goToExport() {
+  document.getElementById("finalOverlay").classList.add("hidden");
+  showExportScreen();
+}
+
+function confirmEarlyTurnIn() {
+  const msgEn = "You haven't finished yet. Turn in what you've completed so far?";
+  const msgEs = "Todavía no has terminado. ¿Quieres entregar lo que has completado hasta ahora?";
+  const msg = document.body.classList.contains("lang-es") ? msgEs : msgEn;
+  if (window.confirm(msg)) showExportScreen();
+}
+
+function showExportScreen() {
+  document.getElementById("app").classList.add("export-mode");
+  document.getElementById("exportScreen").classList.add("active");
+  const summary = document.getElementById("scoreSummary");
+  summary.innerHTML =
+    '<div class="bi"><span class="en"><b>' + correctCount + ' of ' + answeredCount + '</b> correct on the first try.</span>' +
+    '<span class="es"><b>' + correctCount + ' de ' + answeredCount + '</b> correctos en el primer intento.</span></div>';
+  window.scrollTo(0, 0);
+}
+function backToGame() {
+  document.getElementById("app").classList.remove("export-mode");
+  document.getElementById("exportScreen").classList.remove("active");
+}
+
+updateProgress();
+</script>
+</body>
+</html>

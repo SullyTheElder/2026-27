@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prompt Doctor</title>
+<style>
+  :root {
+    --navy: #0F1B2D; --teal: #0E7C7B; --mint: #6FC3B4; --amber: #C97A2B;
+    --light: #EAF4F4; --gray: #9AA6A6; --danger: #B5473A; --revealed: #7A6FB0; --white: #FFFFFF;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: Calibri, "Segoe UI", sans-serif; background: var(--light); color: #1a1a1a; min-height: 100vh; }
+  #app { max-width: 1050px; margin: 0 auto; padding: 18px 20px 40px; }
+
+  /* Dual-visible bilingual for FIXED UI chrome (CSS toggle, no JS string lookups) */
+  .bi { display: flex; flex-direction: column; }
+  .bi .en { order: 1; }
+  .bi .es { order: 2; font-style: italic; color: #777; font-size: 0.85em; margin-top: 3px; }
+  body.lang-es .bi .en { order: 2; font-style: italic; color: #777; font-size: 0.85em; margin-top: 3px; }
+  body.lang-es .bi .es { order: 1; font-style: normal; color: inherit; font-size: 1em; margin-top: 0; }
+  .bi.inline { flex-direction: row; gap: 6px; }
+  .bi.inline .es { margin-top: 0; }
+
+  header {
+    background: var(--navy); color: white; border-radius: 14px; padding: 16px 22px;
+    display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 14px;
+  }
+  header .bi .en, header .bi .es { font-family: Cambria, Georgia, serif; font-size: 1.5rem; font-weight: 700; }
+  header .sub { color: var(--mint); font-size: 0.85rem; margin-top: 2px; }
+  .lang-toggle {
+    background: transparent; border: 1.5px solid var(--mint); color: var(--mint);
+    border-radius: 999px; padding: 6px 14px; font-size: 0.85rem; cursor: pointer; font-weight: 600;
+  }
+  .lang-toggle:hover { background: rgba(111,195,180,0.15); }
+
+  .progress-row { display: flex; gap: 8px; margin-bottom: 6px; }
+  .progress-dot { flex: 1; height: 8px; border-radius: 4px; background: #D7E4E4; }
+  .progress-dot.done { background: var(--teal); }
+  .progress-dot.current { background: var(--amber); }
+  .attempt-indicator { font-size: 0.82rem; color: var(--amber); font-weight: 700; margin-bottom: 14px; text-align: right; }
+  .attempt-indicator.final { color: var(--danger); }
+
+  .hook-box {
+    background: white; border-left: 4px solid var(--amber); border-radius: 10px;
+    padding: 14px 18px; margin-bottom: 16px; font-size: 0.98rem; line-height: 1.5;
+  }
+  .hook-box.compact { font-size: 0.9rem; padding: 10px 16px; }
+  #hookRound1 { display: block; }
+  #hookRound2 { display: none; }
+  body.round2 #hookRound1 { display: none; }
+  body.round2 #hookRound2 { display: block; }
+
+  .stage-label { font-size: 0.85rem; color: var(--teal); font-weight: 700; margin-bottom: 6px; }
+
+  .bins { display: grid; gap: 16px; margin-bottom: 16px; grid-template-columns: 1fr 1fr; }
+  .bins.cols-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+  @media (max-width: 800px) { .bins, .bins.cols-4 { grid-template-columns: 1fr; } }
+  .bin {
+    background: white; border: 2px dashed #C7D6D6; border-radius: 14px; padding: 14px;
+    min-height: 170px; cursor: pointer; transition: all 0.15s ease;
+  }
+  .bin.has-selected { border-color: var(--amber); background: #FFF6EC; }
+  .bin h3 { margin: 0 0 10px; font-size: 0.95rem; color: var(--navy); font-family: Cambria, Georgia, serif; }
+  .bin h3 .bi .en, .bin h3 .bi .es { font-size: 1em; }
+  .bin h3 .bi .es { font-size: 0.82em; }
+  .bin-items { display: flex; flex-wrap: wrap; gap: 8px; }
+  .placed-item { background: var(--light); border-radius: 8px; padding: 8px 11px; font-size: 0.83rem; cursor: pointer; max-width: 100%; }
+  .placed-item.correct { background: #EAF6EA; border: 1.5px solid #3F9142; }
+  .placed-item.wrong { background: #FBEAE8; border: 1.5px solid var(--danger); }
+  .placed-item.revealed { background: #EFECF9; border: 1.5px solid var(--revealed); cursor: default; }
+  .placed-item.revealed .tag { display: block; color: var(--revealed); font-weight: 700; font-size: 0.7rem; margin-top: 3px; }
+
+  .pool-card-wrap { background: white; border-radius: 14px; padding: 16px; box-shadow: 0 1px 3px rgba(15,27,45,0.08); margin-bottom: 16px; }
+  .pool { display: flex; flex-wrap: wrap; gap: 10px; }
+  .pool-card {
+    background: var(--light); border: 2px solid transparent; border-radius: 10px;
+    padding: 12px 16px; font-size: 0.88rem; cursor: pointer; transition: all 0.15s ease; max-width: 340px;
+  }
+  .pool-card:hover { border-color: var(--teal); background: white; }
+  .pool-card.selected { border-color: var(--amber); background: #FFF6EC; }
+
+  button.primary {
+    background: var(--teal); color: white; border: none; border-radius: 8px;
+    padding: 11px 20px; font-size: 0.98rem; font-weight: 700; cursor: pointer;
+  }
+  button.primary:hover { background: #0b6362; }
+  button.primary:disabled { background: #C9D6D6; cursor: not-allowed; }
+  button.secondary {
+    background: transparent; color: var(--teal); border: 1.5px solid var(--teal);
+    border-radius: 8px; padding: 9px 16px; font-size: 0.9rem; font-weight: 600; cursor: pointer;
+  }
+  .action-row { display: flex; gap: 10px; margin-top: 4px; flex-wrap: wrap; align-items: center; }
+  .feedback { font-size: 0.9rem; color: #444; }
+
+  .overlay { position: fixed; inset: 0; background: rgba(15,27,45,0.55); display: flex; align-items: center; justify-content: center; padding: 20px; z-index: 20; }
+  .overlay.hidden { display: none; }
+  .modal { background: white; border-radius: 16px; max-width: 640px; width: 100%; padding: 28px 26px; max-height: 86vh; overflow-y: auto; }
+  .modal h2.bi .en, .modal h2.bi .es { font-family: Cambria, Georgia, serif; color: var(--navy); margin: 0; font-size: 1.5rem; }
+  .principle-card { background: var(--light); border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; display: flex; gap: 12px; align-items: flex-start; }
+  .principle-num { width: 30px; height: 30px; border-radius: 50%; background: var(--amber); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0; }
+  .kickoff-box { background: var(--navy); color: white; border-radius: 12px; padding: 16px 18px; margin-top: 16px; }
+  .kickoff-box .bi .en, .kickoff-box .bi .es { color: white; }
+  .kickoff-box h3.bi .en, .kickoff-box h3.bi .es { color: var(--mint); font-family: Cambria, Georgia, serif; margin: 0 0 8px; }
+
+  #exportScreen { display: none; }
+  #exportScreen.active { display: block; }
+  #app.export-mode > header, #app.export-mode > .progress-row, #app.export-mode > .attempt-indicator, #app.export-mode > .hook-box,
+  #app.export-mode > .stage-label, #app.export-mode > .bins, #app.export-mode > .pool-card-wrap, #app.export-mode > .action-row { display: none; }
+  .export-card { background: white; border-radius: 14px; padding: 20px 24px; box-shadow: 0 1px 3px rgba(15,27,45,0.08); margin-bottom: 16px; }
+  .export-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 10px; }
+  .export-title.bi .en, .export-title.bi .es { font-family: Cambria, Georgia, serif; color: var(--navy); font-size: 1.6rem; margin: 0; }
+  .name-row { display: flex; gap: 16px; flex-wrap: wrap; margin: 14px 0 4px; }
+  .name-row .field { flex: 1; min-width: 180px; }
+  .name-row label.bi .en, .name-row label.bi .es { font-size: 0.85rem; color: #555; }
+  .name-row input {
+    width: 100%; border: none; border-bottom: 2px solid #C7D6D6; background: transparent;
+    font-size: 1rem; padding: 6px 2px; font-family: Calibri, sans-serif; color: #111; margin-top: 4px;
+  }
+  .name-row input:focus { outline: none; border-bottom-color: var(--teal); }
+  .attempt-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 14px; }
+  .attempt-stat { background: var(--light); border-radius: 10px; padding: 12px; text-align: center; }
+  .attempt-stat .num { font-size: 1.6rem; font-weight: 700; color: var(--navy); }
+  .attempt-stat .lbl { font-size: 0.72rem; color: #666; margin-top: 2px; }
+  .export-section-title.bi .en, .export-section-title.bi .es { font-family: Cambria, Georgia, serif; color: var(--teal); font-size: 1.1rem; margin: 6px 0 10px; }
+  .reflection-block textarea {
+    width: 100%; min-height: 60px; border: 1.5px solid #C7D6D6; border-radius: 8px;
+    padding: 8px 10px; font-family: Calibri, sans-serif; font-size: 0.92rem; resize: vertical; margin-bottom: 16px; margin-top: 6px;
+  }
+  .reflection-block textarea:focus { outline: none; border-color: var(--teal); }
+  .print-btn-row { display: flex; gap: 10px; margin-top: 6px; }
+  @media print {
+    body { background: white; }
+    .lang-toggle, .print-btn-row { display: none !important; }
+    .export-card { box-shadow: none; border: 1px solid #ddd; page-break-inside: avoid; }
+    #app { max-width: 100%; padding: 0; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div>
+      <div class="bi"><span class="en">Prompt Doctor</span><span class="es">Doctor de Prompts</span></div>
+      <div class="sub">Unit 3 — Directing AI</div>
+    </div>
+    <button class="lang-toggle" onclick="document.body.classList.toggle('lang-es')">Español / English</button>
+  </header>
+
+  <div class="progress-row" id="progressRow"></div>
+  <div class="attempt-indicator" id="attemptIndicator"></div>
+  <div class="stage-label" id="stageLabel"></div>
+
+  <div class="hook-box">
+    <div id="hookRound1" class="bi">
+      <span class="en">You know the 4 principles of a strong prompt. Time to diagnose: is each prompt below ready to use, or does it still need work?</span>
+      <span class="es">Ya conoces los 4 principios de un prompt fuerte. Hora de diagnosticar: ¿cada prompt de abajo está listo para usar, o todavía necesita trabajo?</span>
+    </div>
+    <div id="hookRound2" class="bi">
+      <span class="en">Round 2: for each broken prompt, diagnose exactly WHICH problem it has.</span>
+      <span class="es">Ronda 2: para cada prompt roto, diagnostica exactamente CUÁL problema tiene.</span>
+    </div>
+  </div>
+
+  <div class="bins" id="binsArea"></div>
+  <div class="pool-card-wrap"><div class="pool" id="poolArea"></div></div>
+
+  <div class="action-row">
+    <button class="primary" id="checkBtn" disabled>
+      <span class="bi inline"><span class="en">Check my sort</span><span class="es">/ Revisar mi organización</span></span>
+    </button>
+    <button class="secondary" id="resetBtn">
+      <span class="bi inline"><span class="en">Reset this round</span><span class="es">/ Reiniciar esta ronda</span></span>
+    </button>
+    <button class="secondary" id="turnInNowBtn" style="border-color: var(--amber); color: var(--amber); margin-left: auto;">
+      <span class="bi inline"><span class="en">Turn in now (haven't finished)</span><span class="es">/ Entregar ahora (no he terminado)</span></span>
+    </button>
+  </div>
+  <div class="feedback" id="feedbackBox"></div>
+
+  <div id="exportScreen">
+    <div class="export-card">
+      <div class="export-header">
+        <div class="export-title bi"><span class="en">Reflection Log</span><span class="es">Registro de Reflexión</span></div>
+        <button class="lang-toggle" style="border-color: var(--teal); color: var(--teal);" onclick="document.body.classList.toggle('lang-es')">Español / English</button>
+      </div>
+      <div class="name-row">
+        <div class="field"><label class="bi"><span class="en">Name</span><span class="es">Nombre</span></label><input type="text" id="studentName"></div>
+        <div class="field" style="flex: 0 0 140px;"><label class="bi"><span class="en">Period</span><span class="es">Periodo</span></label><input type="text" id="studentPeriod"></div>
+      </div>
+    </div>
+
+    <div class="export-card">
+      <div class="export-section-title bi"><span class="en">How You Did</span><span class="es">Cómo te Fue</span></div>
+      <div class="attempt-summary" id="attemptSummary"></div>
+    </div>
+
+    <div class="export-card">
+      <div class="export-section-title bi"><span class="en">Reflection</span><span class="es">Reflexión</span></div>
+      <div class="reflection-block">
+        <label class="bi"><span class="en">1. Pick one broken prompt from today. Rewrite it as a strong prompt.</span><span class="es">1. Elige un prompt roto de hoy. Reescríbelo como un prompt fuerte.</span></label>
+        <textarea></textarea>
+        <label class="bi"><span class="en">2. Which diagnosis was hardest to spot — vague, missing context, no format, or missing constraint? Why?</span><span class="es">2. ¿Qué diagnóstico fue más difícil de detectar — vago, sin contexto, sin formato, o sin restricción? ¿Por qué?</span></label>
+        <textarea></textarea>
+      </div>
+    </div>
+
+    <div class="print-btn-row">
+      <button class="primary" onclick="window.print()"><span class="bi inline"><span class="en">Print / Save as PDF</span><span class="es">/ Imprimir / Guardar como PDF</span></span></button>
+      <button class="secondary" onclick="backToGame()"><span class="bi inline"><span class="en">Back to game</span><span class="es">/ Volver al juego</span></span></button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay hidden" id="overlay"><div class="modal" id="modalContent"></div></div>
+
+<script>
+// Item data: {id, en, es, cat} — both languages live together per item, never split across separate dictionaries.
+const ROUND1_ITEMS = [
+  { id: "r1_poem", en: "\u201cWrite a 4-line poem about autumn leaves for a 9th grade poetry unit.\u201d", es: "\u201cEscribe un poema de 4 l\u00edneas sobre hojas de oto\u00f1o para una unidad de poes\u00eda de 9\u00b0 grado.\u201d", cat: "ready" },
+  { id: "r1_wwi", en: "\u201cExplain the causes of World War I in 3 bullet points, for a high schooler.\u201d", es: "\u201cExplica las causas de la Primera Guerra Mundial en 3 puntos, para un estudiante de secundaria.\u201d", cat: "ready" },
+  { id: "r1_spanish", en: "\u201cGive me 2 study tips for memorizing Spanish vocabulary, each under 15 words.\u201d", es: "\u201cDame 2 consejos de estudio para memorizar vocabulario en espa\u00f1ol, cada uno de menos de 15 palabras.\u201d", cat: "ready" },
+  { id: "r1_summary", en: "\u201cSummarize this paragraph in one sentence for my study guide: [paragraph pasted below].\u201d", es: "\u201cResume este p\u00e1rrafo en una oraci\u00f3n para mi gu\u00eda de estudio: [p\u00e1rrafo pegado abajo].\u201d", cat: "ready" },
+  { id: "r1_history", en: "\u201cTell me about history.\u201d", es: "\u201cH\u00e1blame de historia.\u201d", cat: "needswork" },
+  { id: "r1_something", en: "\u201cWrite something good.\u201d", es: "\u201cEscribe algo bueno.\u201d", cat: "needswork" },
+  { id: "r1_math", en: "\u201cExplain math.\u201d", es: "\u201cExplica las matem\u00e1ticas.\u201d", cat: "needswork" },
+  { id: "r1_help", en: "\u201cHelp.\u201d", es: "\u201cAyuda.\u201d", cat: "needswork" }
+];
+
+const ROUND2_ITEMS = [
+  { id: "r2_history", en: "\u201cTell me about history.\u201d", es: "\u201cH\u00e1blame de historia.\u201d", cat: "vague" },
+  { id: "r2_math", en: "\u201cExplain math.\u201d", es: "\u201cExplica las matem\u00e1ticas.\u201d", cat: "vague" },
+  { id: "r2_water", en: "\u201cExplain the water cycle.\u201d", es: "\u201cExplica el ciclo del agua.\u201d", cat: "context" },
+  { id: "r2_workout", en: "\u201cWrite a workout plan.\u201d", es: "\u201cEscribe un plan de ejercicio.\u201d", cat: "context" },
+  { id: "r2_water9th", en: "\u201cExplain the water cycle to a 9th grader.\u201d", es: "\u201cExplica el ciclo del agua a un estudiante de 9\u00b0 grado.\u201d", cat: "format" },
+  { id: "r2_spanishquiz", en: "\u201cGive me tips for studying Spanish vocabulary for a quiz.\u201d", es: "\u201cDame consejos para estudiar vocabulario en espa\u00f1ol para un examen.\u201d", cat: "format" },
+  { id: "r2_poemclass", en: "\u201cWrite a poem about autumn for my poetry class.\u201d", es: "\u201cEscribe un poema sobre el oto\u00f1o para mi clase de poes\u00eda.\u201d", cat: "constraint" },
+  { id: "r2_article", en: "\u201cSummarize this article for me.\u201d", es: "\u201cRes\u00fameme este art\u00edculo.\u201d", cat: "constraint" }
+];
+
+let lang_es = false; // mirrors body class, tracked for JS-rendered content
+let round = 1;
+let checkCount = 0;
+let resultsLog = {};
+let state = { poolOrder: [], bins: {}, checked: false, status: {}, selected: null, revealedIds: [] };
+
+const ROUND_CONFIG = {
+  1: {
+    items: ROUND1_ITEMS, binKeys: ["ready", "needswork"],
+    binLabels: { ready: {en:"Ready to Use", es:"Listo para Usar"}, needswork: {en:"Needs Work", es:"Necesita Trabajo"} }
+  },
+  2: {
+    items: ROUND2_ITEMS, binKeys: ["vague", "context", "format", "constraint"],
+    binLabels: {
+      vague: {en:"Too Vague", es:"Demasiado Vago"},
+      context: {en:"Missing Context", es:"Sin Contexto"},
+      format: {en:"No Format Given", es:"Sin Formato"},
+      constraint: {en:"Missing Constraint/Example", es:"Sin Restricción/Ejemplo"}
+    }
+  }
+};
+
+function curLang(item) { return document.body.classList.contains("lang-es") ? item.es : item.en; }
+function currentItems() { return ROUND_CONFIG[round].items; }
+function findItem(id) { return currentItems().find(i => i.id === id); }
+function correctCatFor(id) { const item = findItem(id); return item ? item.cat : null; }
+
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+  return a;
+}
+
+function initRound(n) {
+  round = n;
+  checkCount = 0;
+  const cfg = ROUND_CONFIG[n];
+  const ids = cfg.items.map(i => i.id);
+  const bins = {}; cfg.binKeys.forEach(k => bins[k] = []);
+  state = { poolOrder: shuffle(ids), bins, checked: false, status: {}, selected: null, revealedIds: [] };
+  document.body.classList.toggle("round2", n === 2);
+  render();
+}
+
+function handlePoolClick(id) { state.selected = state.selected === id ? null : id; render(); }
+function handleBinClick(binKey) {
+  if (!state.selected) return;
+  const id = state.selected;
+  state.poolOrder = state.poolOrder.filter(x => x !== id);
+  state.bins[binKey].push(id);
+  state.selected = null; state.checked = false; state.status = {};
+  setFeedback(""); render();
+}
+function handlePlacedClick(binKey, id) {
+  if (state.revealedIds.includes(id)) return;
+  state.bins[binKey] = state.bins[binKey].filter(x => x !== id);
+  state.poolOrder.push(id);
+  state.checked = false; state.status = {};
+  setFeedback(""); render();
+}
+function setFeedback(msg) { document.getElementById("feedbackBox").textContent = msg; }
+
+function checkRound() {
+  if (state.poolOrder.length > 0) {
+    setFeedback(document.body.classList.contains("lang-es") ? "Organiza todo antes de revisar." : "Sort every item before checking.");
+    return;
+  }
+  checkCount++;
+  const cfg = ROUND_CONFIG[round];
+  let total = 0, correct = 0; const status = {};
+  cfg.binKeys.forEach(binKey => {
+    state.bins[binKey].forEach(id => {
+      total++;
+      const ok = correctCatFor(id) === binKey;
+      if (ok) correct++;
+      status[id] = ok ? "correct" : "wrong";
+    });
+  });
+  state.status = status; state.checked = true;
+  if (!resultsLog[round]) resultsLog[round] = {};
+  Object.keys(status).forEach(id => {
+    if (status[id] === "correct" && !resultsLog[round][id]) resultsLog[round][id] = checkCount === 1 ? "a1" : "a2";
+  });
+
+  if (correct === total) {
+    setFeedback(document.body.classList.contains("lang-es") ? "\u00a1Todos correctos!" : "All correct!");
+    render();
+    setTimeout(advanceRound, 700);
+    return;
+  }
+  if (checkCount >= 2) {
+    const toReveal = [];
+    cfg.binKeys.forEach(bk => state.bins[bk].forEach(id => { if (status[id] === "wrong") toReveal.push(id); }));
+    cfg.binKeys.forEach(bk => { state.bins[bk] = state.bins[bk].filter(id => !toReveal.includes(id)); });
+    toReveal.forEach(id => {
+      const cb = correctCatFor(id);
+      state.bins[cb].push(id);
+      state.revealedIds.push(id);
+      resultsLog[round][id] = "revealed";
+    });
+    render();
+    setTimeout(advanceRound, 900);
+  } else {
+    const es = document.body.classList.contains("lang-es");
+    setFeedback(es ? (correct + " de " + total + " correctos. Haz clic en uno rojo para intentar de nuevo \u2014 tienes una revisi\u00f3n m\u00e1s.")
+                   : (correct + " of " + total + " correct. Click a red one to try again \u2014 you have one more check."));
+    render();
+  }
+}
+
+function advanceRound() { if (round === 1) showReveal(); else showFinal(); }
+
+function confirmEarlyTurnIn() {
+  const es = document.body.classList.contains("lang-es");
+  const msg = es ? "Todav\u00eda no has terminado. \u00bfQuieres entregar lo que has completado hasta ahora?" : "You haven't finished yet. Turn in what you've completed so far?";
+  if (window.confirm(msg)) showExportScreen();
+}
+
+function showReveal() {
+  const overlay = document.getElementById("overlay");
+  document.getElementById("modalContent").innerHTML = `
+    <h2 class="bi"><span class="en">The Four Diagnoses</span><span class="es">Los Cuatro Diagn\u00f3sticos</span></h2>
+    <p class="bi" style="margin-top:10px;"><span class="en">A "Needs Work" prompt is usually missing one of these four things \u2014 the same 4 principles from last time, now as diagnoses.</span><span class="es">Un prompt que "Necesita Trabajo" generalmente le falta una de estas cuatro cosas \u2014 los mismos 4 principios de la vez pasada, ahora como diagn\u00f3sticos.</span></p>
+    <div class="principle-card"><div class="principle-num">1</div><div class="bi"><span class="en"><b>Too Vague</b> \u2014 no specific topic given.</span><span class="es"><b>Demasiado Vago</b> \u2014 no se dio un tema espec\u00edfico.</span></div></div>
+    <div class="principle-card"><div class="principle-num">2</div><div class="bi"><span class="en"><b>Missing Context</b> \u2014 topic is clear, but no audience or purpose.</span><span class="es"><b>Sin Contexto</b> \u2014 el tema es claro, pero no hay audiencia o prop\u00f3sito.</span></div></div>
+    <div class="principle-card"><div class="principle-num">3</div><div class="bi"><span class="en"><b>No Format Given</b> \u2014 topic and context are there, but no length or structure.</span><span class="es"><b>Sin Formato</b> \u2014 el tema y el contexto est\u00e1n ah\u00ed, pero no hay longitud o estructura.</span></div></div>
+    <div class="principle-card"><div class="principle-num">4</div><div class="bi"><span class="en"><b>Missing Constraint/Example</b> \u2014 mostly complete, but no rule or model to follow.</span><span class="es"><b>Sin Restricci\u00f3n/Ejemplo</b> \u2014 casi completo, pero sin regla o modelo a seguir.</span></div></div>
+    <div style="margin-top:16px;"><button class="primary" onclick="closeOverlayAnd(2)"><span class="bi inline"><span class="en">Start Round 2</span><span class="es">/ Comenzar Ronda 2</span></span></button></div>
+  `;
+  overlay.classList.remove("hidden");
+}
+
+function showFinal() {
+  const overlay = document.getElementById("overlay");
+  document.getElementById("modalContent").innerHTML = `
+    <h2 class="bi"><span class="en">All Diagnosed!</span><span class="es">\u00a1Todo Diagnosticado!</span></h2>
+    <p class="bi" style="margin-top:10px;"><span class="en">You can now tell not just whether a prompt is bad, but exactly why \u2014 which means you can fix it fast instead of guessing.</span><span class="es">Ahora puedes saber no solo si un prompt es malo, sino exactamente por qu\u00e9 \u2014 lo que significa que puedes arreglarlo r\u00e1pido en lugar de adivinar.</span></p>
+    <div class="kickoff-box">
+      <h3 class="bi"><span class="en">Now Turn It In</span><span class="es">Ahora Entr\u00e9galo</span></h3>
+      <div class="bi"><span class="en">Answer the reflection questions, then print or save as PDF.</span><span class="es">Responde las preguntas de reflexi\u00f3n, luego imprime o guarda como PDF.</span></div>
+    </div>
+    <div style="margin-top:16px;"><button class="primary" onclick="closeOverlayAndExport()"><span class="bi inline"><span class="en">Got it</span><span class="es">/ Entendido</span></span></button></div>
+  `;
+  overlay.classList.remove("hidden");
+}
+function closeOverlayAnd(nextRound) { document.getElementById("overlay").classList.add("hidden"); initRound(nextRound); }
+function closeOverlayAndExport() { document.getElementById("overlay").classList.add("hidden"); showExportScreen(); }
+
+function showExportScreen() {
+  document.getElementById("app").classList.add("export-mode");
+  document.getElementById("exportScreen").classList.add("active");
+  let a1 = 0, a2 = 0, rev = 0;
+  [1, 2].forEach(rn => {
+    const log = resultsLog[rn]; if (!log) return;
+    Object.values(log).forEach(v => { if (v === "a1") a1++; else if (v === "a2") a2++; else if (v === "revealed") rev++; });
+  });
+  document.getElementById("attemptSummary").innerHTML = `
+    <div class="attempt-stat"><div class="num">${a1}</div><div class="lbl bi"><span class="en">Correct, first try</span><span class="es">Correcto a la primera</span></div></div>
+    <div class="attempt-stat"><div class="num">${a2}</div><div class="lbl bi"><span class="en">Needed a second guess</span><span class="es">Necesit\u00f3 un segundo intento</span></div></div>
+    <div class="attempt-stat"><div class="num">${rev}</div><div class="lbl bi"><span class="en">Had to be revealed</span><span class="es">Tuvo que revelarse</span></div></div>
+  `;
+  window.scrollTo(0, 0);
+}
+function backToGame() {
+  document.getElementById("app").classList.remove("export-mode");
+  document.getElementById("exportScreen").classList.remove("active");
+}
+
+function render() {
+  const cfg = ROUND_CONFIG[round];
+  const totalRounds = 2;
+  const progressRow = document.getElementById("progressRow");
+  progressRow.innerHTML = "";
+  for (let i = 1; i <= totalRounds; i++) {
+    const dot = document.createElement("div");
+    dot.className = "progress-dot" + (i < round ? " done" : i === round ? " current" : "");
+    progressRow.appendChild(dot);
+  }
+  const es = document.body.classList.contains("lang-es");
+  document.getElementById("stageLabel").textContent = (es ? "Ronda " + round + " de 2" : "Round " + round + " of 2");
+
+  const attemptEl = document.getElementById("attemptIndicator");
+  if (checkCount === 0) {
+    attemptEl.className = "attempt-indicator";
+    attemptEl.textContent = es ? "Primera revisi\u00f3n \u2014 tendr\u00e1s una oportunidad m\u00e1s despu\u00e9s de esta." : "First check \u2014 you'll get one more chance after this.";
+  } else {
+    attemptEl.className = "attempt-indicator final";
+    attemptEl.textContent = es ? "Revisi\u00f3n final \u2014 lo que siga mal se revelar\u00e1." : "Final check \u2014 anything still wrong will be revealed.";
+  }
+
+  const binsArea = document.getElementById("binsArea");
+  binsArea.className = "bins" + (cfg.binKeys.length === 4 ? " cols-4" : "");
+  binsArea.innerHTML = "";
+  cfg.binKeys.forEach((binKey) => {
+    const bin = document.createElement("div");
+    bin.className = "bin" + (state.selected ? " has-selected" : "");
+    bin.onclick = () => handleBinClick(binKey);
+    const h3 = document.createElement("h3");
+    const lbl = cfg.binLabels[binKey];
+    h3.innerHTML = `<div class="bi"><span class="en">${lbl.en}</span><span class="es">${lbl.es}</span></div>`;
+    bin.appendChild(h3);
+    const itemsWrap = document.createElement("div");
+    itemsWrap.className = "bin-items";
+    state.bins[binKey].forEach(id => {
+      const item = findItem(id);
+      const chip = document.createElement("div");
+      const isRevealed = state.revealedIds.includes(id);
+      let cls = "placed-item";
+      if (isRevealed) cls += " revealed";
+      else if (state.checked) cls += state.status[id] === "correct" ? " correct" : " wrong";
+      chip.className = cls;
+      chip.textContent = curLang(item);
+      if (isRevealed) {
+        const tag = document.createElement("span");
+        tag.className = "tag";
+        tag.textContent = es ? "revelado" : "revealed";
+        chip.appendChild(tag);
+      }
+      chip.onclick = (e) => { e.stopPropagation(); handlePlacedClick(binKey, id); };
+      itemsWrap.appendChild(chip);
+    });
+    bin.appendChild(itemsWrap);
+    binsArea.appendChild(bin);
+  });
+
+  const pool = document.getElementById("poolArea");
+  pool.innerHTML = "";
+  state.poolOrder.forEach(id => {
+    const item = findItem(id);
+    const card = document.createElement("div");
+    card.className = "pool-card" + (state.selected === id ? " selected" : "");
+    card.textContent = curLang(item);
+    card.onclick = (e) => { e.stopPropagation(); handlePoolClick(id); };
+    pool.appendChild(card);
+  });
+  if (state.poolOrder.length > 0) {
+    const hint = document.createElement("div");
+    hint.style.cssText = "width:100%;font-size:0.85rem;color:#888;font-style:italic;margin-top:4px;";
+    hint.textContent = es ? "Haz clic en un elemento de abajo, luego haz clic en d\u00f3nde pertenece." : "Click an item below, then click where it belongs.";
+    pool.appendChild(hint);
+  }
+  document.getElementById("checkBtn").disabled = state.poolOrder.length > 0;
+}
+
+document.getElementById("checkBtn").addEventListener("click", checkRound);
+document.getElementById("resetBtn").addEventListener("click", () => initRound(round));
+document.getElementById("turnInNowBtn").addEventListener("click", confirmEarlyTurnIn);
+document.querySelector(".lang-toggle").addEventListener("click", () => { render(); });
+
+initRound(1);
+</script>
+</body>
+</html>
