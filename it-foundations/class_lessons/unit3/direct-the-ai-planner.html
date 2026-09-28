@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Direct the AI: Project Planner</title>
+<style>
+  :root {
+    --navy: #0F1B2D; --teal: #0E7C7B; --mint: #6FC3B4; --amber: #C97A2B;
+    --light: #EAF4F4; --gray: #9AA6A6; --white: #FFFFFF;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: Calibri, "Segoe UI", sans-serif; background: var(--light); color: #1a1a1a; }
+  #app { max-width: 900px; margin: 0 auto; padding: 18px 20px 60px; }
+
+  .bi { display: flex; flex-direction: column; }
+  .bi .en { order: 1; }
+  .bi .es { order: 2; font-style: italic; color: #777; font-size: 0.85em; margin-top: 3px; }
+  body.lang-es .bi .en { order: 2; font-style: italic; color: #777; font-size: 0.85em; margin-top: 3px; }
+  body.lang-es .bi .es { order: 1; font-style: normal; color: inherit; font-size: 1em; margin-top: 0; }
+  .bi.heading .en, .bi.heading .es { font-weight: 700; }
+
+  header {
+    background: var(--navy); color: white; border-radius: 14px; padding: 18px 24px;
+    display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 16px;
+  }
+  header .title-block .bi .en, header .title-block .bi .es { font-family: Cambria, Georgia, serif; font-size: 1.3rem; font-weight: 700; }
+  header .sub { color: var(--mint); font-size: 0.85rem; margin-top: 4px; }
+  .lang-toggle {
+    background: transparent; border: 1.5px solid var(--mint); color: var(--mint);
+    border-radius: 999px; padding: 7px 16px; font-size: 0.85rem; cursor: pointer; font-weight: 600; flex-shrink: 0;
+  }
+
+  .part-banner { border-radius: 14px 14px 0 0; padding: 12px 20px; margin: -22px -26px 18px -26px; }
+  .part-banner.today { background: var(--navy); }
+  .part-banner.next { background: var(--teal); }
+  .part-banner .bi .en, .part-banner .bi .es { color: white; font-family: Cambria, Georgia, serif; font-size: 1.1rem; font-weight: 700; }
+  .part-banner .bi .es { color: #CFE8E8; }
+  body.lang-es .part-banner .bi .en { color: #CFE8E8; }
+  body.lang-es .part-banner .bi .es { color: white; }
+
+  .card { background: white; border-radius: 14px; padding: 22px 26px; box-shadow: 0 1px 3px rgba(15,27,45,0.08); margin-bottom: 16px; }
+  .card h2.bi .en, .card h2.bi .es { font-family: Cambria, Georgia, serif; color: var(--teal); font-size: 1.2rem; margin: 0; }
+
+  .name-row { display: flex; gap: 20px; flex-wrap: wrap; }
+  .name-row .field { flex: 1; min-width: 200px; }
+  .name-row label.bi .en, .name-row label.bi .es { font-size: 0.85rem; color: #555; }
+  .name-row input {
+    width: 100%; border: none; border-bottom: 2px solid #C7D6D6; background: transparent;
+    font-size: 1rem; padding: 6px 2px; margin-top: 4px; font-family: Calibri, sans-serif; color: #111;
+  }
+  .name-row input:focus { outline: none; border-bottom-color: var(--teal); }
+
+  .medium-options { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 10px; }
+  .medium-option {
+    flex: 1; min-width: 150px; border: 2px solid #C7D6D6; border-radius: 10px; padding: 14px;
+    text-align: center; cursor: pointer; transition: all 0.15s ease;
+  }
+  .medium-option:hover { border-color: var(--teal); }
+  .medium-option input[type="radio"] { display: none; }
+  .medium-option .icon { font-size: 1.6rem; display: block; margin-bottom: 6px; }
+  .medium-option .bi .en, .medium-option .bi .es { font-weight: 600; font-size: 0.95rem; }
+  .medium-option.selected { border-color: var(--amber); background: #FFF6EC; }
+
+  .q-block { margin-top: 16px; }
+  .q-block label.bi .en, .q-block label.bi .es { font-size: 0.95rem; font-weight: 600; color: #222; }
+  .q-block textarea {
+    width: 100%; min-height: 70px; border: 1.5px solid #C7D6D6; border-radius: 8px;
+    padding: 10px 12px; font-family: Calibri, sans-serif; font-size: 0.95rem; resize: vertical; margin-top: 8px;
+  }
+  .q-block textarea:focus { outline: none; border-color: var(--teal); }
+  .q-block .hint.bi .en, .q-block .hint.bi .es { font-size: 0.85rem; color: #777; margin-top: 4px; }
+
+  .checklist { margin-top: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  @media (max-width: 600px) { .checklist { grid-template-columns: 1fr; } }
+  .check-item { display: flex; align-items: flex-start; gap: 10px; background: var(--light); border-radius: 8px; padding: 10px 12px; }
+  .check-item input[type="checkbox"] { margin-top: 3px; width: 18px; height: 18px; flex-shrink: 0; }
+  .check-item .bi .en, .check-item .bi .es { font-size: 0.9rem; }
+
+  .instructions-box {
+    background: white; border-left: 4px solid var(--amber); border-radius: 10px;
+    padding: 16px 20px; margin-bottom: 16px;
+  }
+  .instructions-box .bi .en, .instructions-box .bi .es { font-size: 0.95rem; line-height: 1.5; }
+
+  .print-btn-row { display: flex; gap: 10px; margin-top: 8px; }
+  button.primary {
+    background: var(--teal); color: white; border: none; border-radius: 8px;
+    padding: 13px 24px; font-size: 1rem; font-weight: 700; cursor: pointer;
+  }
+  button.primary:hover { background: #0b6362; }
+
+  @media print {
+    body { background: white; }
+    .lang-toggle, .print-btn-row { display: none !important; }
+    .card { box-shadow: none; border: 1px solid #ddd; page-break-inside: avoid; }
+    #app { max-width: 100%; padding: 0; }
+    textarea { border: 1px solid #999; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="title-block">
+      <div class="bi heading"><span class="en">Direct the AI: Project Planner</span><span class="es">Dirige a la IA: Planificador del Proyecto</span></div>
+      <div class="sub">Unit 3 — U3L08</div>
+    </div>
+    <button class="lang-toggle" onclick="document.body.classList.toggle('lang-es')">Español / English</button>
+  </header>
+
+  <div class="instructions-box">
+    <div class="bi">
+      <span class="en">This worksheet covers both today's planning AND your next session's generation + revision. Fill in Part 1 today and save/submit it as your checkpoint. You'll come back to Part 2 next session.</span>
+      <span class="es">Esta hoja cubre tanto la planeación de hoy COMO la generación y revisión de tu próxima sesión. Completa la Parte 1 hoy y guárdala/entrégala como tu punto de control. Volverás a la Parte 2 la próxima sesión.</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="name-row">
+      <div class="field"><label class="bi"><span class="en">Name</span><span class="es">Nombre</span></label><input type="text" id="studentName"></div>
+      <div class="field" style="flex: 0 0 140px;"><label class="bi"><span class="en">Period</span><span class="es">Periodo</span></label><input type="text" id="studentPeriod"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="part-banner today"><div class="bi"><span class="en">Part 1: Choose & Draft (Today)</span><span class="es">Parte 1: Elige y Redacta (Hoy)</span></div></div>
+
+    <h2 class="bi"><span class="en">I'm creating a...</span><span class="es">Estoy creando un...</span></h2>
+    <div class="medium-options">
+      <label class="medium-option" onclick="selectMedium(this)">
+        <input type="radio" name="medium" value="image">
+        <span class="icon">🖼️</span>
+        <div class="bi"><span class="en">Image</span><span class="es">Imagen</span></div>
+      </label>
+      <label class="medium-option" onclick="selectMedium(this)">
+        <input type="radio" name="medium" value="story">
+        <span class="icon">📖</span>
+        <div class="bi"><span class="en">Story</span><span class="es">Historia</span></div>
+      </label>
+      <label class="medium-option" onclick="selectMedium(this)">
+        <input type="radio" name="medium" value="song">
+        <span class="icon">🎵</span>
+        <div class="bi"><span class="en">Song / Audio Concept</span><span class="es">Canción / Concepto de Audio</span></div>
+      </label>
+    </div>
+
+    <div class="q-block">
+      <label class="bi"><span class="en">Draft your prompt (v1). Write it exactly as you'd type it into the AI tool.</span><span class="es">Redacta tu prompt (v1). Escríbelo exactamente como lo escribirías en la herramienta de IA.</span></label>
+      <textarea style="min-height:100px;"></textarea>
+    </div>
+
+    <div class="q-block">
+      <label class="bi"><span class="en">Self-check: does your prompt v1 include all 4?</span><span class="es">Auto-revisión: ¿tu prompt v1 incluye los 4?</span></label>
+      <div class="checklist">
+        <label class="check-item"><input type="checkbox"><div class="bi"><span class="en">Specific — exact topic, not broad</span><span class="es">Específico — tema exacto, no amplio</span></div></label>
+        <label class="check-item"><input type="checkbox"><div class="bi"><span class="en">Context — who it's for / why</span><span class="es">Contexto — para quién es / por qué</span></div></label>
+        <label class="check-item"><input type="checkbox"><div class="bi"><span class="en">Format — length, style, structure</span><span class="es">Formato — longitud, estilo, estructura</span></div></label>
+        <label class="check-item"><input type="checkbox"><div class="bi"><span class="en">Constraint/Example — a rule or model</span><span class="es">Restricción/Ejemplo — una regla o modelo</span></div></label>
+      </div>
+    </div>
+
+    <div class="q-block">
+      <label class="bi"><span class="en">Predict: what might go wrong, or what might you need to change once you see the actual output?</span><span class="es">Predice: ¿qué podría salir mal, o qué podrías necesitar cambiar una vez que veas el resultado real?</span></label>
+      <textarea></textarea>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="part-banner next"><div class="bi"><span class="en">Part 2: Generate & Revise (Next Session)</span><span class="es">Parte 2: Genera y Revisa (Próxima Sesión)</span></div></div>
+
+    <div class="q-block">
+      <label class="bi"><span class="en">Describe what the AI actually produced from your v1 prompt.</span><span class="es">Describe qué produjo realmente la IA con tu prompt v1.</span></label>
+      <textarea></textarea>
+    </div>
+    <div class="q-block">
+      <label class="bi"><span class="en">Write your revised prompt (v2), based on what you saw.</span><span class="es">Escribe tu prompt revisado (v2), basado en lo que viste.</span></label>
+      <textarea style="min-height:100px;"></textarea>
+    </div>
+    <div class="q-block">
+      <label class="bi"><span class="en">Reflection: What specifically did you change between v1 and v2, and why?</span><span class="es">Reflexión: ¿Qué cambiaste específicamente entre v1 y v2, y por qué?</span></label>
+      <textarea></textarea>
+    </div>
+    <div class="q-block">
+      <label class="bi"><span class="en">Reflection: What surprised you about directing an AI?</span><span class="es">Reflexión: ¿Qué te sorprendió sobre dirigir a una IA?</span></label>
+      <textarea></textarea>
+    </div>
+  </div>
+
+  <div class="print-btn-row">
+    <button class="primary" onclick="window.print()">
+      <span style="display:block;">Print / Save as PDF</span>
+      <span style="display:block; font-size:0.75rem; font-weight:normal; font-style:italic; opacity:0.85;">Imprimir / Guardar como PDF</span>
+    </button>
+  </div>
+</div>
+<script>
+function selectMedium(el) {
+  document.querySelectorAll(".medium-option").forEach(o => o.classList.remove("selected"));
+  el.classList.add("selected");
+  el.querySelector('input[type="radio"]').checked = true;
+}
+</script>
+</body>
+</html>
