@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en" data-course="networking">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>U2L11: Missed Connection</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{ --navy:#0B1F3A; --green:#8FC53E; --cream:#F4F1E9; --gold:#D9A441; --ink:#1a1a1a; --muted:#5b6472; --line:#dfe3e8; }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{ font-family:'Inter', system-ui, sans-serif; color:var(--ink); background:var(--cream); line-height:1.55; overflow-x:hidden; }
+  .topbar{ display:flex; align-items:center; justify-content:space-between; padding:14px 24px; background:var(--navy); color:#fff; flex-wrap:wrap; gap:10px; }
+  .topbar a{ color:#fff; text-decoration:none; font-size:0.85rem; font-weight:500; border:1px solid rgba(255,255,255,0.35); padding:6px 12px; border-radius:6px; }
+  .topbar a:hover, .topbar a:focus-visible{ background:rgba(255,255,255,0.12); outline:2px solid var(--gold); outline-offset:2px; }
+  .topbar .brand{ font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:0.95rem; }
+  main{ max-width:900px; margin:0 auto; padding:32px 20px 80px; }
+  header.hero{ text-align:center; margin-bottom:20px; }
+  .eyebrow{ font-family:'Space Grotesk',sans-serif; font-weight:600; letter-spacing:0.12em; text-transform:uppercase; color:var(--green); font-size:0.8rem; margin-bottom:6px; }
+  h1{ font-family:'Space Grotesk',sans-serif; font-weight:700; color:var(--navy); font-size:clamp(1.6rem, 4vw, 2.2rem); margin:0 0 8px; }
+  .subtitle{ color:var(--muted); font-size:1.05rem; font-style:italic; }
+  section{ background:#fff; border-radius:12px; padding:24px clamp(16px,4vw,32px); margin-bottom:24px; box-shadow:0 1px 3px rgba(11,31,58,0.08); }
+  h2{ font-family:'Space Grotesk',sans-serif; color:var(--navy); font-size:1.3rem; margin-top:0; border-bottom:2px solid var(--green); padding-bottom:8px; }
+  ol, ul{ padding-left:1.4em; }
+  li{ margin-bottom:6px; }
+  code{ font-family:'IBM Plex Mono', monospace; font-size:0.9em; background:#eef1f5; padding:1px 6px; border-radius:4px; }
+  table{ width:100%; border-collapse:collapse; margin:12px 0; font-size:0.92rem; }
+  th, td{ border:1px solid var(--line); padding:8px 10px; text-align:left; vertical-align:top; }
+  th{ background:var(--navy); color:#fff; font-family:'Space Grotesk',sans-serif; font-weight:600; }
+  tr:nth-child(even) td{ background:#fafbfc; }
+  input[type="text"]{ width:100%; border:1px solid var(--line); border-radius:5px; padding:5px 7px; font-family:'Inter',sans-serif; font-size:0.9rem; }
+  input[type="text"]:focus-visible{ outline:2px solid var(--gold); outline-offset:1px; border-color:var(--gold); }
+  .print-hint{ text-align:center; color:var(--muted); font-size:0.85rem; margin-top:-8px; margin-bottom:28px; }
+  .pdf-btn{ position:fixed; right:20px; bottom:20px; z-index:50; display:flex; align-items:center; gap:8px; background:var(--green); color:var(--navy); border:none; border-radius:30px; padding:12px 20px; font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:0.95rem; box-shadow:0 4px 14px rgba(11,31,58,0.28); cursor:pointer; }
+  .pdf-btn:hover, .pdf-btn:focus-visible{ background:#7cb32e; outline:2px solid var(--gold); outline-offset:2px; }
+  .pdf-hint{ position:fixed; right:20px; bottom:70px; z-index:50; max-width:220px; background:var(--navy); color:#fff; font-size:0.78rem; padding:8px 12px; border-radius:8px; box-shadow:0 4px 14px rgba(11,31,58,0.28); }
+  .name-bar{ display:flex; gap:16px; flex-wrap:wrap; align-items:center; background:#fff; border-radius:12px; padding:14px 20px; margin-bottom:24px; box-shadow:0 1px 3px rgba(11,31,58,0.08); font-size:0.95rem; }
+  .name-bar label{ font-weight:600; color:var(--navy); }
+  .name-bar input[type="text"]{ max-width:260px; }
+  .ticket{ border:1px solid var(--line); border-radius:10px; padding:16px 18px; margin-bottom:18px; background:#fafbfc; }
+  .ticket-head{ display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px; flex-wrap:wrap; gap:6px; }
+  .ticket-num{ font-family:'Space Grotesk',sans-serif; font-weight:700; color:var(--navy); }
+  .ticket-tag{ font-family:'IBM Plex Mono',monospace; font-size:0.72rem; color:#fff; background:var(--navy); padding:2px 9px; border-radius:10px; }
+  .diag{ font-family:'IBM Plex Mono',monospace; font-size:0.85rem; background:#20242b; color:#e7eaf0; padding:10px 14px; border-radius:6px; margin:8px 0; white-space:pre-wrap; }
+  @media print{
+    .topbar, .pdf-btn, .print-hint, .pdf-hint{ display:none; }
+    body{ background:#fff; }
+    section, .name-bar{ box-shadow:none; border:1px solid var(--line); }
+    .ticket{ page-break-inside:avoid; }
+    tr, table{ page-break-inside:avoid; }
+    input[type="text"]{ border:1px solid #888; }
+    @page{ margin:0.6in; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <span class="brand">🐾 Bulldog Networking — AP Networking</span>
+  <a href="../../index.html">&larr; Back to AP Networking</a>
+</div>
+
+<main>
+  <header class="hero">
+    <div class="eyebrow">AP Networking · Local Unit 2 · U2L11</div>
+    <h1>Missed Connection</h1>
+    <p class="subtitle">Troubleshooting My SOHO Network — CB 2.1.A / 2.1.B</p>
+  </header>
+  <p class="print-hint">Fill in your answers below, then use the "Download as PDF" button to save a copy to turn in.</p>
+
+  <div class="name-bar">
+    <label for="student-name">Name:</label>
+    <input type="text" id="student-name" autocomplete="name">
+    <label for="student-period">Period:</label>
+    <input type="text" id="student-period" style="max-width:100px;">
+  </div>
+
+  <section>
+    <h2>Guiding Question</h2>
+    <p>When something on a network stops working, how do you figure out why — using only the evidence in front of you?</p>
+    <p style="color:var(--muted); font-size:0.92rem;">You already know how to read <code>ping</code> and <code>ipconfig</code>/<code>ifconfig</code> output. Today you're using that skill to diagnose problems instead of just verifying a healthy connection.</p>
+  </section>
+
+  <section>
+    <h2>Warm-Up: Check Your Own Connection</h2>
+    <p>Before diagnosing broken examples, confirm what a <em>healthy</em> connection looks like. On your own CyberRange Windows 7 VM, run:</p>
+    <ol>
+      <li><code>ping 8.8.8.8</code></li>
+      <li><code>ipconfig</code></li>
+    </ol>
+    <table>
+      <thead><tr><th>Command</th><th>Result</th></tr></thead>
+      <tbody>
+        <tr><td>ping 8.8.8.8</td><td><input type="text"></td></tr>
+        <tr><td>ipconfig</td><td><input type="text"></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>Activity: Help Desk Tickets</h2>
+    <p>You're on the school's technology support team. Four tickets came in today. For each one, use the diagnostic info given to identify the <strong>likely root cause</strong> and recommend a <strong>solution</strong> — before we name any formal categories.</p>
+
+    <div class="ticket">
+      <div class="ticket-head"><span class="ticket-num">Ticket 1</span><span class="ticket-tag">Computer Lab</span></div>
+      <p>A teacher reports that an entire row of computers in the lab suddenly lost internet access at the same time. You walk over and look at the switch those computers connect to.</p>
+      <div class="diag">Switch panel: Power ..... solid green
+Port 4 ......... solid green
+Port 5 ......... solid green
+Port 6 ......... unlit
+Port 7 ......... solid green</div>
+      <table>
+        <tr><td style="width:35%;"><strong>Likely root cause</strong></td><td><input type="text"></td></tr>
+        <tr><td><strong>Recommended solution</strong></td><td><input type="text"></td></tr>
+      </table>
+    </div>
+
+    <div class="ticket">
+      <div class="ticket-head"><span class="ticket-num">Ticket 2</span><span class="ticket-tag">Front Office</span></div>
+      <p>The front office secretary says web pages are loading, but very slowly, and video calls keep freezing. You have her run a quick test.</p>
+      <div class="diag">C:\&gt; ping 8.8.8.8
+
+Reply from 8.8.8.8: time=187ms
+Reply from 8.8.8.8: time=210ms
+Request timed out.
+Reply from 8.8.8.8: time=195ms
+Request timed out.
+
+Packet loss: 40%</div>
+      <table>
+        <tr><td style="width:35%;"><strong>Likely root cause</strong></td><td><input type="text"></td></tr>
+        <tr><td><strong>Recommended solution</strong></td><td><input type="text"></td></tr>
+      </table>
+    </div>
+
+    <div class="ticket">
+      <div class="ticket-head"><span class="ticket-num">Ticket 3</span><span class="ticket-tag">Library</span></div>
+      <p>A student's laptop shows a Wi-Fi connection but says "no internet access." You have them check their configuration.</p>
+      <div class="diag">C:\&gt; ipconfig
+
+Wireless LAN adapter Wi-Fi:
+   IPv4 Address. . . . . . . . . . . : 169.254.83.12
+   Subnet Mask . . . . . . . . . . . : 255.255.0.0
+   Default Gateway . . . . . . . . . :</div>
+      <table>
+        <tr><td style="width:35%;"><strong>Likely root cause</strong></td><td><input type="text"></td></tr>
+        <tr><td><strong>Recommended solution</strong></td><td><input type="text"></td></tr>
+      </table>
+    </div>
+
+    <div class="ticket">
+      <div class="ticket-head"><span class="ticket-num">Ticket 4</span><span class="ticket-tag">Staff Laptop</span></div>
+      <p>A teacher's laptop won't load any websites, on Wi-Fi or wired. They run a configuration check for you over the phone.</p>
+      <div class="diag">$ ifconfig
+
+eth0: flags=4098  mtu 1500
+      inet 127.0.0.1  netmask 255.0.0.0</div>
+      <table>
+        <tr><td style="width:35%;"><strong>Likely root cause</strong></td><td><input type="text"></td></tr>
+        <tr><td><strong>Recommended solution</strong></td><td><input type="text"></td></tr>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>Concept: Where Connectivity Problems Come From</h2>
+    <ul>
+      <li><strong>Physical/hardware issues</strong> — a loose, damaged, or unplugged cable, or a failed port. Indicator lights on a router or switch are your first diagnostic clue: steady/flashing green usually means normal operation, red or orange may mean a hardware issue, and an unlit light may mean a faulty port or an unplugged cable.</li>
+      <li><strong>Congestion</strong> — too much traffic or a struggling connection shows up as high <code>ping</code> response times (over ~100ms) or noticeable packet loss.</li>
+      <li><strong>APIPA addressing</strong> — an address in the <code>169.254.0.0</code>&ndash;<code>169.254.255.255</code> range means the device couldn't reach a DHCP server to get a real address.</li>
+      <li><strong>Loopback addressing</strong> — an address of <code>127.0.0.1</code> (and nothing else) means the device isn't connected to any network at all — it can only talk to itself.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Vocabulary</h2>
+    <ul>
+      <li><strong>Root cause</strong> — the underlying reason a problem is happening, as opposed to just its symptom.</li>
+      <li><strong>Diagnostic tool</strong> — software or a command (like <code>ping</code> or <code>ipconfig</code>) used to gather information about a network problem.</li>
+      <li><strong>APIPA (Automatic Private IP Addressing)</strong> — a fallback address a device assigns itself when it can't reach a DHCP server.</li>
+      <li><strong>Loopback address</strong> — the address <code>127.0.0.1</code>, which a device uses to refer to itself; seeing only this address means there's no active network connection.</li>
+      <li><strong>Packet loss</strong> — data that was sent but never received a response; a sign of a weak or congested connection.</li>
+      <li><strong>Latency / response time</strong> — how long it takes for a signal to get a reply; consistently high values suggest congestion.</li>
+    </ul>
+  </section>
+</main>
+
+<div class="pdf-hint">In the print dialog, set <strong>Destination</strong> to <strong>Save as PDF</strong>, then save.</div>
+<button class="pdf-btn" id="pdf-btn" type="button">📄 Download as PDF</button>
+
+<script>
+  document.getElementById('pdf-btn').addEventListener('click', function () {
+    window.print();
+  });
+</script>
+</body>
+</html>

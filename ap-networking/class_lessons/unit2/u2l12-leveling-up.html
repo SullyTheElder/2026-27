@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en" data-course="networking">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>U2L12: Leveling Up</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#0B1F3A; --green:#8FC53E; --cream:#F4F1E9; --gold:#D9A441;
+    --ink:#1a1a1a; --muted:#5b6472; --line:#dfe3e8;
+    --ai-bg:#20242b; --ai-line:#3a4150; --ai-text:#e7eaf0;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{ font-family:'Inter', system-ui, sans-serif; color:var(--ink); background:var(--cream); line-height:1.55; overflow-x:hidden; }
+  .topbar{ display:flex; align-items:center; justify-content:space-between; padding:14px 24px; background:var(--navy); color:#fff; flex-wrap:wrap; gap:10px; }
+  .topbar a{ color:#fff; text-decoration:none; font-size:0.85rem; font-weight:500; border:1px solid rgba(255,255,255,0.35); padding:6px 12px; border-radius:6px; }
+  .topbar a:hover, .topbar a:focus-visible{ background:rgba(255,255,255,0.12); outline:2px solid var(--gold); outline-offset:2px; }
+  .topbar .brand{ font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:0.95rem; }
+  main{ max-width:920px; margin:0 auto; padding:32px 20px 80px; }
+  header.hero{ text-align:center; margin-bottom:20px; }
+  .eyebrow{ font-family:'Space Grotesk',sans-serif; font-weight:600; letter-spacing:0.12em; text-transform:uppercase; color:var(--green); font-size:0.8rem; margin-bottom:6px; }
+  h1{ font-family:'Space Grotesk',sans-serif; font-weight:700; color:var(--navy); font-size:clamp(1.6rem, 4vw, 2.3rem); margin:0 0 8px; }
+  .subtitle{ color:var(--muted); font-size:1.05rem; font-style:italic; }
+  section{ background:#fff; border-radius:12px; padding:24px clamp(16px,4vw,32px); margin-bottom:24px; box-shadow:0 1px 3px rgba(11,31,58,0.08); }
+  h2{ font-family:'Space Grotesk',sans-serif; color:var(--navy); font-size:1.3rem; margin-top:0; border-bottom:2px solid var(--green); padding-bottom:8px; }
+  h3{ font-family:'Space Grotesk',sans-serif; color:var(--navy); font-size:1.02rem; margin-bottom:6px;}
+  ol, ul{ padding-left:1.4em; }
+  li{ margin-bottom:6px; }
+  code{ font-family:'IBM Plex Mono', monospace; font-size:0.9em; background:#eef1f5; padding:1px 6px; border-radius:4px; }
+  table{ width:100%; border-collapse:collapse; margin:14px 0; font-size:0.92rem; }
+  th, td{ border:1px solid var(--line); padding:8px 10px; text-align:left; vertical-align:top; }
+  th{ background:var(--navy); color:#fff; font-family:'Space Grotesk',sans-serif; font-weight:600; }
+  tr:nth-child(even) td{ background:#fafbfc; }
+  input[type="text"]{ width:100%; border:1px solid var(--line); border-radius:5px; padding:5px 7px; font-family:'Inter',sans-serif; font-size:0.9rem; }
+  input[type="text"]:focus-visible{ outline:2px solid var(--gold); outline-offset:1px; border-color:var(--gold); }
+  .print-hint{ text-align:center; color:var(--muted); font-size:0.85rem; margin-top:-8px; margin-bottom:28px; }
+  .pdf-btn{ position:fixed; right:20px; bottom:20px; z-index:50; display:flex; align-items:center; gap:8px; background:var(--green); color:var(--navy); border:none; border-radius:30px; padding:12px 20px; font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:0.95rem; box-shadow:0 4px 14px rgba(11,31,58,0.28); cursor:pointer; }
+  .pdf-btn:hover, .pdf-btn:focus-visible{ background:#7cb32e; outline:2px solid var(--gold); outline-offset:2px; }
+  .pdf-hint{ position:fixed; right:20px; bottom:70px; z-index:50; max-width:220px; background:var(--navy); color:#fff; font-size:0.78rem; padding:8px 12px; border-radius:8px; box-shadow:0 4px 14px rgba(11,31,58,0.28); }
+  .name-bar{ display:flex; gap:16px; flex-wrap:wrap; align-items:center; background:#fff; border-radius:12px; padding:14px 20px; margin-bottom:24px; box-shadow:0 1px 3px rgba(11,31,58,0.08); font-size:0.95rem; }
+  .name-bar label{ font-weight:600; color:var(--navy); }
+  .name-bar input[type="text"]{ max-width:260px; }
+
+  .ai-card{ background:var(--ai-bg); color:var(--ai-text); border-radius:10px; padding:16px 18px; margin:14px 0; font-size:0.9rem; box-shadow:0 4px 12px rgba(0,0,0,0.2); }
+  .ai-head{ display:flex; align-items:center; gap:8px; font-family:'Space Grotesk',sans-serif; color:#fff; font-weight:600; font-size:0.9rem; margin-bottom:10px; border-bottom:1px solid var(--ai-line); padding-bottom:8px; }
+  .ai-prompt{ color:#9aa4b5; font-style:italic; margin-bottom:8px; font-size:0.85rem; }
+  .ai-response{ font-family:'IBM Plex Mono',monospace; font-size:0.82rem; line-height:1.6; color:var(--ai-text); }
+
+  @media print{
+    .topbar, .pdf-btn, .print-hint, .pdf-hint{ display:none; }
+    body{ background:#fff; }
+    section, .name-bar{ box-shadow:none; border:1px solid var(--line); }
+    tr, table{ page-break-inside:avoid; }
+    .ai-card{ box-shadow:none; border:1px solid #333; }
+    input[type="text"]{ border:1px solid #888; }
+    @page{ margin:0.6in; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <span class="brand">🐾 Bulldog Networking — AP Networking</span>
+  <a href="../../index.html">&larr; Back to AP Networking</a>
+</div>
+
+<main>
+  <header class="hero">
+    <div class="eyebrow">AP Networking · Local Unit 2 · U2L12</div>
+    <h1>Leveling Up</h1>
+    <p class="subtitle">Advanced Features on My Network — CB 2.4.A / 2.4.B</p>
+  </header>
+  <p class="print-hint">Fill in your answers below, then use the "Download as PDF" button to save a copy to turn in.</p>
+
+  <div class="name-bar">
+    <label for="student-name">Name:</label>
+    <input type="text" id="student-name" autocomplete="name">
+    <label for="student-period">Period:</label>
+    <input type="text" id="student-period" style="max-width:100px;">
+  </div>
+
+  <section>
+    <h2>Guiding Question</h2>
+    <p>AI tools can generate network advice in seconds &mdash; but how do you know if that advice is actually good?</p>
+  </section>
+
+  <section>
+    <h2>Part 1 — Evaluate the AI</h2>
+    <p>Below are three real-sounding requests someone made to an AI assistant, and the advice it gave back. For each one, decide: is this good advice for the situation described? What's right, what's wrong, and why?</p>
+
+    <h3>Suggestion A</h3>
+    <div class="ai-card">
+      <div class="ai-head">🤖 AI Network Assistant</div>
+      <div class="ai-prompt">Prompt: "How should I set up my home network?"</div>
+      <div class="ai-response">For a robust home network, I recommend: a 48-port rack-mount enterprise switch, three separate access points each with independent VLAN controllers, and a dedicated hardware firewall appliance. This setup will handle any number of devices with maximum reliability.</div>
+    </div>
+    <p><em>Context: a household of 4 people with about 10 devices total.</em></p>
+
+    <h3>Suggestion B</h3>
+    <div class="ai-card">
+      <div class="ai-head">🤖 AI Network Assistant</div>
+      <div class="ai-prompt">Prompt: "How do I set static IP addresses for my 5 devices so they don't change?"</div>
+      <div class="ai-response">Assign each device a static address in this range: 192.168.1.1 through 192.168.1.300, with a subnet mask of 255.255.255.0. This gives you plenty of room to grow.</div>
+    </div>
+
+    <h3>Suggestion C</h3>
+    <div class="ai-card">
+      <div class="ai-head">🤖 AI Network Assistant</div>
+      <div class="ai-prompt">Prompt: "What's a good way to network two buildings 200 feet apart for fast, reliable gaming and video calls?"</div>
+      <div class="ai-response">Powerline networking adapters are a great choice here &mdash; simply plug one into an outlet in each building and they'll communicate over your existing electrical wiring, no new cables needed.</div>
+    </div>
+
+    <table>
+      <thead><tr><th>Suggestion</th><th>What's wrong with it (if anything)?</th><th>Better recommendation</th></tr></thead>
+      <tbody>
+        <tr><td>A</td><td><input type="text"></td><td><input type="text"></td></tr>
+        <tr><td>B</td><td><input type="text"></td><td><input type="text"></td></tr>
+        <tr><td>C</td><td><input type="text"></td><td><input type="text"></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>Concept: Judging AI Network Advice</h2>
+    <ul>
+      <li>Vague prompts tend to produce impractical or overly complex recommendations &mdash; the AI has no idea about budget, scale, or actual need, so it often defaults to "more is better."</li>
+      <li>AI suggestions can be technically flawed in ways that are easy to miss if you don't already know the underlying rules &mdash; like an IP address range that's mathematically invalid (an octet can't exceed 255).</li>
+      <li>Some suggestions are technically <em>correct</em> but a poor fit for the actual scenario &mdash; a real technology, used the wrong way for the situation described.</li>
+      <li>Good evaluation checks: does this match the actual number of users/devices? Is it realistic for the budget and skill level involved? Is it technically accurate? Does it fit the specific performance or coverage need described?</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Vocabulary</h2>
+    <ul>
+      <li><strong>Prompt</strong> &mdash; the request or question given to an AI tool; vague prompts tend to produce vague or unrealistic answers.</li>
+      <li><strong>Media server</strong> &mdash; a device on a network used to store shared files, stream content, or host multiplayer games for other devices on that network.</li>
+      <li><strong>Local file share</strong> &mdash; a folder on one device made accessible to other devices on the same network.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Part 2 — Hands-On: Set Up a Local File Share</h2>
+    <p>A media server is really just a device that shares files, streams, or hosts something for other devices on the network. Today you'll configure the simplest version of that: a shared folder on your Server 2022 VM.</p>
+    <ol>
+      <li>Launch your Server 2022 VM (the one you used for the Filius labs).</li>
+      <li>Create a new folder on the desktop or in a convenient location. Name it <code>SharedMedia</code>.</li>
+      <li>Right-click the folder &rarr; <strong>Properties</strong> &rarr; <strong>Sharing</strong> tab &rarr; <strong>Advanced Sharing</strong>.</li>
+      <li>Check <strong>Share this folder</strong>, then click <strong>Permissions</strong> and confirm at least Read access is allowed.</li>
+      <li>Click <strong>Apply</strong>, then note the network path shown (it will look like <code>\\SERVERNAME\SharedMedia</code>).</li>
+    </ol>
+    <table>
+      <thead><tr><th>Field</th><th>Your Result</th></tr></thead>
+      <tbody>
+        <tr><td>Folder name</td><td><input type="text"></td></tr>
+        <tr><td>Network share path shown</td><td><input type="text"></td></tr>
+      </tbody>
+    </table>
+    <p>Reflect: what kind of files or content would make sense to put in a shared folder like this one, for a household or small office? What would <em>not</em> make sense to put there, given what you learned about security in U2L09?</p>
+    <table>
+      <tbody><tr><td style="height:70px;"><input type="text"></td></tr></tbody>
+    </table>
+  </section>
+</main>
+
+<div class="pdf-hint">In the print dialog, set <strong>Destination</strong> to <strong>Save as PDF</strong>, then save.</div>
+<button class="pdf-btn" id="pdf-btn" type="button">📄 Download as PDF</button>
+
+<script>
+  document.getElementById('pdf-btn').addEventListener('click', function () {
+    window.print();
+  });
+</script>
+</body>
+</html>
