@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Investigation Lab</title>
+<style>
+  :root {
+    --navy: #0F1B2D; --teal: #0E7C7B; --mint: #6FC3B4; --amber: #C97A2B;
+    --light: #EAF4F4; --gray: #9AA6A6; --white: #FFFFFF;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: Calibri, "Segoe UI", sans-serif; background: var(--light); color: #1a1a1a; }
+  #app { max-width: 900px; margin: 0 auto; padding: 18px 20px 60px; }
+
+  .bi { display: flex; flex-direction: column; }
+  .bi .en { order: 1; }
+  .bi .es { order: 2; font-style: italic; color: #777; font-size: 0.85em; margin-top: 3px; }
+  body.lang-es .bi .en { order: 2; font-style: italic; color: #777; font-size: 0.85em; margin-top: 3px; }
+  body.lang-es .bi .es { order: 1; font-style: normal; color: inherit; font-size: 1em; margin-top: 0; }
+  .bi.heading .en, .bi.heading .es { font-weight: 700; }
+
+  header {
+    background: var(--navy); color: white; border-radius: 14px; padding: 18px 24px;
+    display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 16px;
+  }
+  header .title-block .bi .en, header .title-block .bi .es { font-family: Cambria, Georgia, serif; font-size: 1.35rem; font-weight: 700; }
+  header .sub { color: var(--mint); font-size: 0.85rem; margin-top: 4px; }
+  .lang-toggle {
+    background: transparent; border: 1.5px solid var(--mint); color: var(--mint);
+    border-radius: 999px; padding: 7px 16px; font-size: 0.85rem; cursor: pointer; font-weight: 600; flex-shrink: 0;
+  }
+
+  .instructions-box {
+    background: white; border-left: 4px solid var(--amber); border-radius: 10px;
+    padding: 16px 20px; margin-bottom: 16px;
+  }
+  .instructions-box .bi .en, .instructions-box .bi .es { font-size: 0.95rem; line-height: 1.5; }
+
+  .station-banner { border-radius: 14px 14px 0 0; padding: 12px 20px; margin: -22px -26px 18px -26px; display: flex; align-items: center; gap: 12px; }
+  .station-banner .num { background: rgba(255,255,255,0.25); width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; color: white; flex-shrink: 0; }
+  .station-banner .bi .en, .station-banner .bi .es { color: white; font-family: Cambria, Georgia, serif; font-size: 1.1rem; font-weight: 700; }
+  .station-banner .bi .es { color: #CFE8E8; }
+  body.lang-es .station-banner .bi .en { color: #CFE8E8; }
+  body.lang-es .station-banner .bi .es { color: white; }
+
+  .card { background: white; border-radius: 14px; padding: 22px 26px; box-shadow: 0 1px 3px rgba(15,27,45,0.08); margin-bottom: 16px; }
+
+  .station-desc.bi .en, .station-desc.bi .es { font-size: 0.98rem; line-height: 1.5; }
+  .station-desc { margin-bottom: 12px; }
+
+  .suggestion-box { background: var(--light); border-radius: 8px; padding: 10px 14px; margin-bottom: 14px; }
+  .suggestion-box .bi .en, .suggestion-box .bi .es { font-size: 0.88rem; color: #444; }
+
+  .name-row { display: flex; gap: 20px; flex-wrap: wrap; }
+  .name-row .field { flex: 1; min-width: 200px; }
+  .name-row label.bi .en, .name-row label.bi .es { font-size: 0.85rem; color: #555; }
+  .name-row input {
+    width: 100%; border: none; border-bottom: 2px solid #C7D6D6; background: transparent;
+    font-size: 1rem; padding: 6px 2px; margin-top: 4px; font-family: Calibri, sans-serif; color: #111;
+  }
+  .name-row input:focus { outline: none; border-bottom-color: var(--teal); }
+
+  .q-block { margin-top: 14px; }
+  .q-block label.bi .en, .q-block label.bi .es { font-size: 0.93rem; font-weight: 600; color: #222; }
+  .q-block textarea {
+    width: 100%; min-height: 60px; border: 1.5px solid #C7D6D6; border-radius: 8px;
+    padding: 10px 12px; font-family: Calibri, sans-serif; font-size: 0.95rem; resize: vertical; margin-top: 8px;
+  }
+  .q-block textarea:focus { outline: none; border-color: var(--teal); }
+  .q-block input[type="text"] {
+    width: 100%; border: 1.5px solid #C7D6D6; border-radius: 8px;
+    padding: 10px 12px; font-family: Calibri, sans-serif; font-size: 0.95rem; margin-top: 8px;
+  }
+  .q-block input[type="text"]:focus { outline: none; border-color: var(--teal); }
+
+  .bonus-tag { display: inline-block; background: var(--amber); color: white; font-size: 0.72rem; font-weight: 700; padding: 3px 10px; border-radius: 999px; margin-bottom: 8px; }
+
+  .print-btn-row { display: flex; gap: 10px; margin-top: 8px; }
+  button.primary {
+    background: var(--teal); color: white; border: none; border-radius: 8px;
+    padding: 13px 24px; font-size: 1rem; font-weight: 700; cursor: pointer;
+  }
+  button.primary:hover { background: #0b6362; }
+
+  @media print {
+    body { background: white; }
+    .lang-toggle, .print-btn-row { display: none !important; }
+    .card { box-shadow: none; border: 1px solid #ddd; page-break-inside: avoid; }
+    #app { max-width: 100%; padding: 0; }
+    textarea, input[type="text"] { border: 1px solid #999; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="title-block">
+      <div class="bi heading"><span class="en">AI Investigation Lab</span><span class="es">Laboratorio de Investigación de IA</span></div>
+      <div class="sub">Unit 3 — AI Literacy</div>
+    </div>
+    <button class="lang-toggle" onclick="document.body.classList.toggle('lang-es')">Español / English</button>
+  </header>
+
+  <div class="instructions-box">
+    <div class="bi">
+      <span class="en">You've learned how AI predicts patterns, where bias comes from, why hallucinations happen, and how to write a strong prompt. Today: put all of it to the test, using real AI tools. See the menu below for options that don't require logging in. Work through each station at your own pace.</span>
+      <span class="es">Has aprendido cómo la IA predice patrones, de dónde viene el sesgo, por qué ocurren las alucinaciones, y cómo escribir un prompt fuerte. Hoy: pon todo eso a prueba, usando herramientas de IA reales. Mira el menú de abajo para opciones que no requieren iniciar sesión. Trabaja cada estación a tu propio ritmo.</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2 class="bi" style="margin:0 0 12px;"><span class="en" style="font-family:Cambria,Georgia,serif;color:var(--teal);font-size:1.1rem;">Tool Menu — Pick Any of These</span><span class="es" style="font-family:Cambria,Georgia,serif;color:var(--teal);font-size:1.1rem;">Menú de Herramientas — Elige Cualquiera</span></h2>
+    <div class="suggestion-box bi" style="margin-bottom:8px;">
+      <span class="en"><b>No login needed:</b> Microsoft Copilot (copilot.microsoft.com) · DuckDuckGo AI Chat / Duck.ai (duck.ai) — includes an actual Claude model · Perplexity AI (perplexity.ai) — shows its sources · HuggingChat (huggingface.co/chat)</span>
+      <span class="es"><b>Sin iniciar sesión:</b> Microsoft Copilot (copilot.microsoft.com) · DuckDuckGo AI Chat / Duck.ai (duck.ai) — incluye un modelo de Claude real · Perplexity AI (perplexity.ai) — muestra sus fuentes · HuggingChat (huggingface.co/chat)</span>
+    </div>
+    <div class="suggestion-box bi">
+      <span class="en"><b>Already have an account:</b> ChatGPT or Canva AI both still work fine if you're logged in.</span>
+      <span class="es"><b>Si ya tienes cuenta:</b> ChatGPT o Canva AI funcionan bien si ya iniciaste sesión.</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="name-row">
+      <div class="field"><label class="bi"><span class="en">Name</span><span class="es">Nombre</span></label><input type="text" id="studentName"></div>
+      <div class="field" style="flex: 0 0 140px;"><label class="bi"><span class="en">Period</span><span class="es">Periodo</span></label><input type="text" id="studentPeriod"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="station-banner" style="background: var(--navy);">
+      <div class="num">1</div>
+      <div class="bi"><span class="en">Tool Comparison Test</span><span class="es">Prueba de Comparación de Herramientas</span></div>
+    </div>
+    <div class="station-desc bi">
+      <span class="en">Take the prompt from your Direct the AI project. Run the exact same prompt through a DIFFERENT tool than the one you used before.</span>
+      <span class="es">Toma el prompt de tu proyecto Dirige a la IA. Ejecuta el mismo prompt exacto en una herramienta DIFERENTE a la que usaste antes.</span>
+    </div>
+    <div class="q-block">
+      <label class="bi"><span class="en">Which tool did you use originally, and which are you trying now?</span><span class="es">¿Qué herramienta usaste originalmente, y cuál estás probando ahora?</span></label>
+      <input type="text">
+    </div>
+    <div class="q-block">
+      <label class="bi"><span class="en">How is the new result different from your original one?</span><span class="es">¿En qué se diferencia el nuevo resultado del original?</span></label>
+      <textarea></textarea>
+    </div>
+    <div class="q-block">
+      <label class="bi"><span class="en">Which result do you actually prefer, and why?</span><span class="es">¿Cuál resultado prefieres realmente, y por qué?</span></label>
+      <textarea></textarea>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="station-banner" style="background: var(--teal);">
+      <div class="num">2</div>
+      <div class="bi"><span class="en">Hallucination Hunt</span><span class="es">Cacería de Alucinaciones</span></div>
+    </div>
+    <div class="station-desc bi">
+      <span class="en">Ask your AI tool a specific, checkable factual question — something with a real answer, not super common knowledge. Try to verify the answer yourself.</span>
+      <span class="es">Hazle a tu herramienta de IA una pregunta factual específica y verificable — algo con una respuesta real, no de conocimiento muy común. Intenta verificar la respuesta tú mismo.</span>
+    </div>
+    <div class="suggestion-box bi">
+      <span class="en">Ideas: an exact date for a specific event · a specific statistic · who held a specific role at a specific time · the population of a small or obscure place</span>
+      <span class="es">Ideas: una fecha exacta de un evento específico · una estadística específica · quién tuvo un puesto específico en un momento específico · la población de un lugar pequeño u obscuro</span>
+    </div>
+    <div class="q-block">
+      <label class="bi"><span class="en">What question did you ask?</span><span class="es">¿Qué pregunta hiciste?</span></label>
+      <textarea></textarea>
+    </div>
+    <div class="q-block">
+      <label class="bi"><span class="en">What did the AI answer, and were you able to verify it?</span><span class="es">¿Qué respondió la IA, y pudiste verificarlo?</span></label>
+      <textarea></textarea>
+    </div>
+    <div class="q-block">
+      <label class="bi"><span class="en">Did you catch a hallucination, or was the answer accurate? How confident did it sound either way?</span><span class="es">¿Detectaste una alucinación, o la respuesta fue precisa? ¿Qué tan segura sonaba de cualquier forma?</span></label>
+      <textarea></textarea>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="station-banner" style="background: var(--amber);">
+      <div class="num">3</div>
+      <div class="bi"><span class="en">Bias Check</span><span class="es">Revisión de Sesgo</span></div>
+    </div>
+    <div class="station-desc bi">
+      <span class="en">Ask your AI tool to write 2-3 sentences about a person in a specific profession — WITHOUT specifying their gender. See what pronoun or assumption it defaults to.</span>
+      <span class="es">Pídele a tu herramienta de IA que escriba 2-3 oraciones sobre una persona en una profesión específica — SIN especificar su género. Observa qué pronombre o suposición usa por defecto.</span>
+    </div>
+    <div class="suggestion-box bi">
+      <span class="en">Try: nurse, CEO, engineer, teacher, firefighter, or pick your own profession.</span>
+      <span class="es">Prueba: enfermero/a, director/a ejecutivo/a, ingeniero/a, maestro/a, bombero/a, o elige tu propia profesión.</span>
+    </div>
+    <div class="q-block">
+      <label class="bi"><span class="en">Which profession did you use?</span><span class="es">¿Qué profesión usaste?</span></label>
+      <input type="text">
+    </div>
+    <div class="q-block">
+      <label class="bi"><span class="en">What did the AI default to? Paste or describe the result.</span><span class="es">¿Qué usó la IA por defecto? Pega o describe el resultado.</span></label>
+      <textarea></textarea>
+    </div>
+    <div class="q-block">
+      <label class="bi"><span class="en">Does this match what you'd expect from the bias lesson earlier this unit? Why or why not?</span><span class="es">¿Esto coincide con lo que esperarías de la lección de sesgo anterior en esta unidad? ¿Por qué sí o por qué no?</span></label>
+      <textarea></textarea>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="station-banner" style="background: #6B5B95;">
+      <div class="num">4</div>
+      <div class="bi"><span class="en">Break It (Bonus)</span><span class="es">Rómpelo (Extra)</span></div>
+    </div>
+    <span class="bonus-tag">OPTIONAL / OPCIONAL</span>
+    <div class="station-desc bi">
+      <span class="en">Try the vaguest, shortest prompt you can think of. Then try an extremely specific or oddly-constrained one. Compare what happens.</span>
+      <span class="es">Intenta el prompt más vago y corto que se te ocurra. Luego intenta uno extremadamente específico o con restricciones raras. Compara qué pasa.</span>
+    </div>
+    <div class="suggestion-box bi">
+      <span class="en">Stuck? Try one of these as-is, or use them to spark your own: "Tell me something." · "Make it good." · "Help me with this." · "Write about stuff." · "What do you think?" · "Do something cool."</span>
+      <span class="es">¿Atascado? Prueba una de estas tal cual, o úsalas para inspirar la tuya: "Dime algo." · "Hazlo bien." · "Ayúdame con esto." · "Escribe sobre cosas." · "¿Qué opinas?" · "Haz algo genial."</span>
+    </div>
+    <div class="q-block">
+      <label class="bi"><span class="en">Your vague prompt, and a quick summary of what happened:</span><span class="es">Tu prompt vago, y un resumen rápido de qué pasó:</span></label>
+      <textarea></textarea>
+    </div>
+    <div class="q-block">
+      <label class="bi"><span class="en">Your specific/weird prompt, and what happened:</span><span class="es">Tu prompt específico/raro, y qué pasó:</span></label>
+      <textarea></textarea>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2 class="bi" style="margin:0 0 10px;"><span class="en" style="font-family:Cambria,Georgia,serif;color:var(--teal);font-size:1.15rem;">Lab Conclusions</span><span class="es" style="font-family:Cambria,Georgia,serif;color:var(--teal);font-size:1.15rem;">Conclusiones del Laboratorio</span></h2>
+    <div class="q-block">
+      <label class="bi"><span class="en">Across all your stations today, what's ONE thing that changed how you think about using AI tools?</span><span class="es">En todas tus estaciones de hoy, ¿cuál es UNA cosa que cambió cómo piensas sobre usar herramientas de IA?</span></label>
+      <textarea></textarea>
+    </div>
+    <div class="q-block">
+      <label class="bi"><span class="en">What's one habit from today you'll actually use in real life?</span><span class="es">¿Cuál es un hábito de hoy que realmente usarás en la vida real?</span></label>
+      <textarea></textarea>
+    </div>
+  </div>
+
+  <div class="print-btn-row">
+    <button class="primary" onclick="window.print()">
+      <span style="display:block;">Print / Save as PDF</span>
+      <span style="display:block; font-size:0.75rem; font-weight:normal; font-style:italic; opacity:0.85;">Imprimir / Guardar como PDF</span>
+    </button>
+  </div>
+</div>
+</body>
+</html>
