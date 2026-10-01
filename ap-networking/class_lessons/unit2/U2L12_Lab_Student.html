@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>U2L12 — Router Subnet Configuration Lab</title>
+<style>
+  :root { --navy: #0B1F3A; --green: #8FC53E; --cream: #F4F1E9; }
+  * { box-sizing: border-box; }
+  body {
+    font-family: Calibri, 'Segoe UI', Arial, sans-serif;
+    background: var(--cream); color: var(--navy);
+    margin: 0; padding: 0 0 60px 0; line-height: 1.55;
+  }
+  h1, h2, h3 { font-family: Cambria, Georgia, serif; }
+  header {
+    background: var(--navy); color: var(--cream);
+    padding: 26px 24px; display: flex; align-items: center; justify-content: space-between;
+  }
+  header h1 { margin: 0; font-size: 1.4rem; }
+  header p { margin: 4px 0 0 0; color: var(--green); font-weight: bold; }
+  main { max-width: 860px; margin: 0 auto; padding: 24px; }
+  .print-btn {
+    display: block; width: fit-content; margin: 0 auto 24px auto;
+    background: var(--navy); color: white; border: none; padding: 10px 20px;
+    border-radius: 6px; font-family: Calibri, sans-serif; font-size: 0.95rem; cursor: pointer;
+  }
+  .part-divider {
+    font-family: Cambria, Georgia, serif; font-size: 1.3rem; color: var(--navy);
+    background: var(--green); padding: 10px 20px; border-radius: 6px; margin: 34px 0 20px 0;
+  }
+  .card {
+    background: white; border-radius: 8px; padding: 20px 24px; margin-bottom: 20px;
+    box-shadow: 0 1px 3px rgba(11,31,58,0.15);
+  }
+  .card h2 { margin-top: 0; font-size: 1.1rem; border-bottom: 2px solid var(--green); padding-bottom: 6px; }
+  .step {
+    display: flex; gap: 14px; margin: 16px 0; align-items: flex-start;
+  }
+  .step-num {
+    background: var(--navy); color: var(--cream); font-weight: bold; font-family: Cambria, serif;
+    min-width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .recap {
+    background: #EAF4E0; border-left: 5px solid var(--green); padding: 14px 18px;
+    border-radius: 4px; margin-bottom: 20px;
+  }
+  table.addr-table {
+    width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 0.95rem;
+  }
+  table.addr-table th, table.addr-table td {
+    border: 1px solid var(--navy); padding: 8px 10px; text-align: left;
+  }
+  table.addr-table th { background: var(--navy); color: var(--cream); }
+  table.addr-table td { height: 2.2em; }
+  .flag {
+    background: #FFF6E0; border-left: 5px solid #C77700; padding: 10px 16px;
+    margin: 12px 0; border-radius: 4px; font-size: 0.95rem;
+  }
+  .flag strong { color: #8a5300; }
+  .checkpoint-box {
+    background: #E8F0FA; border-left: 5px solid var(--navy); padding: 12px 18px;
+    margin: 16px 0; border-radius: 4px; font-size: 0.95rem;
+  }
+  .checkpoint-line { margin-top: 8px; font-family: 'Courier New', monospace; }
+  .write-here { display: inline-block; border-bottom: 1px solid var(--navy); min-width: 160px; }
+  ul, ol { padding-left: 22px; }
+  @media print {
+    .print-btn { display: none; }
+    header { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .card { box-shadow: none; border: 1px solid #ccc; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>U2L12 — Router Subnet Configuration Lab</h1>
+    <p>CB 3.4.C.5 · Filius on the Server 2022 VM</p>
+  </div>
+</header>
+
+<main>
+
+<button class="print-btn" onclick="window.print()">🖨️ Print or Save as PDF</button>
+
+<div class="card">
+  <h2>What You're Doing</h2>
+  <p>You've calculated subnet sizes (U2L01–02) and configured a single device's address (U2L06). Now you'll
+  configure a <strong>router</strong> that connects two separate subnets — giving each interface the correct
+  address, and making sure devices on each side can reach each other.</p>
+  <p>This lab runs across two days: Friday is a guided walkthrough where we build a simple version together.
+  Monday, you'll apply the same method to a new scenario on your own.</p>
+</div>
+
+<div class="part-divider">PART 1 — FRIDAY (Guided)</div>
+
+<div class="card">
+  <h2>Follow Along: Two Subnets, One Router</h2>
+  <p>Build this exact topology in Filius, matching the demo:</p>
+  <div class="step"><div class="step-num">1</div><div>Open Filius on the Server 2022 VM. Place two PCs and one
+  router on the canvas.</div></div>
+  <div class="step"><div class="step-num">2</div><div>Cable PC-A to the router's first interface, and PC-B to
+  the router's second interface.</div></div>
+  <div class="step"><div class="step-num">3</div><div>Configure the router's two interfaces:
+  <strong>Interface 1 → 10.0.1.1</strong>, <strong>Interface 2 → 10.0.2.1</strong> (both /24).</div></div>
+
+  <div class="checkpoint-box"><strong>✅ Checkpoint A — don't skip this, even if you're short on time:</strong>
+  write down your router's two interface addresses below. This line survives even if nothing else does.
+  <div class="checkpoint-line">Interface 1: <span class="write-here"></span> &nbsp;&nbsp; Interface 2: <span class="write-here"></span></div>
+  </div>
+
+  <div class="step"><div class="step-num">4</div><div>Configure PC-A: address <strong>10.0.1.10</strong>,
+  subnet mask /24, gateway <strong>10.0.1.1</strong>.</div></div>
+  <div class="step"><div class="step-num">5</div><div>Configure PC-B: address <strong>10.0.2.10</strong>,
+  subnet mask /24, gateway <strong>10.0.2.1</strong>.</div></div>
+  <div class="step"><div class="step-num">6</div><div>Test it: ping from PC-A to PC-B. Confirm it succeeds
+  before moving on.</div></div>
+
+  <div class="checkpoint-box"><strong>✅ Checkpoint B — this screenshot IS the record of today's work:</strong>
+  VM storage does <strong>not</strong> carry over between sessions — don't bother trying to save the Filius
+  file itself, it won't be there Monday. Before you leave:
+  <ol style="margin-top:8px;">
+    <li>Take a screenshot of your finished topology with all addresses visible.</li>
+    <li>Upload it to the Canvas assignment. This is today's actual submission — not a backup.</li>
+  </ol>
+  </div>
+  <div class="flag"><strong>🚩 If your ping doesn't succeed by the end of the period:</strong> upload a
+  screenshot of your topology as-is anyway. Partial, visible progress is worth more than nothing — don't just
+  close the window.</div>
+</div>
+
+<div class="part-divider">PART 2 — MONDAY (Independent)</div>
+
+<div class="recap">
+  <strong>Before you open Filius:</strong> today's VM starts blank — Friday's topology isn't there, because VM
+  storage doesn't carry over between sessions. That's expected, not a problem, and you don't need to rebuild
+  it.
+  <br><br>
+  Take 30 seconds to glance back at your <strong>Checkpoint A</strong> addresses and <strong>Checkpoint B</strong>
+  screenshot to remind yourself of the steps — then go straight into today's new scenario below.
+</div>
+
+<div class="card">
+  <h2>Your Turn: The Campus Annex Scenario</h2>
+  <p>The school is adding two new portable classroom buildings, each needing its own subnet, both connecting
+  through one router. You're assigning the addressing from scratch — this time, you decide the sizing.</p>
+  <ul>
+    <li><strong>Building A</strong> needs to support up to <strong>12 devices</strong>.</li>
+    <li><strong>Building B</strong> needs to support up to <strong>6 devices</strong>.</li>
+    <li>Both subnets come out of the same base block: <strong>192.168.20.0/24</strong>.</li>
+  </ul>
+
+  <h3>Step 1 — Size each subnet</h3>
+  <p>Using the 2ⁿ − 2 formula from U2L01–02, figure out the smallest subnet size that covers each building's
+  device count, plus the 2 reserved addresses.</p>
+  <table class="addr-table">
+    <tr><th>Building</th><th>Devices needed</th><th>Host bits (n)</th><th>Usable hosts (2ⁿ−2)</th><th>Subnet size (/#)</th></tr>
+    <tr><td>A</td><td>12</td><td></td><td></td><td></td></tr>
+    <tr><td>B</td><td>6</td><td></td><td></td><td></td></tr>
+  </table>
+
+  <h3>Step 2 — Carve the blocks</h3>
+  <p>Starting from 192.168.20.0/24, assign Building A its block first (it's larger), then give Building B the
+  next available block after it.</p>
+  <table class="addr-table">
+    <tr><th>Building</th><th>Network address</th><th>Usable range</th><th>Broadcast address</th></tr>
+    <tr><td>A</td><td></td><td></td><td></td></tr>
+    <tr><td>B</td><td></td><td></td><td></td></tr>
+  </table>
+
+  <div class="checkpoint-box"><strong>✅ Checkpoint C — submit this part now, before touching Filius:</strong>
+  upload a photo or scan of your completed Step 1–2 tables to Canvas as its own submission. This locks in your
+  math grade independent of whatever happens next in the simulator.</div>
+
+  <h3>Step 3 — Build it in Filius</h3>
+  <ol>
+    <li>Place <strong>one PC in Building A</strong> and <strong>one PC in Building B</strong>, plus one router
+    connecting them.</li>
+    <li>Configure the router's two interfaces using the first usable address in each block.</li>
+    <li>Configure each PC with an address from its building's range, the correct mask, and the router
+    interface as its gateway.</li>
+    <li>Test: ping across buildings (the Building A device to the Building B device). Fix anything that fails.</li>
+  </ol>
+  <p><em>Finished with time to spare? Add a second PC to each building (next address in the usable range) and
+  confirm it can also ping across buildings — optional, but good practice.</em></p>
+
+  <h3>Step 4 — Submit</h3>
+  <p>Submit to Canvas: a screenshot of your Filius topology, and a screenshot showing a successful
+  cross-building ping. (Your address tables are already in from Checkpoint C.)</p>
+  <div class="flag"><strong>🚩 Running out of time in Step 3?</strong> Upload your topology screenshot as-is,
+  finished or not. Your Step 1–2 math is already submitted separately, so an unfinished build still earns
+  partial credit instead of nothing.</div>
+</div>
+
+</main>
+</body>
+</html>
