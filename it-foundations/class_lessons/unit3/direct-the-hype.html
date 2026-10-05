@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Direct the Hype</title>
+<style>
+:root{
+  --navy:#14284b; --navy2:#1e3a6e; --teal:#1aa595; --teal-d:#0b6f63;
+  --mint:#d5f4ea; --mint2:#eaf9f4; --amber:#f2a93b; --amber-l:#fff1d6;
+  --coral:#d9435d; --coral-l:#fde4e8; --ink:#14284b; --paper:#f4f9f8; --line:#c4d9d4;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{animation:none!important;transition:none!important}}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:Calibri,Carlito,"Segoe UI",system-ui,sans-serif;font-size:18px;line-height:1.5}
+h1,h2,h3,.serif{font-family:Cambria,Caladea,Georgia,serif;line-height:1.2}
+:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
+
+.bi{display:block}
+.bi .es{display:block;color:var(--teal-d);font-size:.9em;margin-top:2px}
+.on-dark .bi .es,.top .bi .es{color:#9fe8d8}
+.bi.inline{display:inline}
+.bi.inline .en,.bi.inline .es{display:inline;margin:0;font-size:1em}
+.bi.inline .es::before{content:" / "}
+
+.top{background:var(--navy);color:#fff;padding:10px 20px;display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap;border-bottom:4px solid var(--teal)}
+.top .brand{font-family:Cambria,Caladea,Georgia,serif;font-weight:700;font-size:1.05rem}
+.top nav{display:flex;gap:10px;flex-wrap:wrap}
+.top nav a{border:2px solid #4b6aa3;color:#fff;border-radius:8px;padding:6px 12px;text-decoration:none;font-size:.9rem;line-height:1.25}
+.top nav a:hover{border-color:var(--mint);background:var(--navy2)}
+
+main{max-width:900px;margin:0 auto;padding:24px 18px 70px}
+.hero{background:var(--navy);color:#fff;border-radius:14px;padding:26px 28px;margin-bottom:20px}
+.hero h1{margin:0 0 4px;font-size:2rem}
+.hero .lead{margin-top:10px;font-size:1.05rem}
+.hero .rules{margin-top:16px;display:grid;gap:8px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+.hero .rule{background:var(--navy2);border-radius:10px;padding:10px 14px;font-size:.98rem}
+
+.panel{background:#fff;border:2px solid var(--line);border-radius:12px;padding:16px 18px;margin-bottom:18px}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
+.field{flex:1 1 260px}
+.field label,.lbl{display:block;font-weight:700;margin:10px 0 4px}
+input[type=text],textarea{width:100%;font:inherit;color:var(--ink);background:#fff;border:2px solid var(--line);border-radius:8px;padding:9px 11px}
+textarea{min-height:110px;resize:vertical}
+textarea.tall{min-height:170px}
+input[type=text]:focus,textarea:focus{border-color:var(--teal);outline:none;box-shadow:0 0 0 3px #1aa59544}
+.hint{font-size:.92rem;color:#4d6285;margin:0 0 4px}
+
+.btn{font:inherit;font-weight:700;background:var(--teal);color:#fff;border:0;border-radius:10px;padding:10px 18px;cursor:pointer;line-height:1.25;text-align:left;text-decoration:none;display:inline-block}
+.btn .bi .es{color:#e0fff8}
+.btn:hover{background:var(--teal-d)}
+.btn.alt{background:#fff;color:var(--navy);border:2px solid var(--navy)}
+.btn.alt .bi .es{color:var(--teal-d)}
+.btn.alt:hover{background:var(--mint2)}
+.btn.amber{background:var(--amber);color:var(--navy)}
+.btn.amber .bi .es{color:#5a3a00}
+.btn.amber:hover{background:#e29a2b}
+
+/* mission choice */
+.missions{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));margin:10px 0}
+.mission{font:inherit;text-align:left;background:#fff;color:var(--ink);border:2px solid var(--line);border-radius:12px;padding:14px;cursor:pointer}
+.mission:hover{border-color:var(--teal)}
+.mission[aria-pressed=true]{background:var(--amber-l);border-color:var(--amber);box-shadow:0 0 0 3px #f2a93b44}
+.mission h3{margin:0 0 4px;font-size:1.1rem}
+.mission p{margin:0;font-size:.95rem}
+
+/* session tabs: a trail, since the work really is a sequence */
+.trail{display:flex;gap:0;margin:6px 0 18px;flex-wrap:wrap}
+.trail button{flex:1 1 150px;font:inherit;text-align:left;background:#fff;color:var(--ink);border:2px solid var(--line);padding:8px 12px;cursor:pointer;line-height:1.25;position:relative}
+.trail button:first-child{border-radius:10px 0 0 10px}
+.trail button:last-child{border-radius:0 10px 10px 0}
+.trail button + button{border-left:0}
+.trail button[aria-current=true]{background:var(--navy);color:#fff;border-color:var(--navy)}
+.trail button[aria-current=true] .bi .es{color:#9fe8d8}
+.trail button.done:not([aria-current=true]){background:var(--mint2);border-color:var(--teal)}
+.trail .n{font-weight:700;display:block;font-size:.85rem}
+.trail .tick{position:absolute;right:8px;top:6px;color:var(--teal-d);font-weight:700}
+.trail button[aria-current=true] .tick{color:var(--mint)}
+@media(max-width:620px){.trail button{flex:1 1 100%;border-left:2px solid var(--line)!important;border-radius:0!important}.trail button:first-child{border-radius:10px 10px 0 0!important}.trail button:last-child{border-radius:0 0 10px 10px!important}}
+
+.sessionhead{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:baseline}
+.time{background:var(--amber-l);border:2px solid var(--amber);border-radius:999px;padding:1px 12px;font-size:.88rem;font-weight:700;white-space:nowrap}
+.checks{display:grid;gap:6px;margin:8px 0}
+.check{display:flex;gap:10px;align-items:flex-start;background:#fff;border:2px solid var(--line);border-radius:10px;padding:8px 12px;cursor:pointer}
+.check input{width:22px;height:22px;margin-top:3px;accent-color:var(--teal);flex:0 0 22px}
+.check.on{background:var(--mint2);border-color:var(--teal)}
+.tools{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
+.tools a{border:2px solid var(--navy);border-radius:8px;padding:5px 12px;text-decoration:none;color:var(--navy);font-weight:700;font-size:.95rem}
+.tools a:hover{background:var(--mint2)}
+.example{background:var(--amber-l);border-left:6px solid var(--amber);border-radius:8px;padding:10px 14px;margin:10px 0;font-size:.97rem}
+.example .tag{font-weight:700}
+.pair{display:grid;gap:12px;grid-template-columns:1fr 1fr}
+@media(max-width:700px){.pair{grid-template-columns:1fr}}
+.nav{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:14px}
+.saved{font-size:.85rem;color:var(--teal-d);min-height:1.3em}
+
+/* hype card */
+.card{background:#fffdf7;border:3px solid var(--navy);border-radius:14px;overflow:hidden;margin-bottom:16px}
+.card .ch{background:var(--navy);color:#fff;padding:14px 18px}
+.card .ch h2{margin:0;font-size:1.4rem}
+.card .cb{padding:14px 18px}
+.card dt{font-weight:700;margin-top:12px}
+.card dt .bi .es{font-weight:400}
+.card dd{margin:4px 0 0;padding:8px 10px;background:#fff;border:1px dashed var(--line);border-radius:8px;white-space:pre-wrap;overflow-wrap:anywhere}
+.card dd.empty{color:#7b8aa6;font-style:italic}
+.partner{background:var(--mint2);border:2px solid var(--teal);border-radius:10px;padding:10px 14px;margin-top:14px}
+.partner ol{margin:6px 0 0;padding-left:22px}
+.partner li{margin:6px 0}
+.sig{display:flex;gap:18px;flex-wrap:wrap;margin-top:12px}
+.sig div{flex:1 1 220px;border-bottom:2px solid var(--navy);padding-top:22px;font-size:.9rem}
+.stars{display:flex;gap:6px;margin:6px 0}
+.stars button{font:inherit;font-size:1.5rem;width:44px;height:44px;border-radius:10px;border:2px solid var(--line);background:#fff;color:#aab8b5;cursor:pointer}
+.stars button.on{background:var(--amber);border-color:var(--amber);color:var(--navy)}
+.codebox{font-family:Consolas,"Courier New",monospace;background:var(--navy);color:var(--mint);padding:3px 12px;border-radius:8px}
+.msg{margin:10px 0;padding:10px 14px;border-radius:10px;border-left:6px solid var(--teal);background:var(--mint2)}
+textarea.out{font-family:Consolas,"Courier New",monospace;font-size:.85rem;min-height:200px}
+
+@media print{
+  .top,.noprint,.btn,.trail{display:none!important}
+  body{background:#fff;font-size:12pt}
+  main{max-width:none;padding:0}
+  .card{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="brand">IT Fundamentals · Mr. Sullivan</div>
+  <nav aria-label="Navigation">
+    <a href="../index.html"><span class="bi"><span class="en">Class lessons</span><span class="es" lang="es">Lecciones de la clase</span></span></a>
+    <a href="security-desk.html"><span class="bi"><span class="en">Homecoming Security Desk</span><span class="es" lang="es">Mesa de Seguridad de Homecoming</span></span></a>
+  </nav>
+</header>
+
+<main id="app"></main>
+
+<script>
+"use strict";
+
+const L = (en, es) => ({ en, es });
+const bi = (o, cls) => `<span class="bi ${cls || ""}"><span class="en">${o.en}</span><span class="es" lang="es">${o.es}</span></span>`;
+const esc = s => String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+const KEY = "hw26_direct_the_hype_v1";
+
+/* ============ content ============ */
+const MISSIONS = [
+  { id: "poster", name: L("A poster concept", "Un concepto de cartel"),
+    desc: L("Design an eye-catching poster for a homecoming event: the idea, the words, and what’s in the picture.", "Diseña un cartel llamativo para un evento de homecoming: la idea, las palabras y qué sale en la imagen.") },
+  { id: "script", name: L("A 30-second announcement", "Un anuncio de 30 segundos"),
+    desc: L("Write a short, high-energy morning-announcement script that gets students excited to attend.", "Escribe un guion corto y lleno de energía para los anuncios de la mañana que emocione a los estudiantes a asistir.") },
+  { id: "day", name: L("A new Spirit Day", "Un nuevo Día de Espíritu"),
+    desc: L("Invent a brand-new Spirit Day: the theme, what to wear or do, and why people would love it.", "Inventa un Día de Espíritu nuevo: el tema, qué ponerse o hacer y por qué le gustaría a la gente.") }
+];
+
+const CHECKLIST = [
+  L("Who it’s for (the audience)", "Para quién es (el público)"),
+  L("What exactly I want made (the format and length)", "Qué quiero exactamente que haga (el formato y la extensión)"),
+  L("Real details it should use (event, day, mood, school colors)", "Detalles reales que debe usar (evento, día, ambiente, colores de la escuela)"),
+  L("A rule or limit (tone, what to avoid, word count)", "Una regla o límite (tono, qué evitar, cantidad de palabras)")
+];
+
+const SESSIONS = [
+  { id: "s1", time: L("~20 min", "~20 min"),
+    title: L("Pick your mission and write your first prompt", "Elige tu misión y escribe tu primer prompt") },
+  { id: "s2", time: L("~15 min", "~15 min"),
+    title: L("Run it and judge what came back", "Pruébalo y juzga lo que salió") },
+  { id: "s3", time: L("~15 min", "~15 min"),
+    title: L("Fact-check the AI", "Verifica los datos de la IA") },
+  { id: "s4", time: L("~20 min", "~20 min"),
+    title: L("Direct it better and make it yours", "Dirígela mejor y hazlo tuyo") },
+  { id: "s5", time: L("~15 min", "~15 min"),
+    title: L("Finish your Hype Card and show it", "Termina tu Tarjeta del Entusiasmo y muéstrala") }
+];
+
+const AI_TOOLS = [
+  ["Microsoft Copilot", "https://copilot.microsoft.com"],
+  ["Duck.ai", "https://duck.ai"],
+  ["Perplexity", "https://www.perplexity.ai"],
+  ["HuggingChat", "https://huggingface.co/chat"]
+];
+
+/* ============ state ============ */
+function fresh() {
+  return { name: "", cur: 0, mission: "", prompt1: "", checks: [], output1: "", generic: "", surprise: "",
+           claims: "", verified: "", prompt2: "", changes: "", final: "", stars: 0, learned: "", visited: [true, false, false, false, false] };
+}
+let S = fresh();
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* storage blocked */ } }
+function load() {
+  try { const o = JSON.parse(localStorage.getItem(KEY)); if (o && typeof o === "object" && "cur" in o) S = Object.assign(fresh(), o); } catch (e) { /* ignore */ }
+}
+let view = "work"; // work | card
+
+/* ============ completion rules (what counts as “done” per session) ============ */
+const len = s => (s || "").trim().length;
+function isDone(i) {
+  switch (i) {
+    case 0: return !!S.mission && len(S.prompt1) >= 25;
+    case 1: return len(S.output1) >= 20 && len(S.generic) >= 15;
+    case 2: return len(S.claims) >= 15 && len(S.verified) >= 15;
+    case 3: return len(S.prompt2) >= 25 && len(S.changes) >= 20 && len(S.final) >= 20;
+    case 4: return S.stars > 0 && len(S.learned) >= 20;
+  }
+  return false;
+}
+const doneCount = () => [0, 1, 2, 3, 4].filter(isDone).length;
+const missionOf = id => MISSIONS.find(m => m.id === id);
+
+/* ============ UI bits ============ */
+const U = {
+  title: L("Direct the Hype", "Dirige el Entusiasmo"),
+  lead: L("Use AI to help make something for Homecoming, then show that YOU were the director. The best part of this project is what you notice, question, and change.", "Usa la IA para ayudar a crear algo para Homecoming y demuestra que TÚ fuiste el director. Lo mejor de este proyecto es lo que notas, cuestionas y cambias."),
+  r1: L("5 short sessions. Do one a day, or go faster. Your pace is fine.", "5 sesiones cortas. Haz una al día o avanza más rápido. Tu ritmo está bien."),
+  r2: L("Everything saves on this device as you type.", "Todo se guarda en este dispositivo mientras escribes."),
+  r3: L("The AI helps. You decide, check, and edit.", "La IA ayuda. Tú decides, verificas y editas."),
+  r4: L("Grading is mostly about your thinking, not how fancy the AI output is.", "La calificación depende sobre todo de tu forma de pensar, no de qué tan elegante sea lo que genere la IA."),
+  name: L("Your name (first and last)", "Tu nombre (nombre y apellido)"),
+  next: L("Next session", "Siguiente sesión"),
+  prev: L("Previous session", "Sesión anterior"),
+  card: L("See my Hype Card", "Ver mi Tarjeta del Entusiasmo"),
+  backWork: L("Back to my work", "Volver a mi trabajo"),
+  session: L("Session", "Sesión"),
+  done: L("Done", "Listo"),
+  saved: L("Saved on this device", "Guardado en este dispositivo"),
+  openTool: L("Open an AI tool in a new tab:", "Abre una herramienta de IA en una pestaña nueva:"),
+  copyBtn: L("Copy my Hype Card text", "Copiar el texto de mi Tarjeta"),
+  copied: L("Copied!", "¡Copiado!"),
+  print: L("Print / save as PDF", "Imprimir / guardar como PDF"),
+  restartAsk: L("Start over (erases everything on this device)", "Empezar de nuevo (borra todo en este dispositivo)"),
+  restartSure: L("Really erase all your work here? Press again to confirm.", "¿De verdad quieres borrar todo tu trabajo aquí? Presiónalo otra vez para confirmar."),
+};
+
+function ta(id, label, hint, tall) {
+  return `<label class="lbl" for="${id}">${bi(label)}</label>${hint ? `<p class="hint">${bi(hint)}</p>` : ""}
+    <textarea id="${id}" class="${tall ? "tall" : ""}" data-f="${id}">${esc(S[id])}</textarea>`;
+}
+
+/* ============ session screens ============ */
+function sessionBody(i) {
+  if (i === 0) {
+    const m = missionOf(S.mission);
+    return `
+    <p>${bi(L("Choose the thing you’ll direct the AI to help you make.", "Elige lo que le pedirás a la IA que te ayude a crear."))}</p>
+    <div class="missions">${MISSIONS.map(x => `<button class="mission" data-a="mission" data-m="${x.id}" aria-pressed="${S.mission === x.id}">
+        <h3 class="serif">${bi(x.name)}</h3><p>${bi(x.desc)}</p></button>`).join("")}</div>
+
+    <h3 class="serif" style="margin-bottom:4px">${bi(L("Write your FIRST prompt", "Escribe tu PRIMER prompt"))}</h3>
+    <p>${bi(L("A prompt is what you type to tell the AI what to do. Write it before you open any AI tool. A strong prompt usually includes:", "Un prompt es lo que escribes para decirle a la IA qué hacer. Escríbelo antes de abrir cualquier herramienta de IA. Un buen prompt suele incluir:"))}</p>
+    <div class="checks" id="checks">${CHECKLIST.map((c, k) => { const on = (S.checks || []).includes(k); return `<label class="check ${on ? "on" : ""}"><input type="checkbox" data-a="check" data-k="${k}" ${on ? "checked" : ""}><span>${bi(c)}</span></label>`; }).join("")}</div>
+    <div class="example">
+      <div><span class="tag">${bi(L("A weak prompt:", "Un prompt débil:"), "inline")}</span></div>
+      ${bi(L("“make a homecoming poster”", "“hazme un cartel de homecoming”"))}
+      <div style="margin-top:8px"><span class="tag">${bi(L("A stronger prompt:", "Un prompt más fuerte:"), "inline")}</span></div>
+      ${bi(L("“Describe a poster for a Friday night football game, aimed at 9th graders, in blue and gold, with a funny, high-energy tone. Give me a headline and three details to show in the picture.”", "“Describe un cartel para un partido de fútbol americano del viernes por la noche, dirigido a estudiantes de 9.º grado, en azul y dorado, con un tono divertido y lleno de energía. Dame un titular y tres detalles para mostrar en la imagen.”"))}
+    </div>
+    ${ta("prompt1", L("My first prompt (exactly what I will type)", "Mi primer prompt (exactamente lo que voy a escribir)"), L("Aim for 2–4 sentences. Check the boxes above only if you really included each item.", "Intenta que tenga de 2 a 4 oraciones. Marca las casillas de arriba solo si de verdad incluiste cada elemento."), false)}`;
+  }
+  if (i === 1) {
+    return `
+    <p>${bi(L("Now open an AI tool and type your prompt in. Don’t change it yet. See what you get.", "Ahora abre una herramienta de IA y escribe tu prompt. Todavía no lo cambies. Mira qué obtienes."))}</p>
+    <p class="noprint"><b>${bi(U.openTool, "inline")}</b></p>
+    <div class="tools noprint">${AI_TOOLS.map(t => `<a href="${t[1]}" target="_blank" rel="noopener noreferrer">${t[0]}</a>`).join("")}</div>
+    <div class="panel" style="background:var(--mint2)"><b>${bi(L("My first prompt:", "Mi primer prompt:"), "inline")}</b><br>${S.prompt1 ? esc(S.prompt1) : `<i>${bi(L("(Write it in Session 1 first.)", "(Escríbelo primero en la Sesión 1.)"), "inline")}</i>`}</div>
+    ${ta("output1", L("Paste the AI’s answer here (or the best part of it)", "Pega aquí la respuesta de la IA (o la mejor parte)"), L("If you can’t paste, copy the key lines by typing them.", "Si no puedes pegar, copia las líneas clave escribiéndolas."), true)}
+    ${ta("generic", L("What feels generic, boring, or “could be about any school”? What actually felt original?", "¿Qué se siente genérico, aburrido o “podría ser de cualquier escuela”? ¿Qué sí se sintió original?"), L("Point to specific words or ideas.", "Señala palabras o ideas específicas."), false)}
+    ${ta("surprise", L("Optional: What surprised you?", "Opcional: ¿Qué te sorprendió?"), null, false)}`;
+  }
+  if (i === 2) {
+    return `
+    <p>${bi(L("AI can sound sure even when it’s wrong or making things up. Time to play fact-checker.", "La IA puede sonar segura incluso cuando se equivoca o inventa cosas. Es hora de hacer de verificador de datos."))}</p>
+    <div class="example">${bi(L("A claim is anything the AI states as a fact: a date, a place, a number, a rule, what your school does or has. Ideas and opinions aren’t claims. Facts are.", "Una afirmación es cualquier cosa que la IA presenta como un hecho: una fecha, un lugar, un número, una regla, lo que tu escuela hace o tiene. Las ideas y opiniones no son afirmaciones. Los hechos sí."))}</div>
+    ${ta("claims", L("List 2 or more factual claims in the AI’s answer (or write “none” and explain why)", "Anota 2 o más afirmaciones de hechos en la respuesta de la IA (o escribe “ninguna” y explica por qué)"), L("Example: “It says our dance is on Friday.”", "Ejemplo: “Dice que nuestro baile es el viernes.”"), false)}
+    ${ta("verified", L("How would you check each one, or how did you? Who or what is the real source? What did you find?", "¿Cómo comprobarías cada una, o cómo lo hiciste? ¿Cuál es la fuente real? ¿Qué encontraste?"), L("Good sources: school announcements, your teacher, the office, official school pages. Another AI is not a source.", "Buenas fuentes: anuncios de la escuela, tu maestro, la oficina, páginas oficiales de la escuela. Otra IA no es una fuente."), true)}`;
+  }
+  if (i === 3) {
+    return `
+    <p>${bi(L("Now be the director. Use what you noticed to write a better prompt, then edit the result so it’s truly yours.", "Ahora sé el director. Usa lo que notaste para escribir un mejor prompt y luego edita el resultado para que sea realmente tuyo."))}</p>
+    <div class="panel" style="background:var(--mint2)"><b>${bi(L("What you said felt generic:", "Lo que dijiste que se sintió genérico:"), "inline")}</b><br>${S.generic ? esc(S.generic) : "—"}</div>
+    ${ta("prompt2", L("My SECOND prompt (use the real details and fix what felt generic)", "Mi SEGUNDO prompt (usa los detalles reales y arregla lo que se sintió genérico)"), L("Add the missing details, give it the facts you verified, and say what to avoid.", "Agrega los detalles que faltaban, dale los datos que verificaste y dile qué evitar."), false)}
+    <p class="noprint"><b>${bi(U.openTool, "inline")}</b></p>
+    <div class="tools noprint">${AI_TOOLS.map(t => `<a href="${t[1]}" target="_blank" rel="noopener noreferrer">${t[0]}</a>`).join("")}</div>
+    ${ta("changes", L("What did the AI change this time? What did YOU change by hand afterward, and why?", "¿Qué cambió la IA esta vez? ¿Qué cambiaste TÚ a mano después y por qué?"), L("Be specific: “I replaced the pizza line because…”", "Sé específico: “Reemplacé la línea de la pizza porque…”"), false)}
+    ${ta("final", L("My FINAL version (after my edits)", "Mi versión FINAL (después de mis ediciones)"), L("This should sound like you and be true. If it’s a poster, describe it in words or sketch it on paper.", "Debe sonar como tú y ser verdadera. Si es un cartel, descríbelo con palabras o dibújalo en papel."), true)}`;
+  }
+  // session 5
+  return `
+    <p>${bi(L("Last step: reflect, rate, and get ready to show your work.", "Último paso: reflexiona, califica y prepárate para mostrar tu trabajo."))}</p>
+    <div class="lbl">${bi(L("How original and “you” is your final version?", "¿Qué tan original y “tuya” es tu versión final?"))}</div>
+    <div class="stars" role="group" aria-label="Rating 1 to 5">${[1, 2, 3, 4, 5].map(n => `<button data-a="star" data-n="${n}" class="${S.stars >= n ? "on" : ""}" aria-label="${n}" aria-pressed="${S.stars === n}">${n}</button>`).join("")}</div>
+    <p class="hint">${bi(L("1 = mostly the AI’s ideas, 5 = mostly my ideas and choices.", "1 = sobre todo ideas de la IA, 5 = sobre todo mis ideas y decisiones."))}</p>
+    ${ta("learned", L("What did you learn about directing AI, and what would you tell a friend who just types “make me a poster”?", "¿Qué aprendiste sobre dirigir a la IA y qué le dirías a un amigo que solo escribe “hazme un cartel”?"), L("At least two sentences.", "Al menos dos oraciones."), true)}
+    <div class="partner"><b>${bi(L("Show it: 1-minute walkthrough", "Muéstralo: explicación de 1 minuto"))}</b>
+      <p style="margin:4px 0 0">${bi(L("Your Hype Card has a partner check. Explain it out loud to a classmate or to Mr. Sullivan using these three questions:", "Tu Tarjeta tiene una revisión con un compañero. Explícala en voz alta a un compañero o al Sr. Sullivan con estas tres preguntas:"))}</p>
+      <ol>
+        <li>${bi(L("What did your first prompt miss?", "¿Qué le faltó a tu primer prompt?"))}</li>
+        <li>${bi(L("What did the AI get wrong or make generic, and how did you catch it?", "¿Qué hizo mal o genérico la IA y cómo lo descubriste?"))}</li>
+        <li>${bi(L("What is the one thing in the final version that is 100% your idea?", "¿Qué es lo único de la versión final que es 100 % idea tuya?"))}</li>
+      </ol></div>`;
+}
+
+function renderWork() {
+  const n = doneCount();
+  const trail = SESSIONS.map((s, i) => `<button data-a="goto" data-i="${i}" class="${isDone(i) ? "done" : ""}" ${S.cur === i ? 'aria-current="true"' : ""}>
+      <span class="n">${bi(U.session, "inline")} ${i + 1}</span>${bi(s.title)}${isDone(i) ? `<span class="tick" aria-label="done">✓</span>` : ""}</button>`).join("");
+  const s = SESSIONS[S.cur];
+  return `
+  <section class="hero on-dark">
+    <h1>${bi(U.title)}</h1>
+    <div class="lead">${bi(U.lead)}</div>
+    <div class="rules"><div class="rule">${bi(U.r1)}</div><div class="rule">${bi(U.r2)}</div><div class="rule">${bi(U.r3)}</div><div class="rule">${bi(U.r4)}</div></div>
+  </section>
+  <section class="panel">
+    <label class="lbl" style="margin-top:0" for="nameIn">${bi(U.name)}</label>
+    <input type="text" id="nameIn" autocomplete="off" value="${esc(S.name)}" data-f="name">
+  </section>
+  <div class="trail" role="navigation" aria-label="Sessions">${trail}</div>
+  <section class="panel">
+    <div class="sessionhead"><h2 class="serif" style="margin:0 0 8px">${bi(L("Session " + (S.cur + 1) + ": " + s.title.en, "Sesión " + (S.cur + 1) + ": " + s.title.es))}</h2><span class="time">${s.time.en}</span></div>
+    ${sessionBody(S.cur)}
+    <div class="saved" id="saved"></div>
+    <div class="nav noprint">
+      <div>${S.cur > 0 ? `<button class="btn alt" data-a="goto" data-i="${S.cur - 1}">${bi(U.prev)}</button>` : ""}</div>
+      <div>${S.cur < 4 ? `<button class="btn" data-a="goto" data-i="${S.cur + 1}">${bi(U.next)}</button>` : `<button class="btn amber" data-a="card">${bi(U.card)}</button>`}</div>
+    </div>
+  </section>
+  <div class="noprint" style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+    <span><b>${n} / 5</b> ${bi(L("sessions complete", "sesiones completas"), "inline")}</span>
+    <button class="btn alt" data-a="card">${bi(U.card)}</button>
+  </div>`;
+}
+
+/* ============ Hype Card ============ */
+function dd(v) { return len(v) ? `<dd>${esc(v)}</dd>` : `<dd class="empty">—</dd>`; }
+function cardText() {
+  const m = missionOf(S.mission);
+  const out = [];
+  out.push("DIRECT THE HYPE — Hype Card (IT Fundamentals)");
+  out.push("Name: " + (S.name || "(no name)") + "    Date: " + new Date().toLocaleDateString());
+  out.push("Mission: " + (m ? m.name.en : "(not chosen)"));
+  out.push("Sessions complete: " + doneCount() + " of 5");
+  out.push("");
+  out.push("FIRST PROMPT:\n" + (S.prompt1 || "-"));
+  out.push("\nWHAT FELT GENERIC IN THE AI'S FIRST ANSWER:\n" + (S.generic || "-"));
+  out.push("\nFACTUAL CLAIMS I FOUND:\n" + (S.claims || "-"));
+  out.push("\nHOW I CHECKED / WHAT I FOUND:\n" + (S.verified || "-"));
+  out.push("\nSECOND PROMPT:\n" + (S.prompt2 || "-"));
+  out.push("\nWHAT THE AI CHANGED / WHAT I CHANGED BY HAND:\n" + (S.changes || "-"));
+  out.push("\nFINAL VERSION:\n" + (S.final || "-"));
+  out.push("\nORIGINALITY RATING (1-5): " + (S.stars || "-"));
+  out.push("\nWHAT I LEARNED:\n" + (S.learned || "-"));
+  return out.join("\n");
+}
+function renderCard() {
+  const m = missionOf(S.mission);
+  const n = doneCount();
+  return `
+  <div class="noprint" style="margin-bottom:12px"><button class="btn alt" data-a="work">${bi(U.backWork)}</button></div>
+  <div class="card">
+    <div class="ch on-dark"><h2>${bi(L("Hype Card", "Tarjeta del Entusiasmo"))}</h2></div>
+    <div class="cb">
+      <p style="margin:0"><b>${esc(S.name) || "—"}</b> · ${new Date().toLocaleDateString()}</p>
+      <p style="margin:4px 0 0">${bi(L("Mission", "Misión"), "inline")}: <b>${m ? bi(m.name, "inline") : "—"}</b> · <b>${n} / 5</b> ${bi(L("sessions complete", "sesiones completas"), "inline")}</p>
+      <dl>
+        <dt>${bi(L("First prompt", "Primer prompt"))}</dt>${dd(S.prompt1)}
+        <dt>${bi(L("What felt generic in the AI’s first answer", "Qué se sintió genérico en la primera respuesta de la IA"))}</dt>${dd(S.generic)}
+        <dt>${bi(L("Factual claims I found", "Afirmaciones de hechos que encontré"))}</dt>${dd(S.claims)}
+        <dt>${bi(L("How I checked and what I found", "Cómo lo comprobé y qué encontré"))}</dt>${dd(S.verified)}
+        <dt>${bi(L("Second prompt", "Segundo prompt"))}</dt>${dd(S.prompt2)}
+        <dt>${bi(L("What the AI changed / what I changed by hand", "Qué cambió la IA / qué cambié yo a mano"))}</dt>${dd(S.changes)}
+        <dt>${bi(L("Final version", "Versión final"))}</dt>${dd(S.final)}
+        <dt>${bi(L("Originality rating", "Calificación de originalidad"))}</dt><dd>${S.stars ? S.stars + " / 5" : "—"}</dd>
+        <dt>${bi(L("What I learned", "Qué aprendí"))}</dt>${dd(S.learned)}
+      </dl>
+      <div class="partner"><b>${bi(L("1-minute walkthrough: partner check", "Explicación de 1 minuto: revisión con un compañero"))}</b>
+        <div class="sig"><div>${bi(L("Partner name", "Nombre del compañero"))}</div><div>${bi(L("Date", "Fecha"))}</div><div>${bi(L("Mr. Sullivan initials", "Iniciales del Sr. Sullivan"))}</div></div></div>
+    </div>
+  </div>
+  <section class="panel noprint">
+    <textarea class="out" id="cardOut" readonly aria-label="Hype Card text">${esc(cardText())}</textarea>
+    <div class="row" style="margin-top:10px">
+      <button class="btn" data-a="copy">${bi(U.copyBtn)}</button>
+      <button class="btn alt" data-a="print">${bi(U.print)}</button>
+    </div>
+    <div id="copyMsg"></div>
+  </section>
+  <section class="panel noprint">
+    <button class="btn alt" id="resetBtn" data-a="reset">${bi(U.restartAsk)}</button>
+    <div id="resetMsg"></div>
+  </section>`;
+}
+
+/* ============ render + events ============ */
+const app = document.getElementById("app");
+function render(top) {
+  const y = window.scrollY;
+  app.innerHTML = view === "card" ? renderCard() : renderWork();
+  window.scrollTo(0, top ? 0 : y);
+}
+let resetArmed = false, saveTimer = null;
+function flashSaved() {
+  const el = document.getElementById("saved"); if (!el) return;
+  el.innerHTML = "✓ " + bi(U.saved, "inline");
+  clearTimeout(saveTimer); saveTimer = setTimeout(() => { const e2 = document.getElementById("saved"); if (e2) e2.innerHTML = ""; }, 1500);
+}
+function refreshTrail() {
+  // update only the done-state of the trail buttons without re-rendering (keeps cursor/focus in textareas)
+  document.querySelectorAll(".trail button").forEach((b, i) => {
+    const d = isDone(i);
+    b.classList.toggle("done", d);
+    const tick = b.querySelector(".tick");
+    if (d && !tick) b.insertAdjacentHTML("beforeend", `<span class="tick" aria-label="done">✓</span>`);
+    if (!d && tick) tick.remove();
+  });
+}
+
+document.addEventListener("input", e => {
+  const f = e.target.dataset && e.target.dataset.f;
+  if (!f) return;
+  S[f] = e.target.value; save(); flashSaved(); refreshTrail();
+});
+document.addEventListener("change", e => {
+  if (e.target.dataset && e.target.dataset.a === "check") {
+    const k = +e.target.dataset.k; S.checks = S.checks || [];
+    const at = S.checks.indexOf(k);
+    if (e.target.checked && at < 0) S.checks.push(k); if (!e.target.checked && at >= 0) S.checks.splice(at, 1);
+    e.target.closest(".check").classList.toggle("on", e.target.checked);
+    save();
+  }
+});
+document.addEventListener("click", e => {
+  const el = e.target.closest("[data-a]"); if (!el) return;
+  const a = el.dataset.a;
+  if (a === "goto") { S.cur = +el.dataset.i; save(); view = "work"; render(true); return; }
+  if (a === "mission") { S.mission = el.dataset.m; save(); render(); return; }
+  if (a === "star") { S.stars = +el.dataset.n; save(); render(); return; }
+  if (a === "card") { view = "card"; render(true); return; }
+  if (a === "work") { view = "work"; render(true); return; }
+  if (a === "print") { window.print(); return; }
+  if (a === "copy") {
+    const ta2 = document.getElementById("cardOut"), msg = document.getElementById("copyMsg");
+    const ok = () => { msg.innerHTML = `<div class="msg">${bi(U.copied)}</div>`; };
+    ta2.select();
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(ta2.value).then(ok, () => { document.execCommand("copy"); ok(); });
+      else { document.execCommand("copy"); ok(); }
+    } catch (err) { try { document.execCommand("copy"); ok(); } catch (e2) { /* manual copy still possible */ } }
+    return;
+  }
+  if (a === "reset") {
+    if (!resetArmed) { resetArmed = true; document.getElementById("resetMsg").innerHTML = `<div class="msg" style="border-color:#d9435d;background:#fde4e8">${bi(U.restartSure)}</div>`; return; }
+    resetArmed = false; S = fresh(); save(); view = "work"; render(true);
+  }
+});
+
+load();
+render(true);
+</script>
+</body>
+</html>
