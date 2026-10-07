@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en" data-course="networking">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Subnetting Escape Room</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#0B1F3A; --green:#8FC53E; --cream:#F4F1E9; --gold:#D9A441;
+    --ink:#1a1a1a; --muted:#5b6472; --line:#dfe3e8;
+    --ai-bg:#20242b; --ai-line:#3a4150; --ai-text:#e7eaf0;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{ font-family:'Inter', system-ui, sans-serif; color:var(--ink); background:var(--cream); line-height:1.55; overflow-x:hidden; }
+  .topbar{ display:flex; align-items:center; justify-content:space-between; padding:14px 24px; background:var(--navy); color:#fff; flex-wrap:wrap; gap:10px; }
+  .topbar a{ color:#fff; text-decoration:none; font-size:0.85rem; font-weight:500; border:1px solid rgba(255,255,255,0.35); padding:6px 12px; border-radius:6px; }
+  .topbar a:hover, .topbar a:focus-visible{ background:rgba(255,255,255,0.12); outline:2px solid var(--gold); outline-offset:2px; }
+  .topbar .brand{ font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:0.95rem; }
+  main{ max-width:920px; margin:0 auto; padding:32px 20px 80px; }
+  header.hero{ text-align:center; margin-bottom:20px; }
+  .eyebrow{ font-family:'Space Grotesk',sans-serif; font-weight:600; letter-spacing:0.12em; text-transform:uppercase; color:var(--green); font-size:0.8rem; margin-bottom:6px; }
+  h1{ font-family:'Space Grotesk',sans-serif; font-weight:700; color:var(--navy); font-size:clamp(1.6rem, 4vw, 2.3rem); margin:0 0 8px; }
+  .subtitle{ color:var(--muted); font-size:1.05rem; font-style:italic; }
+  section{ background:#fff; border-radius:12px; padding:24px clamp(16px,4vw,32px); margin-bottom:24px; box-shadow:0 1px 3px rgba(11,31,58,0.08); }
+  h2{ font-family:'Space Grotesk',sans-serif; color:var(--navy); font-size:1.3rem; margin-top:0; border-bottom:2px solid var(--green); padding-bottom:8px; }
+  h3{ font-family:'Space Grotesk',sans-serif; color:var(--navy); font-size:1.02rem; margin-bottom:6px;}
+  ol, ul{ padding-left:1.4em; }
+  li{ margin-bottom:6px; }
+  code{ font-family:'IBM Plex Mono', monospace; font-size:0.9em; background:#eef1f5; padding:1px 6px; border-radius:4px; }
+  table{ width:100%; border-collapse:collapse; margin:14px 0; font-size:0.92rem; }
+  th, td{ border:1px solid var(--line); padding:8px 10px; text-align:left; vertical-align:top; }
+  th{ background:var(--navy); color:#fff; font-family:'Space Grotesk',sans-serif; font-weight:600; }
+  tr:nth-child(even) td{ background:#fafbfc; }
+  input[type="text"]{ width:100%; border:1px solid var(--line); border-radius:5px; padding:5px 7px; font-family:'Inter',sans-serif; font-size:0.9rem; }
+  input[type="text"]:focus-visible{ outline:2px solid var(--gold); outline-offset:1px; border-color:var(--gold); }
+  .print-hint{ text-align:center; color:var(--muted); font-size:0.85rem; margin-top:-8px; margin-bottom:28px; }
+  .pdf-btn{ position:fixed; right:20px; bottom:20px; z-index:50; display:flex; align-items:center; gap:8px; background:var(--green); color:var(--navy); border:none; border-radius:30px; padding:12px 20px; font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:0.95rem; box-shadow:0 4px 14px rgba(11,31,58,0.28); cursor:pointer; }
+  .pdf-btn:hover, .pdf-btn:focus-visible{ background:#7cb32e; outline:2px solid var(--gold); outline-offset:2px; }
+  .pdf-hint{ position:fixed; right:20px; bottom:70px; z-index:50; max-width:220px; background:var(--navy); color:#fff; font-size:0.78rem; padding:8px 12px; border-radius:8px; box-shadow:0 4px 14px rgba(11,31,58,0.28); }
+  .name-bar{ display:flex; gap:16px; flex-wrap:wrap; align-items:center; background:#fff; border-radius:12px; padding:14px 20px; margin-bottom:24px; box-shadow:0 1px 3px rgba(11,31,58,0.08); font-size:0.95rem; }
+  .name-bar label{ font-weight:600; color:var(--navy); }
+  .name-bar input[type="text"]{ max-width:260px; }
+
+  .ai-card{ background:var(--ai-bg); color:var(--ai-text); border-radius:10px; padding:16px 18px; margin:14px 0; font-size:0.9rem; box-shadow:0 4px 12px rgba(0,0,0,0.2); }
+  .ai-head{ display:flex; align-items:center; gap:8px; font-family:'Space Grotesk',sans-serif; color:#fff; font-weight:600; font-size:0.9rem; margin-bottom:10px; border-bottom:1px solid var(--ai-line); padding-bottom:8px; }
+  .ai-prompt{ color:#9aa4b5; font-style:italic; margin-bottom:8px; font-size:0.85rem; }
+  .ai-response{ font-family:'IBM Plex Mono',monospace; font-size:0.82rem; line-height:1.6; color:var(--ai-text); }
+
+  @media print{
+    .topbar, .pdf-btn, .print-hint, .pdf-hint{ display:none; }
+    body{ background:#fff; }
+    section, .name-bar{ box-shadow:none; border:1px solid var(--line); }
+    tr, table{ page-break-inside:avoid; }
+    .ai-card{ box-shadow:none; border:1px solid #333; }
+    input[type="text"]{ border:1px solid #888; }
+    @page{ margin:0.6in; }
+  }
+</style>
+
+<style>
+  .room{ border:1px solid var(--line); border-radius:12px; padding:18px 20px; margin-bottom:20px; background:#fafbfc; }
+  .room-head{ display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:6px; margin-bottom:6px; }
+  .room-title{ font-family:'Space Grotesk',sans-serif; font-weight:700; color:var(--navy); font-size:1.1rem; }
+  .room-tag{ font-family:'IBM Plex Mono',monospace; font-size:0.72rem; color:#fff; background:var(--navy); padding:2px 9px; border-radius:10px; }
+  .room-tag.bonus{ background:var(--gold); color:#2a1f00; }
+  .lock-row{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:12px; padding-top:12px; border-top:1px dashed var(--line); }
+  .lock-row label{ font-weight:600; color:var(--navy); font-size:0.9rem; }
+  .lock-row input[type="text"]{ max-width:220px; font-family:'IBM Plex Mono',monospace; }
+  .lock-btn{ background:var(--navy); color:#fff; border:none; border-radius:6px; padding:7px 14px; font-family:'Space Grotesk',sans-serif; font-weight:600; cursor:pointer; }
+  .lock-btn:hover, .lock-btn:focus-visible{ background:#16345c; outline:2px solid var(--gold); outline-offset:2px; }
+  .lock-status{ font-weight:600; font-size:0.9rem; }
+  .lock-status.ok{ color:#2f7d1f; } .lock-status.no{ color:#b3261e; }
+  .room.unlocked{ border-color:var(--green); background:#f3faea; }
+  .escape-banner{ display:none; background:var(--navy); color:#fff; border-radius:12px; padding:18px 22px; text-align:center; margin-bottom:24px; font-family:'Space Grotesk',sans-serif; }
+  .escape-banner.show{ display:block; }
+  .escape-banner strong{ color:var(--green); font-size:1.3rem; }
+  .progress{ text-align:center; font-family:'IBM Plex Mono',monospace; font-size:0.85rem; color:var(--muted); margin-bottom:18px; }
+  @media print{ .lock-btn{ display:none; } .escape-banner{ display:none !important; } }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <span class="brand">🐾 Bulldog Networking — AP Networking</span>
+  <a href="../../index.html">&larr; Back to AP Networking</a>
+</div>
+
+<main>
+  <header class="hero">
+    <div class="eyebrow">AP Networking · Local Unit 2 · Team Challenge</div>
+    <h1>Subnetting Escape Room</h1>
+    <p class="subtitle">Solve each room, find the unlock code, and get out.</p>
+  </header>
+  <p class="print-hint">Work as a team. When you&rsquo;re done, use the &ldquo;Download as PDF&rdquo; button to save one copy for your team to turn in.</p>
+
+  <div class="name-bar">
+    <label for="team-names">Team members:</label>
+    <input type="text" id="team-names" autocomplete="off" style="max-width:420px;">
+    <label for="student-period">Period:</label>
+    <input type="text" id="student-period" style="max-width:100px;">
+  </div>
+
+  <section>
+    <h2>The Mission</h2>
+    <p>The network closet door has locked behind you. To get out, your team has to crack the code on each room&rsquo;s lock. Every code is a number that comes straight from the math you&rsquo;ve been practicing &mdash; sizing subnets, finding network and broadcast addresses, and deciding whether devices share a subnet.</p>
+    <p style="color:var(--muted); font-size:0.92rem;"><strong>Tools you already have:</strong> block size = 2<sup>host bits</sup>; usable hosts = 2<sup>n</sup> &minus; 2; the network address is the first address in the block and the broadcast address is the last.</p>
+    <p style="color:var(--muted); font-size:0.92rem;">Enter a code and press <em>Try it</em> to see whether the lock opens. Rooms can be solved in any order. Room 4 is a bonus &mdash; the escape counts once Rooms 1, 2, 3, and the Final Room are open.</p>
+  </section>
+
+  <div class="progress" id="progress">Locks open: 0 of 4 required</div>
+  <div class="escape-banner" id="escape-banner"><strong>YOU ESCAPED!</strong><br>All required locks are open. Download your PDF and turn it in.</div>
+
+  <section>
+    <h2>The Rooms</h2>
+    
+    <div class="room" id="room-r1">
+      <div class="room-head"><span class="room-title">Room 1: The Same-Subnet Gate</span><span class="room-tag">Gate</span></div>
+      <p>All four pairs below are on a network using <strong>/27</strong> subnets (blocks of 32 addresses). For each pair, decide whether the two devices are on the <strong>same subnet</strong> or <strong>different subnets</strong>.</p>
+      <table>
+        <thead><tr><th>Pair</th><th>Device 1</th><th>Device 2</th><th>Same or different?</th></tr></thead>
+        <tbody>
+          <tr><td>A</td><td>192.168.5.20</td><td>192.168.5.40</td><td><input type="text"></td></tr>
+          <tr><td>B</td><td>192.168.5.70</td><td>192.168.5.90</td><td><input type="text"></td></tr>
+          <tr><td>C</td><td>192.168.5.100</td><td>192.168.5.130</td><td><input type="text"></td></tr>
+          <tr><td>D</td><td>192.168.5.161</td><td>192.168.5.190</td><td><input type="text"></td></tr>
+        </tbody>
+      </table>
+      <p><strong>Unlock code:</strong> the number of pairs that are on the <em>same</em> subnet.</p>
+      <div class="lock-row">
+        <label for="code-r1">Unlock code:</label>
+        <input type="text" id="code-r1" autocomplete="off" placeholder="one number">
+        <button class="lock-btn" type="button" data-room="r1">Try it</button>
+        <span class="lock-status" id="status-r1"></span>
+      </div>
+    </div>
+    
+    <div class="room" id="room-r2">
+      <div class="room-head"><span class="room-title">Room 2: The Subnet Split</span><span class="room-tag">Vault</span></div>
+      <p>You have the network <code>192.168.1.0/24</code> and need to divide it into <strong>4 equal-sized subnets</strong>.</p>
+      <ol>
+        <li>What prefix (CIDR) will each subnet use?</li>
+        <li>List the four subnets: network address &rarr; broadcast address.</li>
+      </ol>
+      <table>
+        <thead><tr><th>Subnet</th><th>Network address</th><th>Broadcast address</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td><input type="text"></td><td><input type="text"></td></tr>
+          <tr><td>2</td><td><input type="text"></td><td><input type="text"></td></tr>
+          <tr><td>3</td><td><input type="text"></td><td><input type="text"></td></tr>
+          <tr><td>4</td><td><input type="text"></td><td><input type="text"></td></tr>
+        </tbody>
+      </table>
+      <table><tbody><tr><td style="width:35%;"><strong>Prefix used</strong></td><td><input type="text"></td></tr></tbody></table>
+      <p><strong>Unlock code:</strong> the <em>last number</em> (final octet) of the broadcast address of the <strong>third</strong> subnet.</p>
+      <div class="lock-row">
+        <label for="code-r2">Unlock code:</label>
+        <input type="text" id="code-r2" autocomplete="off" placeholder="one number">
+        <button class="lock-btn" type="button" data-room="r2">Try it</button>
+        <span class="lock-status" id="status-r2"></span>
+      </div>
+    </div>
+    
+    <div class="room" id="room-r3">
+      <div class="room-head"><span class="room-title">Room 3: Host Hunt</span><span class="room-tag">Vault</span></div>
+      <p>You&rsquo;re given the subnet <code>10.0.0.0/26</code>.</p>
+      <table>
+        <tbody>
+          <tr><td style="width:45%;"><strong>Usable host addresses</strong></td><td><input type="text"></td></tr>
+          <tr><td><strong>First usable address</strong></td><td><input type="text"></td></tr>
+          <tr><td><strong>Last usable address</strong></td><td><input type="text"></td></tr>
+        </tbody>
+      </table>
+      <p><strong>Unlock code:</strong> add the <em>last number</em> of the first usable address to the <em>last number</em> of the last usable address.</p>
+      <div class="lock-row">
+        <label for="code-r3">Unlock code:</label>
+        <input type="text" id="code-r3" autocomplete="off" placeholder="one number">
+        <button class="lock-btn" type="button" data-room="r3">Try it</button>
+        <span class="lock-status" id="status-r3"></span>
+      </div>
+    </div>
+    
+    <div class="room" id="room-r4">
+      <div class="room-head"><span class="room-title">Room 4: The Masked Message</span><span class="room-tag bonus">Bonus</span></div>
+      <p>Time-permitting bonus room. Convert each subnet mask to CIDR notation, then put the five prefixes in order from <strong>smallest to largest</strong> and assign letters <strong>A&ndash;E</strong> in that order (smallest = A).</p>
+      <table>
+        <thead><tr><th>Subnet mask</th><th>CIDR prefix</th></tr></thead>
+        <tbody>
+          <tr><td>255.255.255.128</td><td><input type="text"></td></tr>
+          <tr><td>255.255.192.0</td><td><input type="text"></td></tr>
+          <tr><td>255.255.252.0</td><td><input type="text"></td></tr>
+          <tr><td>255.255.255.224</td><td><input type="text"></td></tr>
+          <tr><td>255.255.255.252</td><td><input type="text"></td></tr>
+        </tbody>
+      </table>
+      <table>
+        <thead><tr><th>Letter</th><th>A (smallest)</th><th>B</th><th>C</th><th>D</th><th>E (largest)</th></tr></thead>
+        <tbody><tr><td>Prefix</td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td></tr></tbody>
+      </table>
+      <p><strong>Unlock code:</strong> spell the word <strong>BEAD</strong> using your lettered prefixes &mdash; write the four prefix numbers in that order, separated by commas (example format: 10,20,30,40).</p>
+      <div class="lock-row">
+        <label for="code-r4">Unlock code:</label>
+        <input type="text" id="code-r4" autocomplete="off" placeholder="n,n,n,n">
+        <button class="lock-btn" type="button" data-room="r4">Try it</button>
+        <span class="lock-status" id="status-r4"></span>
+      </div>
+    </div>
+    
+    <div class="room" id="room-r5">
+      <div class="room-head"><span class="room-title">Final Room: The Broadcast Barrier</span><span class="room-tag">Final</span></div>
+      <p>A device has the address <code>172.16.5.200</code> with the subnet mask <code>255.255.255.192</code>.</p>
+      <table>
+        <tbody>
+          <tr><td style="width:45%;"><strong>Prefix (CIDR)</strong></td><td><input type="text"></td></tr>
+          <tr><td><strong>Network address</strong></td><td><input type="text"></td></tr>
+          <tr><td><strong>Broadcast address</strong></td><td><input type="text"></td></tr>
+          <tr><td><strong>Usable hosts in this subnet</strong></td><td><input type="text"></td></tr>
+        </tbody>
+      </table>
+      <p><strong>Unlock code:</strong> the number of usable hosts in this subnet.</p>
+      <div class="lock-row">
+        <label for="code-r5">Unlock code:</label>
+        <input type="text" id="code-r5" autocomplete="off" placeholder="one number">
+        <button class="lock-btn" type="button" data-room="r5">Try it</button>
+        <span class="lock-status" id="status-r5"></span>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div class="pdf-hint">In the print dialog, set <strong>Destination</strong> to <strong>Save as PDF</strong>, then save.</div>
+<button class="pdf-btn" id="pdf-btn" type="button">📄 Download as PDF</button>
+
+<script>
+  document.getElementById('pdf-btn').addEventListener('click', function () { window.print(); });
+
+  // SHA-256 of the correct (normalized) unlock codes - answers are not stored in plain text.
+  var HASHES = {
+    r1: 'd4735e3a265e16eee03f59718b9b5d03019c07d8b6c51f90da3a666eec13ab35',
+    r2: '70260742c2952154c84e2ea9f68b1a7397f49b6d343da1ed284093c0bd72c742',
+    r3: 'da4ea2a5506f2693eae190d9360a1f31793c98a1adade51d93533a6f520ace1c',
+    r4: 'd2c26d3636a3ef736f2af6e207a5e3d5f3410b5a6d977da06f154512237af8cc',
+    r5: '81b8a03f97e8787c53fe1a86bda042b6f0de9b0ec9c09357e107c99ba4d6948a'
+  };
+  var REQUIRED = ['r1','r2','r3','r5'];
+  var opened = {};
+
+  function normalize(room, raw) {
+    var nums = (raw.match(/\d+/g) || []);
+    if (room === 'r4') return nums.join(',');
+    return nums.length ? nums[nums.length - 1] : '';
+  }
+
+  async function sha256(text) {
+    var buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+    return Array.from(new Uint8Array(buf)).map(function (b) { return b.toString(16).padStart(2, '0'); }).join('');
+  }
+
+  function updateProgress() {
+    var n = REQUIRED.filter(function (r) { return opened[r]; }).length;
+    document.getElementById('progress').textContent = 'Locks open: ' + n + ' of 4 required' + (opened.r4 ? ' (+ bonus room)' : '');
+    document.getElementById('escape-banner').classList.toggle('show', n === 4);
+  }
+
+  document.querySelectorAll('.lock-btn').forEach(function (btn) {
+    btn.addEventListener('click', async function () {
+      var room = btn.getAttribute('data-room');
+      var status = document.getElementById('status-' + room);
+      var raw = document.getElementById('code-' + room).value;
+      if (!window.crypto || !crypto.subtle) {
+        status.textContent = 'Ask Mr. Sullivan to check this code.'; status.className = 'lock-status no'; return;
+      }
+      var norm = normalize(room, raw);
+      if (!norm) { status.textContent = 'Enter a code first.'; status.className = 'lock-status no'; return; }
+      var h = await sha256(norm);
+      if (h === HASHES[room]) {
+        status.textContent = '🔓 Unlocked!'; status.className = 'lock-status ok';
+        document.getElementById('room-' + room).classList.add('unlocked');
+        opened[room] = true;
+      } else {
+        status.textContent = 'Not yet - recheck your work.'; status.className = 'lock-status no';
+        document.getElementById('room-' + room).classList.remove('unlocked');
+        opened[room] = false;
+      }
+      updateProgress();
+    });
+  });
+</script>
+</body>
+</html>
