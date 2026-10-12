@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sort It Out — Unit 4, Lesson 1</title>
+<style>
+:root{
+  --navy:#0F2238; --navy2:#1B3553; --teal:#14907F; --teal-d:#0C6B5E; --mint:#CDEFE4;
+  --amber:#F2B134; --amber-d:#A86F08; --coral:#E8604C; --coral-l:#FCE4DF;
+  --bg:#EEF3F7; --card:#FFFFFF; --line:#C9D5E0; --sub:#475C72; --ok:#0C6B5E;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  font-family:Calibri,Carlito,"Segoe UI",system-ui,-apple-system,sans-serif;
+  background:var(--bg); color:var(--navy); font-size:17px; line-height:1.45;
+  -webkit-text-size-adjust:100%;
+}
+h1,h2,h3{font-family:Cambria,Caladea,Georgia,serif; margin:0; line-height:1.15}
+button{font:inherit; color:inherit; cursor:pointer}
+button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--amber); outline-offset:2px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* ---------- bilingual: both always visible, toggle swaps which is primary ---------- */
+.bi{display:flex; flex-direction:column}
+.bi.inline{display:inline-flex; vertical-align:top}
+.bi .en,.bi .es{display:block}
+body[data-lang="en"] .bi .en{order:1; font-weight:700}
+body[data-lang="en"] .bi .es{order:2; font-style:italic; font-weight:400; font-size:.86em; color:var(--sub)}
+body[data-lang="es"] .bi .es{order:1; font-weight:700}
+body[data-lang="es"] .bi .en{order:2; font-style:italic; font-weight:400; font-size:.86em; color:var(--sub)}
+.on-dark .bi .es,.on-dark .bi .en{color:inherit}
+body[data-lang="en"] .on-dark .bi .es,body[data-lang="es"] .on-dark .bi .en{color:#BCD0E2}
+.btn .bi{align-items:center; text-align:center}
+.btn .bi .en,.btn .bi .es{color:inherit !important}
+.btn .bi .es{opacity:.9}
+
+/* ---------- header ---------- */
+header{background:var(--navy); color:#fff; padding:12px 18px; display:flex; align-items:center; gap:14px; flex-wrap:wrap}
+header .back{color:#BCD0E2; text-decoration:none; font-size:15px; border:1px solid #3B5675; padding:6px 10px; border-radius:6px}
+header .back:hover{background:var(--navy2)}
+header .ttl{flex:1; min-width:180px}
+header .ttl h1{font-size:26px}
+header .ttl .sub{font-size:14px; color:#BCD0E2}
+.langtog{display:flex; border:1px solid #3B5675; border-radius:8px; overflow:hidden}
+.langtog button{background:transparent; color:#BCD0E2; border:0; padding:7px 14px; font-weight:700}
+.langtog button[aria-pressed="true"]{background:var(--teal); color:#fff}
+
+main{max-width:1060px; margin:0 auto; padding:16px 16px 60px}
+.card{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:18px; margin-top:16px}
+.card h2{font-size:23px; margin-bottom:8px}
+.lead{font-size:18px}
+.muted{color:var(--sub)}
+
+/* stepper: a real sequence, so numbers are earned */
+.stepper{display:flex; gap:6px; flex-wrap:wrap; list-style:none; padding:0; margin:14px 0 0}
+.stepper li{flex:1 1 90px; min-width:84px; border-top:5px solid var(--line); padding-top:5px; font-size:13px; color:var(--sub)}
+.stepper li.done{border-color:var(--teal); color:var(--teal-d)}
+.stepper li.now{border-color:var(--amber); color:var(--navy)}
+.stepper .bi .en,.stepper .bi .es{font-size:13px !important}
+
+/* buttons */
+.btn{border:0; border-radius:10px; padding:11px 20px; background:var(--teal); color:#fff; min-height:48px}
+.btn:hover:not(:disabled){background:var(--teal-d)}
+.btn:disabled{background:#B8C6D2; color:#fff; cursor:not-allowed}
+.btn.alt{background:var(--navy); }
+.btn.alt:hover:not(:disabled){background:var(--navy2)}
+.btn.ghost{background:transparent; color:var(--navy); border:2px solid var(--navy)}
+.btn.ghost:hover:not(:disabled){background:#E1EAF2}
+.btn.amber{background:var(--amber); color:var(--navy)}
+.btn.amber:hover:not(:disabled){background:#E09E1C}
+.btn.amber:disabled{background:#B8C6D2; color:#fff}
+.row{display:flex; gap:12px; flex-wrap:wrap; align-items:center}
+
+/* welcome */
+.hero{background:var(--navy); color:#fff; border-radius:12px; padding:26px 22px; margin-top:16px}
+.hero h2{font-size:34px; margin-bottom:10px; color:#fff}
+.hero .lead{max-width:62ch}
+.how{display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:12px; margin-top:16px}
+.how > div{background:var(--navy2); border-radius:10px; padding:12px 14px}
+.how .n{font-family:Cambria,Caladea,Georgia,serif; font-size:26px; color:var(--amber); display:block}
+label.f{display:block; margin-top:14px}
+label.f .bi{margin-bottom:4px}
+input[type=text],textarea{width:100%; border:2px solid var(--line); border-radius:8px; padding:10px 12px; font:inherit; color:var(--navy); background:#fff}
+input[type=text]:focus,textarea:focus{border-color:var(--teal)}
+textarea{min-height:130px; resize:vertical}
+.fields{display:grid; grid-template-columns:2fr 1fr; gap:12px; max-width:520px}
+
+/* round layout */
+.grid2{display:grid; grid-template-columns:1.35fr 1fr; gap:16px}
+@media (max-width:820px){.grid2{grid-template-columns:1fr}}
+.scalecard svg{width:100%; height:auto; display:block; max-height:260px}
+.status{min-height:48px; margin:6px 0 10px; font-size:17px}
+.hint{background:var(--coral-l); border-left:5px solid var(--coral); padding:8px 12px; border-radius:6px; margin-bottom:10px}
+.log{list-style:none; margin:8px 0 0; padding:0; display:flex; flex-wrap:wrap; gap:8px; max-height:210px; overflow:auto}
+.log li{background:var(--bg); border:1px solid var(--line); border-radius:8px; padding:5px 10px; font-weight:700; font-size:18px; display:flex; align-items:center; gap:8px}
+.log li.dup{background:var(--coral-l); border-color:var(--coral)}
+.log .tag{font-size:12px; font-weight:700; color:#A12C1B}
+.legend{font-size:14px; color:var(--sub)}
+
+.shelf{overflow-x:auto}
+.crates{display:flex; gap:12px; flex-wrap:wrap; align-items:flex-start; padding:6px 2px}
+.slot{width:78px; display:flex; flex-direction:column; align-items:center; gap:4px}
+.crate{
+  width:74px; height:66px; border-radius:8px; border:3px solid var(--navy); position:relative;
+  background:
+    linear-gradient(var(--navy) 0 0) 0 33%/100% 3px no-repeat,
+    linear-gradient(var(--navy) 0 0) 0 66%/100% 3px no-repeat,
+    var(--amber);
+  display:flex; align-items:center; justify-content:center; padding:0;
+  box-shadow:0 3px 0 var(--amber-d);
+}
+.crate:hover:not(:disabled){transform:translateY(-2px)}
+.crate .plate{background:#fff; border:2px solid var(--navy); border-radius:6px; min-width:34px; height:34px; display:flex; align-items:center; justify-content:center; font-family:Cambria,Caladea,Georgia,serif; font-weight:700; font-size:22px}
+.crate.sel{outline:5px solid var(--teal); outline-offset:2px; transform:translateY(-4px)}
+.crate:disabled{cursor:default; opacity:1}
+.wt{font-weight:700; font-size:15px; color:var(--teal-d)}
+.mvs{display:flex; gap:4px}
+.mv{border:2px solid var(--line); background:#fff; border-radius:6px; width:34px; height:34px; font-size:14px; padding:0; color:var(--navy)}
+.mv:hover:not(:disabled){border-color:var(--teal); background:var(--mint)}
+.mv:disabled{opacity:.35; cursor:not-allowed}
+.axis{display:flex; justify-content:space-between; align-items:center; margin-top:8px; padding:6px 8px; border-top:3px solid var(--navy); font-size:15px}
+.axis .arrow{flex:1; text-align:center; color:var(--sub)}
+.checkbar{display:flex; gap:14px; align-items:center; flex-wrap:wrap; margin-top:12px}
+.msg{flex:1; min-width:220px}
+.msg.good{color:var(--ok)}
+.msg.warn{color:#8A3A00}
+.tagrev{display:inline-block; background:var(--amber); color:var(--navy); border-radius:6px; padding:2px 8px; font-size:13px; font-weight:700; margin-left:6px}
+
+/* result card */
+.result{border:3px solid var(--teal)}
+.stats{display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px; margin:10px 0}
+.stat{background:var(--bg); border-radius:10px; padding:10px 14px}
+.stat .big{font-family:Cambria,Caladea,Georgia,serif; font-size:34px; font-weight:700; display:block; line-height:1.1}
+.bars{margin-top:8px}
+.bar{display:grid; grid-template-columns:minmax(150px,230px) 1fr 40px; gap:10px; align-items:center; margin:6px 0}
+.bar .track{background:var(--bg); border-radius:6px; height:20px; overflow:hidden}
+.bar .fill{height:100%; border-radius:6px}
+.bar .num{font-weight:700; text-align:right}
+@media (max-width:560px){.bar{grid-template-columns:1fr 1fr 34px}}
+
+/* strategy picker */
+.strats{display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:12px; margin-top:10px}
+.strat{text-align:left; background:#fff; border:3px solid var(--line); border-radius:12px; padding:12px 14px}
+.strat:hover{border-color:var(--teal)}
+.strat[aria-pressed="true"]{border-color:var(--teal); background:var(--mint)}
+.strat .h{font-family:Cambria,Caladea,Georgia,serif; font-size:19px; margin-bottom:4px}
+.strat .bi .en,.strat .bi .es{font-weight:400}
+.strat .h .bi .en,.strat .h .bi .es{font-weight:700}
+body[data-lang="en"] .strat .bi .en{font-weight:600}
+body[data-lang="es"] .strat .bi .es{font-weight:600}
+body[data-lang="en"] .strat .h .bi .en,body[data-lang="es"] .strat .h .bi .es{font-weight:700}
+.sumbox{font-family:ui-monospace,Menlo,Consolas,monospace; font-size:14px; min-height:250px; background:#F6F9FB}
+.copied{color:var(--ok); font-weight:700}
+.challenge{border:3px dashed var(--amber)}
+.reset{background:none; border:0; color:var(--sub); text-decoration:underline; font-size:14px; margin-top:24px}
+@media (prefers-reduced-motion:reduce){*{transition:none !important; animation:none !important}}
+</style>
+</head>
+<body data-lang="en">
+<header class="on-dark">
+  <a class="back" href="../index.html"><span class="bi inline"><span class="en">← Lessons</span><span class="es">← Lecciones</span></span></a>
+  <div class="ttl">
+    <h1>Sort It Out</h1>
+    <div class="sub"><span class="bi inline"><span class="en">Unit 4 · Lesson 1</span><span class="es">Unidad 4 · Lección 1</span></span></div>
+  </div>
+  <div class="langtog" role="group" aria-label="Main language / Idioma principal">
+    <button type="button" data-act="lang" data-l="en" aria-pressed="true">EN</button>
+    <button type="button" data-act="lang" data-l="es" aria-pressed="false">ES</button>
+  </div>
+</header>
+<main id="app"></main>
+<div id="live" class="sr" aria-live="polite"></div>
+
+<script>
+(function(){
+'use strict';
+/* ================= helpers ================= */
+const KEY='u4l01-sortitout-v1';
+const B=(en,es,cls)=>`<span class="bi${cls?' '+cls:''}"><span class="en">${en}</span><span class="es">${es}</span></span>`;
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const $=sel=>document.querySelector(sel);
+const reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+function mulberry(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+
+/* ================= round configs ================= */
+const ROUNDS={
+  r1:{n:5, w:[12,19,23,31,40],          pairs:10, min:7},
+  r2:{n:8, w:[7,11,14,18,22,27,33,38],  pairs:28, min:16},
+  r3:{n:8, w:[9,13,16,21,25,29,34,41],  pairs:28, min:16}
+};
+const LET='ABCDEFGH';
+const TITLES={
+  r1:B('Round 1: 5 crates','Ronda 1: 5 cajas'),
+  r2:B('Round 2: 8 crates','Ronda 2: 8 cajas'),
+  r3:B('Challenge: 8 new crates','Reto: 8 cajas nuevas')
+};
+
+/* ================= state ================= */
+let S=null;
+function fresh(){return {v:1,name:'',period:'',lang:'en',stage:'welcome',seed:Math.floor(Math.random()*1e9)+1,rounds:{},m1:'',m2:'',strat:''};}
+function load(){
+  try{const raw=localStorage.getItem(KEY); if(raw){const o=JSON.parse(raw); if(o&&o.v===1) return o;}}catch(e){}
+  return fresh();
+}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+function newRound(key){
+  const cfg=ROUNDS[key]; const rnd=mulberry(S.seed+key.charCodeAt(1)*101);
+  let ws,tries=0;
+  do{
+    ws=cfg.w.slice();
+    for(let i=ws.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1)); const t=ws[i]; ws[i]=ws[j]; ws[j]=t;}
+    tries++;
+  }while(ws.every((v,i)=>i===0||ws[i-1]<v) && tries<50);
+  const ids=LET.slice(0,cfg.n).split(''); const wt={}; ids.forEach((id,i)=>wt[id]=ws[i]);
+  return {ids,wt,order:ids.slice(),weighs:[],sel:[],pairDone:false,last:null,checks:0,status:'open',outcome:null,msg:null};
+}
+function R(key){return S.rounds[key];}
+function truth(key){const r=R(key); return r.ids.slice().sort((a,b)=>r.wt[a]-r.wt[b]);}
+function isKnown(r,a,b){
+  const adj={}; r.weighs.forEach(w=>{(adj[w.l]=adj[w.l]||[]).push(w.h);});
+  const reach=(s,t)=>{const seen=new Set([s]),q=[s]; while(q.length){const x=q.shift(); if(x===t) return true; (adj[x]||[]).forEach(y=>{if(!seen.has(y)){seen.add(y);q.push(y);}});} return false;};
+  return reach(a,b)||reach(b,a);
+}
+function stats(key){
+  const r=R(key); return {used:r.weighs.length, wasted:r.weighs.filter(w=>w.known).length};
+}
+
+/* ================= views ================= */
+const STEPS=[
+  ['r1',B('Round 1','Ronda 1')],['m1',B('Steps','Pasos')],['r2',B('Round 2','Ronda 2')],
+  ['m2',B('Reflect','Reflexión')],['turnin',B('Turn in','Entregar')]
+];
+function stepper(stage){
+  const idx={r1:0,m1:1,r2:2,m2:3,turnin:4,r3:4}[stage];
+  return `<ol class="stepper">${STEPS.map((s,i)=>`<li class="${i<idx?'done':i===idx?'now':''}" ${i===idx?'aria-current="step"':''}>${s[1]}</li>`).join('')}</ol>`;
+}
+
+function viewWelcome(){
+  return `
+  <section class="hero on-dark">
+    <h2>${B('Sort It Out','A ordenar')}</h2>
+    <p class="lead">${B('A warehouse has crates that all look the same. Your job: line them up from lightest to heaviest. The only tool is a balance scale that compares two crates at a time. It never tells you the weight.',
+      'Un almacén tiene cajas que se ven iguales. Tu trabajo: ponerlas en fila de la más ligera a la más pesada. La única herramienta es una balanza que compara dos cajas a la vez. Nunca te dice el peso.')}</p>
+    <div class="how">
+      <div><span class="n">1</span>${B('Click two crates to put them on the scale.','Haz clic en dos cajas para ponerlas en la balanza.')}</div>
+      <div><span class="n">2</span>${B('Press Weigh to see which one is heavier.','Presiona Pesar para ver cuál pesa más.')}</div>
+      <div><span class="n">3</span>${B('Use ◀ ▶ to move crates into order, lightest on the left. Then press Check.','Usa ◀ ▶ para mover las cajas en orden, la más ligera a la izquierda. Luego presiona Revisar.')}</div>
+    </div>
+    <p style="margin-top:14px">${B('You get 2 checks per round. Weigh first, then check.','Tienes 2 revisiones por ronda. Primero pesa, luego revisa.')}</p>
+  </section>
+  <section class="card">
+    <h2>${B('Before you start','Antes de empezar')}</h2>
+    <div class="fields">
+      <label class="f">${B('Your name','Tu nombre')}<input type="text" id="inName" autocomplete="off" maxlength="60" value="${esc(S.name)}"></label>
+      <label class="f">${B('Period','Periodo')}<input type="text" id="inPeriod" autocomplete="off" maxlength="10" value="${esc(S.period)}"></label>
+    </div>
+    <div class="row" style="margin-top:18px">
+      <button class="btn" id="btnStart" data-act="start" ${S.name.trim().length<2?'disabled':''}>${B('Start Round 1','Empezar Ronda 1')}</button>
+    </div>
+  </section>`;
+}
+
+function scaleSVG(theta,left,right){
+  const cx=260, cy=70, half=190, rad=theta*Math.PI/180;
+  const lx=cx-half*Math.cos(rad), ly=cy-half*Math.sin(rad);
+  const rx=cx+half*Math.cos(rad), ry=cy+half*Math.sin(rad);
+  const pan=(x,y,id)=>`
+    <line x1="${x}" y1="${y}" x2="${x-58}" y2="${y+62}" stroke="#0F2238" stroke-width="2"/>
+    <line x1="${x}" y1="${y}" x2="${x+58}" y2="${y+62}" stroke="#0F2238" stroke-width="2"/>
+    <path d="M ${x-66} ${y+62} Q ${x} ${y+92} ${x+66} ${y+62} Z" fill="#14907F" stroke="#0F2238" stroke-width="3"/>
+    ${id?`<g><rect x="${x-24}" y="${y+18}" width="48" height="44" rx="6" fill="#F2B134" stroke="#0F2238" stroke-width="3"/>
+      <line x1="${x-24}" y1="${y+33}" x2="${x+24}" y2="${y+33}" stroke="#0F2238" stroke-width="2"/>
+      <line x1="${x-24}" y1="${y+48}" x2="${x+24}" y2="${y+48}" stroke="#0F2238" stroke-width="2"/>
+      <rect x="${x-13}" y="${y+26}" width="26" height="26" rx="4" fill="#fff" stroke="#0F2238" stroke-width="2"/>
+      <text x="${x}" y="${y+46}" text-anchor="middle" font-family="Cambria,Caladea,Georgia,serif" font-weight="700" font-size="20" fill="#0F2238">${id}</text></g>`:''}`;
+  return `
+    <polygon points="${cx},${cy} ${cx-34},232 ${cx+34},232" fill="#1B3553"/>
+    <rect x="${cx-90}" y="226" width="180" height="14" rx="7" fill="#0F2238"/>
+    <line x1="${lx}" y1="${ly}" x2="${rx}" y2="${ry}" stroke="#0F2238" stroke-width="9" stroke-linecap="round"/>
+    ${pan(lx,ly,left)}${pan(rx,ry,right)}
+    <circle cx="${cx}" cy="${cy}" r="12" fill="#F2B134" stroke="#0F2238" stroke-width="3"/>`;
+}
+function scaleWrap(inner){return `<svg id="scalesvg" viewBox="0 0 520 262" role="img" aria-label="Balance scale">${inner}</svg>`;}
+
+function statusLine(key,r){
+  if(r.status==='done') return B('Round finished. Look at your results below.','Ronda terminada. Mira tus resultados abajo.');
+  if(r.pairDone && r.last){
+    const h=r.last.h,l=r.last.l;
+    return B(`<b>${h}</b> is heavier than <b>${l}</b>.`,`<b>${h}</b> pesa más que <b>${l}</b>.`);
+  }
+  if(r.sel.length===0) return B('Click two crates to put them on the scale.','Haz clic en dos cajas para ponerlas en la balanza.');
+  if(r.sel.length===1) return B(`Crate ${r.sel[0]} is on the scale. Pick one more.`,`La caja ${r.sel[0]} está en la balanza. Elige una más.`);
+  return B('Press Weigh.','Presiona Pesar.');
+}
+function logHTML(key,r){
+  const showFlags = r.status==='done' || key==='r3';
+  if(!r.weighs.length) return `<p class="muted">${B('Nothing weighed yet.','Aún no has pesado nada.')}</p>`;
+  return `<ul class="log" id="loglist">${r.weighs.map(w=>`<li class="${showFlags&&w.known?'dup':''}">${w.l} &lt; ${w.h}${showFlags&&w.known?`<span class="tag">${B('already known','ya se sabía','inline')}</span>`:''}</li>`).join('')}</ul>`;
+}
+function crateHTML(r,id,i){
+  const done=r.status==='done', sel=r.sel.includes(id);
+  return `<div class="slot">
+    <button type="button" class="crate${sel?' sel':''}" data-act="pick" data-id="${id}" aria-pressed="${sel}" aria-label="Crate ${id}" ${done?'disabled':''}><span class="plate">${id}</span></button>
+    ${done?`<span class="wt">${r.wt[id]} kg</span>`:''}
+    <div class="mvs">
+      <button type="button" class="mv" data-act="mv" data-id="${id}" data-d="-1" aria-label="Move crate ${id} left" ${done||i===0?'disabled':''}>◀</button>
+      <button type="button" class="mv" data-act="mv" data-id="${id}" data-d="1" aria-label="Move crate ${id} right" ${done||i===r.order.length-1?'disabled':''}>▶</button>
+    </div>
+  </div>`;
+}
+function msgHTML(r){
+  if(!r.msg) return '';
+  const m=r.msg;
+  if(m.t==='first') return `<div class="msg good">${B('Perfect! Every crate is in the right spot.','¡Perfecto! Todas las cajas están en su lugar.')}</div>`;
+  if(m.t==='second') return `<div class="msg good">${B('Got it on the second check. Every crate is in the right spot.','Lo lograste en la segunda revisión. Todas las cajas están en su lugar.')}</div>`;
+  if(m.t==='wrong') return `<div class="msg warn">${B(`Not yet. ${m.k} of ${m.n} crates are in the right spot. You have 1 check left, so weigh more first.`,`Todavía no. ${m.k} de ${m.n} cajas están en su lugar. Te queda 1 revisión, así que pesa más primero.`)}</div>`;
+  if(m.t==='revealed') return `<div class="msg warn">${B('Out of checks. The correct order is now showing. Think about what you would weigh next time.','Ya no tienes revisiones. Se muestra el orden correcto. Piensa qué pesarías la próxima vez.')}</div>`;
+  return '';
+}
+function barRow(label,val,max,color){
+  return `<div class="bar"><div>${label}</div><div class="track"><div class="fill" style="width:${Math.max(3,Math.round(val/max*100))}%;background:${color}"></div></div><div class="num">${val}</div></div>`;
+}
+function resultCard(key,next){
+  const r=R(key), cfg=ROUNDS[key], st=stats(key);
+  const max=Math.max(cfg.pairs,st.used)+1;
+  let compare='';
+  if(key==='r3'&&R('r2')){
+    const a=stats('r2').used,b=st.used;
+    compare=`<p>${b<a?B(`You used fewer weighings than in Round 2 (${b} vs ${a}). Your plan got better.`,`Usaste menos pesadas que en la Ronda 2 (${b} contra ${a}). Tu plan mejoró.`)
+      :b===a?B(`Same number of weighings as Round 2 (${b}).`,`La misma cantidad de pesadas que en la Ronda 2 (${b}).`)
+      :B(`More weighings than Round 2 (${b} vs ${a}). What got in the way?`,`Más pesadas que en la Ronda 2 (${b} contra ${a}). ¿Qué te estorbó?`)}</p>`;
+  }
+  const outcome = r.outcome==='first'?B('Correct on the 1st check','Correcto en la 1.ª revisión')
+    :r.outcome==='second'?B('Correct on the 2nd check','Correcto en la 2.ª revisión')
+    :B('Order was revealed','Se mostró el orden');
+  return `<section class="card result" id="result-${key}">
+    <h2>${B('Your results','Tus resultados')}</h2>
+    <div class="stats">
+      <div class="stat"><span class="big">${st.used}</span>${B('weighings you used','pesadas que usaste')}</div>
+      <div class="stat"><span class="big">${st.wasted}</span>${B('weighings that told you nothing new (marked red in your log)','pesadas que no te dieron nada nuevo (marcadas en rojo en tu registro)')}</div>
+      <div class="stat"><span class="big" style="font-size:22px;padding-top:8px">${outcome}</span></div>
+    </div>
+    <div class="bars">
+      ${barRow(B('You','Tú'),st.used,max,'#14907F')}
+      ${barRow(B('Weigh every possible pair','Pesar todos los pares posibles'),cfg.pairs,max,'#E8604C')}
+      ${barRow(B('Fewest that always works','Lo mínimo que siempre funciona'),cfg.min,max,'#F2B134')}
+    </div>
+    <p class="muted" style="margin-top:6px">${B(`With ${cfg.n} crates there are ${cfg.pairs} possible pairs. A smart plan needs far fewer weighings than that, because earlier results can tell you about pairs you haven't weighed.`,
+      `Con ${cfg.n} cajas hay ${cfg.pairs} pares posibles. Un buen plan necesita muchas menos pesadas, porque los resultados anteriores te dicen cosas de pares que no has pesado.`)}</p>
+    ${compare}
+    <div class="row" style="margin-top:12px"><button class="btn" data-act="next" data-to="${next}">${B('Next','Siguiente')}</button></div>
+  </section>`;
+}
+
+function viewRound(key,next){
+  const r=R(key); const done=r.status==='done';
+  const checksLeft=2-r.checks;
+  const need=ROUNDS[key].n-1, short=!done && r.weighs.length<need;
+  let hint='';
+  if(key==='r3' && !done && r.sel.length===2 && !r.pairDone && isKnown(r,r.sel[0],r.sel[1]))
+    hint=`<div class="hint">${B('Heads up: your log already tells you which of these is heavier.','Ojo: tu registro ya te dice cuál de estas pesa más.')}</div>`;
+  const intro = key==='r1'?B('Warm-up. Put 5 crates in order from lightest to heaviest.','Calentamiento. Pon 5 cajas en orden de la más ligera a la más pesada.')
+    : key==='r2'?B('Same scale, more crates. Put 8 crates in order.','La misma balanza, más cajas. Pon 8 cajas en orden.')
+    : B('Optional. Eight new crates. Can you use fewer weighings than in Round 2? Your log marks weighings you could have skipped.','Opcional. Ocho cajas nuevas. ¿Puedes usar menos pesadas que en la Ronda 2? Tu registro marca las pesadas que pudiste evitar.');
+  return `
+  ${key==='r3'?'':stepper(key)}
+  <section class="card" style="margin-top:12px">
+    <h2>${TITLES[key]}</h2><p class="lead" style="margin:0">${intro}</p>
+  </section>
+  <div class="grid2">
+    <section class="card scalecard">
+      ${hint}
+      <div id="scalebox">${scaleWrap(scaleSVG(0,r.sel[0]||null,r.sel[1]||null))}</div>
+      <div class="status" id="statusline">${statusLine(key,r)}</div>
+      <button class="btn amber" data-act="weigh" id="btnWeigh" ${(done||r.sel.length!==2||r.pairDone)?'disabled':''}>${B('Weigh them','Pesarlas')}</button>
+    </section>
+    <section class="card">
+      <h2 style="font-size:20px">${B('Your weighings','Tus pesadas')}</h2>
+      <div class="legend">${B('A &lt; D means A is lighter than D','A &lt; D significa que A pesa menos que D')}</div>
+      ${logHTML(key,r)}
+    </section>
+  </div>
+  <section class="card shelf">
+    <h2 style="font-size:20px">${B('Your row of crates','Tu fila de cajas')}</h2>
+    <div class="crates" id="crates">${r.order.map((id,i)=>crateHTML(r,id,i)).join('')}</div>
+    <div class="axis"><span>${B('Lightest','Más ligera')}</span><span class="arrow">◀ ─────────────── ▶</span><span style="text-align:right">${B('Heaviest','Más pesada')}</span></div>
+    <div class="checkbar">
+      <button class="btn alt" data-act="check" id="btnCheck" ${(done||short)?'disabled':''}>${B(`Check my order (${checksLeft} left)`,`Revisar mi orden (${checksLeft} restantes)`)}</button>
+      ${short?`<div class="msg muted" id="needmsg">${B(`Weigh at least ${need} times before you check. With fewer weighings, nobody can know the order for sure. (${r.weighs.length} so far)`,`Pesa al menos ${need} veces antes de revisar. Con menos pesadas, nadie puede saber el orden con seguridad. (${r.weighs.length} hasta ahora)`)}</div>`:''}
+      ${msgHTML(r)}
+      ${r.outcome==='revealed'?`<span class="tagrev">${B('revealed','mostrado','inline')}</span>`:''}
+    </div>
+  </section>
+  ${done?resultCard(key,next):''}`;
+}
+
+function viewM1(){
+  const ok=S.m1.trim().length>=15;
+  return `${stepper('m1')}
+  <section class="card">
+    <h2>${B('Write your steps','Escribe tus pasos')}</h2>
+    <p class="lead">${B('Think about how you ordered the 5 crates. Write the steps in order, so a classmate could follow them without asking you any questions.','Piensa en cómo ordenaste las 5 cajas. Escribe los pasos en orden, para que un compañero pueda seguirlos sin hacerte preguntas.')}</p>
+    <textarea id="inM1" placeholder="First I… Then I…  /  Primero yo… Luego yo…" aria-label="Your steps">${esc(S.m1)}</textarea>
+    <p class="muted" style="margin:6px 0 0">${B('You can write in English or Spanish.','Puedes escribir en inglés o en español.')}</p>
+    <p style="margin-top:14px">${B('Round 2 has 8 crates. Same scale, more crates.','La Ronda 2 tiene 8 cajas. La misma balanza, más cajas.')}</p>
+    <div class="row"><button class="btn" id="btnM1" data-act="next" data-to="r2" ${ok?'':'disabled'}>${B('Go to Round 2','Ir a la Ronda 2')}</button></div>
+  </section>`;
+}
+
+const STRATS={
+  find:{h:B('Find the lightest first','Encontrar la más ligera primero'),
+        d:B('Search for the lightest crate and put it first. Then search the rest for the lightest and put it second. Keep going.','Busca la caja más ligera y ponla primero. Luego busca la más ligera de las que quedan y ponla segunda. Sigue así.')},
+  swap:{h:B('Swap neighbors','Cambiar vecinas'),
+        d:B('Compare two crates side by side. If they are in the wrong order, swap them. Sweep down the row again and again until nothing needs swapping.','Compara dos cajas una al lado de la otra. Si están en mal orden, cámbialas. Recorre la fila una y otra vez hasta que no haya nada que cambiar.')},
+  build:{h:B('Build a sorted row','Armar una fila ordenada'),
+        d:B('Start with one crate. Take the next crate and slide it into the right spot among the ones you already sorted. Repeat.','Empieza con una caja. Toma la siguiente y deslízala al lugar correcto entre las que ya ordenaste. Repite.')},
+  other:{h:B('Something else, or a mix','Otra cosa, o una mezcla'),
+        d:B('My plan did not look like these, or I used more than one.','Mi plan no se parecía a estos, o usé más de uno.')}
+};
+function viewM2(){
+  const ok=S.m2.trim().length>=15 && !!S.strat;
+  const s2=stats('r2');
+  return `${stepper('m2')}
+  <section class="card">
+    <h2>${B('Reflect on Round 2','Reflexiona sobre la Ronda 2')}</h2>
+    <p class="lead">${B(`You used ${s2.used} weighings. ${s2.wasted} of them told you nothing new. Round 2 had more crates than Round 1. What changed about your plan? What would you do differently next time?`,
+      `Usaste ${s2.used} pesadas. ${s2.wasted} no te dieron nada nuevo. La Ronda 2 tenía más cajas que la Ronda 1. ¿Qué cambió en tu plan? ¿Qué harías diferente la próxima vez?`)}</p>
+    <textarea id="inM2" aria-label="Reflection" placeholder="I noticed… Next time I would…  /  Me di cuenta… La próxima vez yo…">${esc(S.m2)}</textarea>
+  </section>
+  <section class="card">
+    <h2>${B('Which plan is closest to yours?','¿Qué plan se parece más al tuyo?')}</h2>
+    <div class="strats">
+      ${Object.keys(STRATS).map(k=>`<button type="button" class="strat" data-act="strat" data-k="${k}" aria-pressed="${S.strat===k}"><div class="h">${STRATS[k].h}</div>${STRATS[k].d}</button>`).join('')}
+    </div>
+    <p style="margin-top:14px">${B('Different plans can give the same finished row, but they can take a different number of weighings. That is what we talk about next.','Planes distintos pueden dar la misma fila terminada, pero pueden necesitar distinta cantidad de pesadas. De eso hablamos a continuación.')}</p>
+    <div class="row"><button class="btn" id="btnM2" data-act="next" data-to="turnin" ${ok?'':'disabled'}>${B('Go to turn in','Ir a entregar')}</button></div>
+  </section>`;
+}
+
+function stratName(k){
+  return {find:'Find the lightest first',swap:'Swap neighbors',build:'Build a sorted row',other:'Something else, or a mix'}[k]||'(none)';
+}
+function outcomeTxt(o){return o==='first'?'correct on 1st check':o==='second'?'correct on 2nd check':'order was revealed';}
+function summary(){
+  const L=[];
+  L.push('SORT IT OUT — Unit 4, Lesson 1');
+  L.push('Name: '+S.name.trim()+'   Period: '+(S.period.trim()||'—'));
+  L.push('Date: '+new Date().toLocaleString());
+  L.push('');
+  ['r1','r2','r3'].forEach(k=>{
+    const r=R(k); if(!r) return;
+    if(k==='r3'&&r.status!=='done') return;
+    const st=stats(k);
+    const nm={r1:'ROUND 1 (5 crates)',r2:'ROUND 2 (8 crates)',r3:'CHALLENGE (8 new crates)'}[k];
+    if(r.status!=='done'){L.push(nm+': not finished'); return;}
+    L.push(nm+': '+st.used+' weighings; '+st.wasted+' told me nothing new; '+outcomeTxt(r.outcome));
+  });
+  L.push('');
+  L.push('MY STEPS (Round 1):');
+  L.push(S.m1.trim());
+  L.push('');
+  L.push('REFLECTION (Round 2):');
+  L.push(S.m2.trim());
+  L.push('');
+  L.push('Plan closest to mine: '+stratName(S.strat));
+  return L.join('\n');
+}
+function viewTurnin(){
+  const r3=R('r3'); const r3done=r3&&r3.status==='done';
+  return `${stepper('turnin')}
+  <section class="card">
+    <h2>${B('Turn it in','Entrégalo')}</h2>
+    <ol style="padding-left:22px;margin:8px 0 0">
+      <li style="margin-bottom:8px">${B('Press Copy my summary.','Presiona Copiar mi resumen.')}</li>
+      <li style="margin-bottom:8px">${B('Open the Canvas assignment and choose Text Entry.','Abre la tarea en Canvas y elige Entrada de texto.')}</li>
+      <li>${B('Paste, then press Submit.','Pega y presiona Enviar.')}</li>
+    </ol>
+    <textarea id="sumbox" class="sumbox" readonly aria-label="Summary" style="margin-top:14px">${esc(summary())}</textarea>
+    <div class="row" style="margin-top:12px">
+      <button class="btn" data-act="copy">${B('Copy my summary','Copiar mi resumen')}</button>
+      <span id="copymsg" class="copied" role="status"></span>
+    </div>
+  </section>
+  ${r3done?'':`<section class="card challenge">
+    <h2>${B('Optional challenge','Reto opcional')}</h2>
+    <p class="lead" style="margin:0 0 12px">${B('Finished early? Try 8 new crates and see if you can use fewer weighings than in Round 2. If you do it, copy your summary again afterward.','¿Terminaste temprano? Prueba con 8 cajas nuevas y mira si puedes usar menos pesadas que en la Ronda 2. Si lo haces, copia tu resumen otra vez después.')}</p>
+    <button class="btn amber" data-act="startr3">${r3?B('Continue the challenge','Continuar el reto'):B('Start the challenge','Empezar el reto')}</button>
+  </section>`}
+  <button class="reset" data-act="reset">${B('Start over (clears this device)','Empezar de nuevo (borra este dispositivo)','inline')}</button>`;
+}
+
+/* ================= render ================= */
+function render(animate){
+  document.body.setAttribute('data-lang',S.lang);
+  document.documentElement.lang=S.lang;
+  document.querySelectorAll('.langtog button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.l===S.lang));
+  const app=$('#app'); let html='';
+  switch(S.stage){
+    case 'welcome': html=viewWelcome(); break;
+    case 'r1': html=viewRound('r1','m1'); break;
+    case 'm1': html=viewM1(); break;
+    case 'r2': html=viewRound('r2','m2'); break;
+    case 'm2': html=viewM2(); break;
+    case 'r3': html=viewRound('r3','turnin'); break;
+    case 'turnin': html=viewTurnin(); break;
+  }
+  app.innerHTML=html;
+  if(/^r\d$/.test(S.stage) && animate) animateScale();
+  else if(/^r\d$/.test(S.stage)) paintScaleFinal();
+  save();
+}
+function scaleAngleFor(r){
+  if(!(r.pairDone&&r.last)) return 0;
+  const a=r.sel[0], b=r.sel[1];
+  return r.wt[b]>r.wt[a] ? 14 : -14;   // heavier side goes down
+}
+function paintScaleFinal(){
+  const r=R(S.stage); const box=$('#scalesvg'); if(!box) return;
+  box.innerHTML=scaleSVG(scaleAngleFor(r),r.sel[0]||null,r.sel[1]||null);
+}
+function animateScale(){
+  const r=R(S.stage); const box=$('#scalesvg'); if(!box) return;
+  const target=scaleAngleFor(r);
+  if(reduce||!target){paintScaleFinal(); return;}
+  const t0=performance.now(), dur=650;
+  function frame(t){
+    const p=Math.min(1,(t-t0)/dur); const e=1-Math.pow(1-p,3);
+    const wob=p<1?0:0;
+    const el=$('#scalesvg'); if(!el||R(S.stage)!==r) return;
+    el.innerHTML=scaleSVG(target*e+wob,r.sel[0],r.sel[1]);
+    if(p<1) requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+function announce(txt){const l=$('#live'); if(l){l.textContent=''; setTimeout(()=>{l.textContent=txt;},30);}}
+
+/* ================= actions ================= */
+function go(stage,animate){S.stage=stage; render(animate); window.scrollTo(0,0);}
+function startRound(key,stage){ if(!S.rounds[key]) S.rounds[key]=newRound(key); go(stage||key); }
+
+function doPick(id){
+  const r=R(S.stage); if(!r||r.status==='done') return;
+  if(r.pairDone){r.sel=[id]; r.pairDone=false; r.last=null;}
+  else if(r.sel.includes(id)){r.sel=r.sel.filter(x=>x!==id);}
+  else if(r.sel.length>=2){r.sel=[id];}
+  else r.sel.push(id);
+  render(false);
+  const b=document.querySelector(`.crate[data-id="${id}"]`); if(b) b.focus();
+}
+function doWeigh(){
+  const r=R(S.stage); if(!r||r.status==='done'||r.sel.length!==2||r.pairDone) return;
+  const [a,b]=r.sel; const known=isKnown(r,a,b);
+  const l=r.wt[a]<r.wt[b]?a:b, h=l===a?b:a;
+  r.weighs.push({a,b,l,h,known}); r.pairDone=true; r.last={l,h};
+  render(true);
+  announce(`${h} is heavier than ${l}`);
+}
+function doMove(id,d){
+  const r=R(S.stage); if(!r||r.status==='done') return;
+  const i=r.order.indexOf(id), j=i+d; if(j<0||j>=r.order.length) return;
+  const t=r.order[i]; r.order[i]=r.order[j]; r.order[j]=t;
+  render(false);
+  const sel=`.mv[data-id="${id}"][data-d="${d}"]`; const btn=document.querySelector(sel);
+  if(btn&&!btn.disabled) btn.focus(); else {const o=document.querySelector(`.mv[data-id="${id}"]:not(:disabled)`); if(o) o.focus();}
+}
+function doCheck(){
+  const key=S.stage, r=R(key); if(!r||r.status==='done') return;
+  if(r.weighs.length<ROUNDS[key].n-1) return;
+  r.checks++;
+  const tr=truth(key); const k=r.order.filter((id,i)=>id===tr[i]).length;
+  if(k===tr.length){r.status='done'; r.outcome=r.checks===1?'first':'second'; r.msg={t:r.outcome}; r.sel=[]; r.pairDone=false; r.last=null;}
+  else if(r.checks>=2){r.order=tr.slice(); r.status='done'; r.outcome='revealed'; r.msg={t:'revealed'}; r.sel=[]; r.pairDone=false; r.last=null;}
+  else r.msg={t:'wrong',k:k,n:tr.length};
+  render(false);
+  announce(r.status==='done'?'Round finished':`${k} of ${tr.length} in the right spot`);
+  if(r.status==='done'){const el=$('#result-'+key); if(el) el.scrollIntoView({behavior:reduce?'auto':'smooth',block:'start'});}
+}
+function updateGates(){
+  const bs=$('#btnStart'); if(bs) bs.disabled=S.name.trim().length<2;
+  const b1=$('#btnM1'); if(b1) b1.disabled=S.m1.trim().length<15;
+  const b2=$('#btnM2'); if(b2) b2.disabled=!(S.m2.trim().length>=15&&S.strat);
+}
+function doCopy(){
+  const ta=$('#sumbox'); const txt=ta.value; const msg=$('#copymsg');
+  const ok=()=>{msg.innerHTML=B('Copied! Now paste it into Canvas.','¡Copiado! Ahora pégalo en Canvas.','inline');};
+  const fallback=()=>{ta.focus(); ta.select(); try{document.execCommand('copy'); ok();}catch(e){msg.innerHTML=B('Select the text and press Ctrl+C.','Selecciona el texto y presiona Ctrl+C.','inline');}};
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(txt).then(ok,fallback);} else fallback();
+}
+
+document.addEventListener('click',function(e){
+  const t=e.target.closest('[data-act]'); if(!t||t.disabled) return;
+  const act=t.dataset.act;
+  if(act==='lang'){S.lang=t.dataset.l; render(false);}
+  else if(act==='start'){ if(S.name.trim().length<2) return; startRound('r1'); }
+  else if(act==='pick') doPick(t.dataset.id);
+  else if(act==='mv') doMove(t.dataset.id,parseInt(t.dataset.d,10));
+  else if(act==='weigh') doWeigh();
+  else if(act==='check') doCheck();
+  else if(act==='next'){ const to=t.dataset.to; if(to==='r2') startRound('r2'); else go(to); }
+  else if(act==='strat'){S.strat=t.dataset.k; render(false); }
+  else if(act==='startr3') startRound('r3');
+  else if(act==='copy') doCopy();
+  else if(act==='reset'){ if(confirm('Start over? This clears your work on this device. / ¿Empezar de nuevo? Esto borra tu trabajo en este dispositivo.')){ try{localStorage.removeItem(KEY);}catch(e){} S=fresh(); render(false);} }
+});
+document.addEventListener('input',function(e){
+  const id=e.target.id;
+  if(id==='inName') S.name=e.target.value;
+  else if(id==='inPeriod') S.period=e.target.value;
+  else if(id==='inM1') S.m1=e.target.value;
+  else if(id==='inM2') S.m2=e.target.value;
+  else return;
+  save(); updateGates();
+});
+
+/* ================= boot ================= */
+S=load();
+// guard against stale/corrupt saves
+if(['r1','r2','r3'].includes(S.stage)&&!S.rounds[S.stage]) S.stage='welcome';
+render(false);
+// test hooks (harmless in class)
+window.__S=()=>S; window.__truth=truth;
+})();
+</script>
+</body>
+</html>
