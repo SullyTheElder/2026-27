@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en" data-course="networking">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>U3L01: Game Day - Planning the Network</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#0B1F3A; --green:#8FC53E; --cream:#F4F1E9; --gold:#D9A441;
+    --ink:#1a1a1a; --muted:#5b6472; --line:#dfe3e8;
+    --ai-bg:#20242b; --ai-line:#3a4150; --ai-text:#e7eaf0;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{ font-family:'Inter', system-ui, sans-serif; color:var(--ink); background:var(--cream); line-height:1.55; overflow-x:hidden; }
+  .topbar{ display:flex; align-items:center; justify-content:space-between; padding:14px 24px; background:var(--navy); color:#fff; flex-wrap:wrap; gap:10px; }
+  .topbar a{ color:#fff; text-decoration:none; font-size:0.85rem; font-weight:500; border:1px solid rgba(255,255,255,0.35); padding:6px 12px; border-radius:6px; }
+  .topbar a:hover, .topbar a:focus-visible{ background:rgba(255,255,255,0.12); outline:2px solid var(--gold); outline-offset:2px; }
+  .topbar .brand{ font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:0.95rem; }
+  main{ max-width:920px; margin:0 auto; padding:32px 20px 80px; }
+  header.hero{ text-align:center; margin-bottom:20px; }
+  .eyebrow{ font-family:'Space Grotesk',sans-serif; font-weight:600; letter-spacing:0.12em; text-transform:uppercase; color:var(--green); font-size:0.8rem; margin-bottom:6px; }
+  h1{ font-family:'Space Grotesk',sans-serif; font-weight:700; color:var(--navy); font-size:clamp(1.6rem, 4vw, 2.3rem); margin:0 0 8px; }
+  .subtitle{ color:var(--muted); font-size:1.05rem; font-style:italic; }
+  section{ background:#fff; border-radius:12px; padding:24px clamp(16px,4vw,32px); margin-bottom:24px; box-shadow:0 1px 3px rgba(11,31,58,0.08); }
+  h2{ font-family:'Space Grotesk',sans-serif; color:var(--navy); font-size:1.3rem; margin-top:0; border-bottom:2px solid var(--green); padding-bottom:8px; }
+  h3{ font-family:'Space Grotesk',sans-serif; color:var(--navy); font-size:1.02rem; margin-bottom:6px;}
+  ol, ul{ padding-left:1.4em; }
+  li{ margin-bottom:6px; }
+  code{ font-family:'IBM Plex Mono', monospace; font-size:0.9em; background:#eef1f5; padding:1px 6px; border-radius:4px; }
+  table{ width:100%; border-collapse:collapse; margin:14px 0; font-size:0.92rem; }
+  th, td{ border:1px solid var(--line); padding:8px 10px; text-align:left; vertical-align:top; }
+  th{ background:var(--navy); color:#fff; font-family:'Space Grotesk',sans-serif; font-weight:600; }
+  tr:nth-child(even) td{ background:#fafbfc; }
+  input[type="text"]{ width:100%; border:1px solid var(--line); border-radius:5px; padding:5px 7px; font-family:'Inter',sans-serif; font-size:0.9rem; }
+  input[type="text"]:focus-visible{ outline:2px solid var(--gold); outline-offset:1px; border-color:var(--gold); }
+  .print-hint{ text-align:center; color:var(--muted); font-size:0.85rem; margin-top:-8px; margin-bottom:28px; }
+  .pdf-btn{ position:fixed; right:20px; bottom:20px; z-index:50; display:flex; align-items:center; gap:8px; background:var(--green); color:var(--navy); border:none; border-radius:30px; padding:12px 20px; font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:0.95rem; box-shadow:0 4px 14px rgba(11,31,58,0.28); cursor:pointer; }
+  .pdf-btn:hover, .pdf-btn:focus-visible{ background:#7cb32e; outline:2px solid var(--gold); outline-offset:2px; }
+  .pdf-hint{ position:fixed; right:20px; bottom:70px; z-index:50; max-width:220px; background:var(--navy); color:#fff; font-size:0.78rem; padding:8px 12px; border-radius:8px; box-shadow:0 4px 14px rgba(11,31,58,0.28); }
+  .name-bar{ display:flex; gap:16px; flex-wrap:wrap; align-items:center; background:#fff; border-radius:12px; padding:14px 20px; margin-bottom:24px; box-shadow:0 1px 3px rgba(11,31,58,0.08); font-size:0.95rem; }
+  .name-bar label{ font-weight:600; color:var(--navy); }
+  .name-bar input[type="text"]{ max-width:260px; }
+
+  .ai-card{ background:var(--ai-bg); color:var(--ai-text); border-radius:10px; padding:16px 18px; margin:14px 0; font-size:0.9rem; box-shadow:0 4px 12px rgba(0,0,0,0.2); }
+  .ai-head{ display:flex; align-items:center; gap:8px; font-family:'Space Grotesk',sans-serif; color:#fff; font-weight:600; font-size:0.9rem; margin-bottom:10px; border-bottom:1px solid var(--ai-line); padding-bottom:8px; }
+  .ai-prompt{ color:#9aa4b5; font-style:italic; margin-bottom:8px; font-size:0.85rem; }
+  .ai-response{ font-family:'IBM Plex Mono',monospace; font-size:0.82rem; line-height:1.6; color:var(--ai-text); }
+
+  @media print{
+    .topbar, .pdf-btn, .print-hint, .pdf-hint{ display:none; }
+    body{ background:#fff; }
+    section, .name-bar{ box-shadow:none; border:1px solid var(--line); }
+    tr, table{ page-break-inside:avoid; }
+    .ai-card{ box-shadow:none; border:1px solid #333; }
+    input[type="text"]{ border:1px solid #888; }
+    @page{ margin:0.6in; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <span class="brand">🐾 Bulldog Networking — AP Networking</span>
+  <a href="../../index.html">&larr; Back to AP Networking</a>
+</div>
+
+<main>
+  <header class="hero">
+    <div class="eyebrow">AP Networking · Local Unit 3 · U3L01</div>
+    <h1>Game Day: Planning the Network</h1>
+    <p class="subtitle">Choosing the Right Devices and Connections — CB 3.1.A / 3.1.B</p>
+  </header>
+  <p class="print-hint">Fill in your answers below, then use the "Download as PDF" button to save a copy to turn in.</p>
+
+  <div class="name-bar">
+    <label for="student-name">Name:</label>
+    <input type="text" id="student-name" autocomplete="name">
+    <label for="student-period">Period:</label>
+    <input type="text" id="student-period" style="max-width:100px;">
+  </div>
+
+  <section>
+    <h2>The Scenario</h2>
+    <p>Your school is hosting the <strong>Bulldog Esports Invitational</strong> in the gym: a regional gaming tournament with a live audience and a livestream online. Players, coaches, casters, referees, staff, and spectators will all be on the network at once.</p>
+    <p>If a player&rsquo;s connection lags, a match could be delayed &mdash; or even decided by the network instead of the players. <strong>You&rsquo;re on the event tech team, and it&rsquo;s your job to plan the network.</strong></p>
+    <p style="color:var(--muted); font-size:0.92rem;">Today is a design day: first you&rsquo;ll make your best calls from what you already know, then you&rsquo;ll learn the planning rules real network designers use, then you&rsquo;ll check and fix your plan.</p>
+  </section>
+
+  <section>
+    <h2>Part 1 — First Draft</h2>
+    <p>For each group, decide what kind of <strong>device</strong> they should use, whether it should connect <strong>wired or wireless</strong>, and <strong>why</strong>. Go with your gut &mdash; you&rsquo;ll get to revise later.</p>
+    <table>
+      <thead><tr><th style="width:36%;">Group</th><th>Device you&rsquo;d choose</th><th style="width:14%;">Wired or wireless?</th><th>Why?</th></tr></thead>
+      <tbody>
+<tr><td><strong>Players</strong><br><span style="color:var(--muted);font-size:0.82rem;">10 people &middot; Compete in a fast-action game: high frame rates and very low lag matter</span></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td></tr>
+<tr><td><strong>Casters &amp; stream crew</strong><br><span style="color:var(--muted);font-size:0.82rem;">3 people &middot; Commentate and broadcast the match live (uploading video)</span></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td></tr>
+<tr><td><strong>Tournament admins</strong><br><span style="color:var(--muted);font-size:0.82rem;">2 people &middot; Run brackets and match results, and manage the event&rsquo;s local server</span></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td></tr>
+<tr><td><strong>Coaches</strong><br><span style="color:var(--muted);font-size:0.82rem;">4 people &middot; Review stats, take notes, and use browser-based tools</span></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td></tr>
+<tr><td><strong>Referees &amp; judges</strong><br><span style="color:var(--muted);font-size:0.82rem;">3 people &middot; Check scoreboards and enter results into forms and dashboards</span></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td></tr>
+<tr><td><strong>Event staff</strong><br><span style="color:var(--muted);font-size:0.82rem;">10 people &middot; Check in guests and update info from forms and dashboards</span></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td></tr>
+<tr><td><strong>Spectators</strong><br><span style="color:var(--muted);font-size:0.82rem;">120 people &middot; Browse, post, and watch on their phones</span></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>Concept: How Designers Plan an Event Network</h2>
+    <h3>Match the device to the job</h3>
+    <ul>
+      <li><strong>Laptops</strong> suit people who type a lot, juggle several browser-based tools, or multitask.</li>
+      <li><strong>Tablets and smartphones</strong> suit quick access to forms and dashboards to view and update data.</li>
+      <li><strong>Gaming consoles, desktops, or high-performance laptops</strong> are needed where high frame rates and low input lag matter &mdash; esports, video editing, big data jobs.</li>
+      <li><strong>Desktops or high-performance laptops with a wired Ethernet port</strong> are the right choice for management workstations and local servers, where reliability and steady access to admin tools matter.</li>
+    </ul>
+    <h3>Wired or wireless?</h3>
+    <ul>
+      <li><strong>Wired</strong> for anything that needs high reliability, low delay, or big data transfers: gaming computers, management workstations, servers, and livestream equipment.</li>
+      <li><strong>Wireless</strong> scales well for lots of devices. Event networks usually run separate wireless networks: a <strong>guest network</strong> (visitors get internet only &mdash; no access to internal resources), an <strong>internal network</strong> (staff with access to tools and platforms), and an <strong>admin network</strong> (secure, mobile access to administrative tools and data).</li>
+      <li>One <strong>wireless access point (WAP)</strong> typically supports <strong>30&ndash;50 mobile devices</strong> (phones, tablets) <strong>or up to 20 computers/laptops</strong>. Signal gets weaker with distance and with walls or electrical interference, so big or oddly shaped spaces may need several WAPs.</li>
+    </ul>
+    <h3>Count the connections</h3>
+    <ul>
+      <li>Every wired connection needs <strong>a port on a switch</strong>. Plan for: the total number of wired devices, the ports available on each switch, the number and length of cables, and the number of switches. <em>Think: what else in your design plugs into the switch besides computers?</em></li>
+      <li>A <strong>router</strong> connects separate network segments and directs data between them using IP addresses. Every device on a segment needs the router set as its <strong>default gateway</strong> to reach other segments or the internet.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Part 2 — Count It Up</h2>
+    <p>Use the planning rules above to size your network. Show your math.</p>
+    <table>
+      <thead><tr><th style="width:55%;">Question</th><th>Your answer &amp; math</th></tr></thead>
+      <tbody>
+        <tr><td>How many devices in this scenario should be <strong>wired</strong>? (Add up the groups you chose to wire.)</td><td><input type="text"></td></tr>
+        <tr><td>How many WAPs do the <strong>spectators&rsquo; phones</strong> need? (Use the 30&ndash;50 range &mdash; give a range or pick a number and defend it.)</td><td><input type="text"></td></tr>
+        <tr><td>How many WAPs do the <strong>staff, coaches, and referees</strong> (laptops and tablets) need?</td><td><input type="text"></td></tr>
+        <tr><td>How many <strong>switch ports</strong> do you need in total? (Wired devices + anything else that plugs in + the router connection.)</td><td><input type="text"></td></tr>
+        <tr><td>How many <strong>switches</strong> will you use, and where would you put them in the gym?</td><td><input type="text"></td></tr>
+      </tbody>
+    </table>
+    <table>
+      <thead><tr><th style="width:55%;">Design checks</th><th>Your answer</th></tr></thead>
+      <tbody>
+        <tr><td>Name the three wireless networks you&rsquo;d create, and which groups join each.</td><td><input type="text"></td></tr>
+        <tr><td>Which groups should <em>not</em> be able to reach the tournament systems? Why?</td><td><input type="text"></td></tr>
+        <tr><td>Look back at Part 1. What is one choice you&rsquo;d change now, and why?</td><td><input type="text"></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>Vocabulary</h2>
+    <ul>
+      <li><strong>Endpoint device</strong> &mdash; a device people use to reach the network: a laptop, tablet, phone, desktop, or console.</li>
+      <li><strong>Wireless access point (WAP)</strong> &mdash; a device that lets wireless devices join the network; it connects to the wired network behind it.</li>
+      <li><strong>Switch port</strong> &mdash; one wired connection point on a switch; each wired device uses one.</li>
+      <li><strong>Router</strong> &mdash; a device that connects separate network segments and directs data between them by IP address.</li>
+      <li><strong>Default gateway</strong> &mdash; the router address a device sends data to when the destination is on a different segment.</li>
+      <li><strong>Guest / internal / admin network</strong> &mdash; separate wireless networks for visitors, standard users, and administrators.</li>
+      <li><strong>Network segment</strong> &mdash; a group of devices set apart from others on the network, with its own range of IP addresses.</li>
+    </ul>
+  </section>
+</main>
+
+<div class="pdf-hint">In the print dialog, set <strong>Destination</strong> to <strong>Save as PDF</strong>, then save.</div>
+<button class="pdf-btn" id="pdf-btn" type="button">📄 Download as PDF</button>
+
+<script>
+  document.getElementById('pdf-btn').addEventListener('click', function () { window.print(); });
+</script>
+</body>
+</html>
