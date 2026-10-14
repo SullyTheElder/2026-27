@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Catch-Up Day Exit Ticket</title>
+<style>
+:root{--navy:#0F2238;--navy2:#1B3553;--teal:#14907F;--teal-d:#0C6B5E;--mint:#CDEFE4;--amber:#F2B134;--coral:#E8604C;--bg:#EEF3F7;--line:#C9D5E0;--sub:#475C72}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:Calibri,Carlito,"Segoe UI",system-ui,sans-serif;background:var(--bg);color:var(--navy);font-size:17px;line-height:1.45;-webkit-text-size-adjust:100%}
+h1,h2,h3{font-family:Cambria,Caladea,Georgia,serif;margin:0;line-height:1.15}
+button,select{font:inherit;color:inherit}
+button{cursor:pointer}
+button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
+
+/* both languages visible; toggle swaps which is primary */
+.bi{display:flex;flex-direction:column}
+.bi.inline{display:inline-flex;vertical-align:top}
+body[data-lang="en"] .bi .en{order:1;font-weight:700}
+body[data-lang="en"] .bi .es{order:2;font-style:italic;font-weight:400;font-size:.86em;color:var(--sub)}
+body[data-lang="es"] .bi .es{order:1;font-weight:700}
+body[data-lang="es"] .bi .en{order:2;font-style:italic;font-weight:400;font-size:.86em;color:var(--sub)}
+.on-dark .bi .en,.on-dark .bi .es{color:#fff}
+body[data-lang="en"] .on-dark .bi .es,body[data-lang="es"] .on-dark .bi .en{color:#BCD0E2}
+.btn .bi{align-items:center;text-align:center}
+.btn .bi .en,.btn .bi .es{color:inherit !important}
+
+header{background:var(--navy);color:#fff;padding:12px 18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+header .back{color:#BCD0E2;text-decoration:none;font-size:15px;border:1px solid #3B5675;padding:6px 10px;border-radius:6px}
+header .ttl{flex:1;min-width:200px}
+header h1{font-size:26px}
+.langtog{display:flex;border:1px solid #3B5675;border-radius:8px;overflow:hidden}
+.langtog button{background:transparent;color:#BCD0E2;border:0;padding:7px 14px;font-weight:700}
+.langtog button[aria-pressed="true"]{background:var(--teal);color:#fff}
+main{max-width:900px;margin:0 auto;padding:16px 16px 60px}
+.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:18px;margin-top:16px}
+.card h2{font-size:22px;margin-bottom:6px}
+.lead{font-size:18px}
+.sub{color:var(--sub)}
+input[type=text],textarea,select{width:100%;border:2px solid var(--line);border-radius:8px;padding:10px 12px;background:#fff;color:var(--navy);min-height:46px}
+input[type=text]:focus,textarea:focus,select:focus{border-color:var(--teal)}
+textarea{min-height:90px;resize:vertical}
+label.f{display:block;margin-top:12px}
+label.f .bi{margin-bottom:4px}
+.fields{display:grid;grid-template-columns:2fr 1fr;gap:12px}
+.item{border-left:6px solid var(--teal);padding-left:14px;margin-top:16px}
+.item h3{font-size:20px;margin-bottom:2px}
+.cols{display:grid;grid-template-columns:2fr 1fr;gap:12px}
+@media (max-width:620px){.cols,.fields{grid-template-columns:1fr}}
+.end{background:#F6F9FB;border:2px dashed var(--line);border-radius:10px;padding:10px 14px;margin-top:12px}
+.btn{border:0;border-radius:10px;padding:11px 20px;background:var(--teal);color:#fff;min-height:48px}
+.btn:hover:not(:disabled){background:var(--teal-d)}
+.btn:disabled{background:#B8C6D2;cursor:not-allowed}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.warn{background:#FCE4DF;border-left:5px solid var(--coral);padding:8px 12px;border-radius:6px;margin-top:10px}
+.sumbox{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:14px;min-height:240px;background:#F6F9FB}
+.ok{color:var(--teal-d);font-weight:700}
+.reset{background:none;border:0;color:var(--sub);text-decoration:underline;font-size:14px;margin-top:22px}
+</style>
+</head>
+<body data-lang="en">
+<header class="on-dark">
+  <a class="back" href="index.html"><span class="bi inline"><span class="en">← Lessons</span><span class="es">← Lecciones</span></span></a>
+  <div class="ttl"><h1>Catch-Up Day Exit Ticket</h1>
+    <div style="font-size:14px;color:#BCD0E2"><span class="bi inline"><span class="en">Plan, work, check in</span><span class="es">Planea, trabaja, revisa</span></span></div></div>
+  <div class="langtog" role="group" aria-label="Main language / Idioma principal">
+    <button type="button" data-act="lang" data-l="en" aria-pressed="true">EN</button>
+    <button type="button" data-act="lang" data-l="es" aria-pressed="false">ES</button>
+  </div>
+</header>
+<main id="app"></main>
+<script>
+(function(){
+'use strict';
+const KEY='catchup-exit-ticket-v1';
+const B=(en,es,c)=>`<span class="bi${c?' '+c:''}"><span class="en">${en}</span><span class="es">${es}</span></span>`;
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const $=s=>document.querySelector(s);
+const STATUS=[['', 'Choose… / Elige…'],['past','Past due / Vencida'],['soon','Due soon / Vence pronto'],['unsure','Not sure / No estoy seguro']];
+const RESULT=[['', 'Fill in at the end of class / Llena al final de la clase'],['done','Finished it / La terminé'],['some','Made progress / Avancé'],['none','Did not get to it / No llegué a hacerla']];
+const STXT={past:'past due',soon:'due soon',unsure:'not sure',done:'finished',some:'made progress',none:'did not get to it'};
+function fresh(){return {v:1,lang:'en',name:'',period:'',items:[0,1,2].map(()=>({a:'',s:'',p:'',r:''})),note:''};}
+let S;
+function load(){try{const o=JSON.parse(localStorage.getItem(KEY)); if(o&&o.v===1&&o.items&&o.items.length===3) return o;}catch(e){} return fresh();}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+const opts=(list,val)=>list.map(o=>`<option value="${o[0]}" ${o[0]===val?'selected':''}>${esc(o[1])}</option>`).join('');
+
+function problems(){
+  const p=[]; const names=S.items.map(i=>i.a.trim().toLowerCase());
+  if(S.name.trim().length<2) p.push('name');
+  S.items.forEach((it,i)=>{ if(it.a.trim().length<3) p.push('a'+i); if(!it.s) p.push('s'+i); });
+  const filled=names.filter(n=>n.length>=3);
+  const dup=new Set(filled).size!==filled.length;
+  return {list:p,dup};
+}
+function summary(){
+  const L=['CATCH-UP DAY EXIT TICKET — 10/14/2026','Name: '+S.name.trim()+'   Period: '+(S.period.trim()||'—'),'Submitted: '+new Date().toLocaleString(),''];
+  S.items.forEach((it,i)=>{
+    L.push((i+1)+'. '+it.a.trim());
+    L.push('   Status in Canvas: '+(STXT[it.s]||'—'));
+    L.push('   My plan: '+(it.p.trim()||'—'));
+    L.push('   How it went: '+(STXT[it.r]||'not marked yet'));
+  });
+  L.push('','One thing that helped or got in my way: '+(S.note.trim()||'—'));
+  return L.join('\n');
+}
+function view(){
+  const pr=problems(); const ready=pr.list.length===0&&!pr.dup;
+  return `
+  <section class="card">
+    <h2>${B('Plan your catch-up time','Planea tu tiempo para ponerte al día')}</h2>
+    <p class="lead" style="margin:0">${B('List 3 assignments that are due or past due that you will work on today. Type each name exactly as it shows in Canvas. Your teacher will check.','Anota 3 tareas que ya vencieron o que vencen pronto y que vas a trabajar hoy. Escribe cada nombre exactamente como aparece en Canvas. Tu maestro lo va a revisar.')}</p>
+    <div class="fields">
+      <label class="f">${B('Your name','Tu nombre')}<input type="text" id="inName" maxlength="60" autocomplete="off" value="${esc(S.name)}"></label>
+      <label class="f">${B('Period','Periodo')}<input type="text" id="inPeriod" maxlength="10" autocomplete="off" value="${esc(S.period)}"></label>
+    </div>
+  </section>
+  ${S.items.map((it,i)=>`
+  <section class="card">
+    <div class="item">
+      <h3>${B('Assignment '+(i+1),'Tarea '+(i+1))}</h3>
+      <div class="cols">
+        <label class="f">${B('Name in Canvas','Nombre en Canvas')}<input type="text" data-f="a" data-i="${i}" maxlength="120" autocomplete="off" value="${esc(it.a)}"></label>
+        <label class="f">${B('Status','Estado')}<select data-f="s" data-i="${i}">${opts(STATUS,it.s)}</select></label>
+      </div>
+      <label class="f">${B('What will I do first? (optional)','¿Qué haré primero? (opcional)')}<input type="text" data-f="p" data-i="${i}" maxlength="160" autocomplete="off" value="${esc(it.p)}"></label>
+      <div class="end">
+        <label class="f" style="margin-top:0">${B('At the end of class: how did it go?','Al final de la clase: ¿cómo te fue?')}<select data-f="r" data-i="${i}">${opts(RESULT,it.r)}</select></label>
+      </div>
+    </div>
+  </section>`).join('')}
+  <section class="card">
+    <label class="f" style="margin-top:0">${B('One thing that helped or got in my way (optional)','Algo que me ayudó o me estorbó (opcional)')}<textarea id="inNote" maxlength="400">${esc(S.note)}</textarea></label>
+    ${pr.dup?`<div class="warn" id="dupwarn">${B('Two of your assignments have the same name. List 3 different assignments.','Dos de tus tareas tienen el mismo nombre. Anota 3 tareas diferentes.')}</div>`:''}
+    <h2 style="margin-top:18px">${B('Turn it in','Entrégalo')}</h2>
+    <p style="margin:0 0 8px">${B('When all 3 assignments have a name and a status, press Copy. Then paste it into the Canvas assignment (Text Entry). Fill in "how did it go" before you do, near the end of class.','Cuando las 3 tareas tengan nombre y estado, presiona Copiar. Luego pégalo en la tarea de Canvas (Entrada de texto). Llena "cómo te fue" antes de hacerlo, cerca del final de la clase.')}</p>
+    <div class="row"><button class="btn" id="btnCopy" data-act="copy" ${ready?'':'disabled'}>${B('Copy my exit ticket','Copiar mi boleto de salida')}</button><span id="copymsg" class="ok" role="status"></span></div>
+    <textarea id="sumbox" class="sumbox" readonly aria-label="Summary" style="margin-top:12px">${esc(summary())}</textarea>
+  </section>
+  <button class="reset" data-act="reset">${B('Start over (clears this device)','Empezar de nuevo (borra este dispositivo)','inline')}</button>`;
+}
+function render(keepFocus){
+  document.body.setAttribute('data-lang',S.lang); document.documentElement.lang=S.lang;
+  document.querySelectorAll('.langtog button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.l===S.lang));
+  const a=document.activeElement; const id=a&&(a.id||''), df=a&&a.dataset&&a.dataset.f, di=a&&a.dataset&&a.dataset.i;
+  const pos=a&&a.selectionStart;
+  $('#app').innerHTML=view(); save();
+  if(keepFocus){
+    let el=id?document.getElementById(id):(df?document.querySelector(`[data-f="${df}"][data-i="${di}"]`):null);
+    if(el){el.focus(); try{if(pos!=null) el.setSelectionRange(pos,pos);}catch(e){}}
+  }
+}
+// light refresh while typing: update summary + copy gate only, never rebuild inputs
+function refresh(){
+  const pr=problems(); const ready=pr.list.length===0&&!pr.dup;
+  $('#btnCopy').disabled=!ready; $('#sumbox').value=summary(); save();
+  const w=$('#dupwarn');
+  if(pr.dup&&!w){ const c=$('#btnCopy').closest('.card'); const d=document.createElement('div'); d.className='warn'; d.id='dupwarn'; d.innerHTML=B('Two of your assignments have the same name. List 3 different assignments.','Dos de tus tareas tienen el mismo nombre. Anota 3 tareas diferentes.'); c.insertBefore(d,c.querySelector('h2')); }
+  if(!pr.dup&&w) w.remove();
+}
+document.addEventListener('input',e=>{
+  const t=e.target;
+  if(t.id==='inName') S.name=t.value;
+  else if(t.id==='inPeriod') S.period=t.value;
+  else if(t.id==='inNote') S.note=t.value;
+  else if(t.dataset&&t.dataset.f) S.items[+t.dataset.i][t.dataset.f]=t.value;
+  else return;
+  refresh();
+});
+document.addEventListener('change',e=>{const t=e.target; if(t.dataset&&t.dataset.f==='s'||t.dataset&&t.dataset.f==='r'){S.items[+t.dataset.i][t.dataset.f]=t.value; refresh();}});
+document.addEventListener('click',e=>{
+  const t=e.target.closest('[data-act]'); if(!t||t.disabled) return;
+  if(t.dataset.act==='lang'){S.lang=t.dataset.l; render(false);}
+  else if(t.dataset.act==='copy'){
+    const ta=$('#sumbox'), m=$('#copymsg'); ta.value=summary();
+    const ok=()=>{m.innerHTML=B('Copied! Now paste it into Canvas.','¡Copiado! Ahora pégalo en Canvas.','inline');};
+    const fb=()=>{ta.focus();ta.select();try{document.execCommand('copy');ok();}catch(x){m.innerHTML=B('Select the text and press Ctrl+C.','Selecciona el texto y presiona Ctrl+C.','inline');}};
+    if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(ta.value).then(ok,fb); else fb();
+  } else if(t.dataset.act==='reset'){
+    if(confirm('Start over? This clears your work on this device. / ¿Empezar de nuevo? Esto borra tu trabajo en este dispositivo.')){try{localStorage.removeItem(KEY);}catch(x){} S=fresh(); render(false);}
+  }
+});
+S=load(); render(false);
+window.__S=()=>S;
+})();
+</script>
+</body>
+</html>
