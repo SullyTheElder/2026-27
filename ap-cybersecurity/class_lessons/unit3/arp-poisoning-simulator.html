@@ -152,6 +152,7 @@ table.arp tr.poisoned td.who{color:#fff}
     <div class="status" id="s3status"></div>
     <div class="q" id="q3box" style="display:none"></div>
     <div class="q" id="q3bbox" style="display:none"></div>
+    <div class="row"><button id="s3next" disabled>Continue to Stage 4</button><span class="note" id="s3hint">To continue: run it once with forwarding ON and once with it OFF, and answer both questions correctly.</span></div>
   </div>
 
   <!-- STAGE 4 -->
@@ -165,6 +166,7 @@ table.arp tr.poisoned td.who{color:#fff}
     <div class="status" id="s4status"></div>
     <div class="q" id="q4box" style="display:none"></div>
     <div class="q" id="q4bbox" style="display:none"></div>
+    <div class="row"><button id="s4next" disabled>Continue to Stage 5</button><span class="note" id="s4hint">To continue: try both actions and answer both questions correctly.</span></div>
   </div>
 
   <!-- STAGE 5 -->
@@ -280,10 +282,12 @@ function ask(boxId,id,text,options,correctIdx,explainRight,explainWrong,onCorrec
       rec.attempts++;
       if(i===correctIdx){
         if(rec.firstTry===null)rec.firstTry=true;
+        rec.solved=true;
         b.classList.add("right");
         wrap.querySelectorAll("button").forEach(x=>x.disabled=true);
         fb.className="fb show good";fb.innerHTML="<strong>Correct.</strong> "+explainRight;
         onCorrect&&onCorrect();
+        updateGates();
       }else{
         if(rec.firstTry===null)rec.firstTry=false;
         b.classList.add("wrong");b.disabled=true;
@@ -299,6 +303,17 @@ function nextBtn(parentId,label,fn){
   const b=document.createElement("button");b.textContent=label;b.addEventListener("click",()=>{b.disabled=true;fn();});
   row.appendChild(b);box.appendChild(row);
 }
+
+
+// ---------- stage gates (event-driven, no timers) ----------
+function solved(id){const r=results.find(x=>x.id===id);return !!(r&&r.solved);}
+function updateGates(){
+  const g3=solved("q3")&&solved("q3b"), g4=solved("q4")&&solved("q4b");
+  $("s3next").disabled=!g3; $("s3hint").textContent=g3?"Both questions complete.":"To continue: run it once with forwarding ON and once with it OFF, and answer both questions correctly.";
+  $("s4next").disabled=!g4; $("s4hint").textContent=g4?"Both questions complete.":"To continue: try both actions and answer both questions correctly.";
+}
+$("s3next").addEventListener("click",()=>{$("fwd").checked=true;showStage(4);});
+$("s4next").addEventListener("click",()=>showStage(5));
 
 // ---------- stage 1 ----------
 $("s1run").addEventListener("click",()=>{
@@ -356,33 +371,10 @@ $("s3run").addEventListener("click",()=>{
           {1:"Without the reply, her connection breaks, so she would notice.",2:"Her laptop is unchanged. Only the gateway table was modified.",3:"Nothing about the server changed."});
       }
     }
-    if(ran.s3on&&ran.s3off&&!$("s3next")){
-      const row=document.createElement("div");row.className="row";row.id="s3next";
-      const b=document.createElement("button");b.textContent="Continue to Stage 4";
-      b.addEventListener("click",()=>{ $("fwd").checked=true; showStage(4); });
-      row.appendChild(b);$("st3").appendChild(row);
-      b.disabled=true;
-      const check=setInterval(()=>{
-        const r3=results.find(r=>r.id==="q3"),r3b=results.find(r=>r.id==="q3b");
-        const done=el=>el&&el.querySelector&&el.querySelector(".right");
-        if(done($("q3box"))&&done($("q3bbox"))){b.disabled=false;clearInterval(check);}
-      },300);
-    }
   });
 });
 
 // ---------- stage 4 ----------
-function s4check(){
-  if(ran.s4copy&&ran.s4alter&&!$("s4next")){
-    const row=document.createElement("div");row.className="row";row.id="s4next";
-    const b=document.createElement("button");b.textContent="Continue to Stage 5";b.disabled=true;
-    b.addEventListener("click",()=>showStage(5));row.appendChild(b);$("st4").appendChild(row);
-    const check=setInterval(()=>{
-      const ok=el=>el.querySelector(".right");
-      if(ok($("q4box"))&&ok($("q4bbox"))){b.disabled=false;clearInterval(check);}
-    },300);
-  }
-}
 $("s4copy").addEventListener("click",()=>{
   if(ran.s4copy)return;ran.s4copy=true;$("s4copy").disabled=true;
   $("s4status").textContent="The adversary quietly saved a copy of Q3_Budget.xlsx.";
@@ -390,7 +382,6 @@ $("s4copy").addEventListener("click",()=>{
     ["Confidentiality","Integrity","Availability"],0,
     "Copying data lets someone who shouldn't see it read it. That is a confidentiality violation.",
     {1:"Nothing was changed in this action, so the data is still accurate.",2:"The file still arrived. Priya can still use it."});
-  s4check();
 });
 $("s4alter").addEventListener("click",()=>{
   if(ran.s4alter)return;ran.s4alter=true;$("s4alter").disabled=true;
@@ -399,7 +390,6 @@ $("s4alter").addEventListener("click",()=>{
     ["Integrity","Confidentiality","Availability"],0,
     "Altering data means it can no longer be trusted to be accurate. That is an integrity violation. Triage first: figure out what was compromised before deciding how to respond.",
     {1:"Reading is a confidentiality problem. This action changed the data.",2:"The file still arrived, so it was available."});
-  s4check();
 });
 
 // ---------- stage 5 ----------
