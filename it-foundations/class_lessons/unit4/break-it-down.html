@@ -64,6 +64,7 @@ label.f .bi{margin-bottom:4px}
 input[type=text],textarea,select{width:100%;border:2px solid var(--line);border-radius:8px;padding:10px 12px;background:#fff;min-height:46px}
 input[type=text]:focus,textarea:focus,select:focus{border-color:var(--teal)}
 textarea{min-height:120px;resize:vertical}
+.need{border-color:var(--coral) !important}
 .fields{display:grid;grid-template-columns:2fr 1fr;gap:12px;max-width:520px}
 
 /* status + results */
@@ -325,7 +326,7 @@ function fresh(){
   const p1=emptyPart(); p1.place={}; TASKS.forEach(t=>p1.place[t.id]=null);
   const p2=emptyPart(); p2.place={}; SLOTS.forEach(s=>p2.place[s.id]=null);
   return {v:1,name:'',period:'',lang:'en',stage:'welcome',p1,p2,
-    p3:{prob:'',custom:'',blocks:[{t:'step',a:'',y:'',n:''},{t:'step',a:'',y:'',n:''},{t:'dec',a:'',y:'',n:''}]},refl:''};
+    p3:{prob:'',custom:'',blocks:[{t:'step',a:'',y:'',n:''},{t:'step',a:'',y:'',n:''},{t:'dec',a:'',y:'',n:''},{t:'step',a:'',y:'',n:''}]},refl:''};
 }
 let S;
 function load(){try{const o=JSON.parse(localStorage.getItem(KEY)); if(o&&o.v===1&&o.p1&&o.p2&&o.p3) return o;}catch(e){} return fresh();}
@@ -489,10 +490,22 @@ function probBi(){
   const o=PROBLEMS.find(x=>x.id===p.prob); return o?B(esc(o.en),esc(o.es)):'…';
 }
 function builderProblems(){
-  const p3=S.p3; const st=p3.blocks.filter(b=>b.t==='step').length, dc=p3.blocks.filter(b=>b.t==='dec').length;
-  const txtOk=p3.blocks.every(b=>b.a.trim().length>=3 && (b.t==='step'||(b.y.trim().length>=3&&b.n.trim().length>=3)));
-  const probOk=p3.prob && (p3.prob!=='other'||p3.custom.trim().length>=3);
-  return {st,dc,txtOk,probOk,ok:!!(probOk&&st>=3&&dc>=1&&txtOk)};
+  const p3=S.p3, miss=[];
+  const st=p3.blocks.filter(b=>b.t==='step').length, dc=p3.blocks.filter(b=>b.t==='dec').length;
+  const probOk=!!(p3.prob && (p3.prob!=='other'||p3.custom.trim().length>=2));
+  if(!p3.prob) miss.push(B('Pick a problem at the top.','Elige un problema arriba.'));
+  else if(!probOk) miss.push(B('Type your problem at the top.','Escribe tu problema arriba.'));
+  let sn=0,qn=0;
+  p3.blocks.forEach(b=>{
+    if(b.t==='step'){ sn++; if(b.a.trim().length<2) miss.push(B(`Step ${sn} is empty. Write what you do.`,`El paso ${sn} está vacío. Escribe qué haces.`)); }
+    else { qn++;
+      if(b.a.trim().length<2) miss.push(B(`Question ${qn} is empty. Write the yes or no question.`,`La pregunta ${qn} está vacía. Escribe la pregunta de sí o no.`));
+      if(b.y.trim().length<2) miss.push(B(`Question ${qn}: fill in "If yes, I…".`,`Pregunta ${qn}: llena "Si es sí, yo…".`));
+      if(b.n.trim().length<2) miss.push(B(`Question ${qn}: fill in "If no, I…".`,`Pregunta ${qn}: llena "Si es no, yo…".`)); }
+  });
+  if(st<3) miss.push(B(`Add ${3-st} more ${3-st===1?'step':'steps'} with the + Add a step button.`,`Agrega ${3-st} ${3-st===1?'paso':'pasos'} más con el botón + Agregar un paso.`));
+  if(dc<1) miss.push(B('Add 1 yes or no question with the + button.','Agrega 1 pregunta de sí o no con el botón +.'));
+  return {st,dc,probOk,miss,ok:miss.length===0};
 }
 function previewHTML(){
   const p3=S.p3; const arrow='<div class="arrow" aria-hidden="true">↓</div>';
@@ -532,21 +545,23 @@ function viewP3(){
       <button class="btn ghost small" data-act="addstep" ${n>=8?'disabled':''}>${B('+ Add a step','+ Agregar un paso')}</button>
       <button class="btn ghost small" data-act="adddec" ${n>=8?'disabled':''}>${B('+ Add a yes or no question','+ Agregar una pregunta de sí o no')}</button>
     </div>
+    <div class="status" id="p3status" style="margin-top:14px"></div>
+    <div class="row"><button class="btn" id="btnP3" data-act="next" data-to="refl" ${pb.ok?'':'disabled'}>${B('Go to reflection','Ir a la reflexión')}</button></div>
     <h3 style="font-size:19px;margin-top:18px">${B('Your chart','Tu diagrama')}</h3>
     <div class="prev" id="prevwrap">${previewHTML()}</div>
-    <div class="status" id="p3status" style="margin-top:10px"></div>
-    <div class="row"><button class="btn" id="btnP3" data-act="next" data-to="refl" ${pb.ok?'':'disabled'}>${B('Go to reflection','Ir a la reflexión')}</button></div>
   </section>`;
 }
 function p3Status(){
-  const pb=builderProblems(); const bits=[];
-  if(!pb.probOk) bits.push(B('Pick a problem.','Elige un problema.'));
-  if(pb.st<3) bits.push(B(`Steps so far: ${pb.st} of 3 needed.`,`Pasos hasta ahora: ${pb.st} de 3 necesarios.`));
-  if(pb.dc<1) bits.push(B('Add at least 1 yes or no question.','Agrega al menos 1 pregunta de sí o no.'));
-  if(!pb.txtOk) bits.push(B('Fill in every box with at least 3 letters.','Llena cada casilla con al menos 3 letras.'));
-  return bits.length?`<div class="msg warn">${bits.join('')}</div>`:`<div class="msg good">${B('Your chart is ready.','Tu diagrama está listo.')}</div>`;
+  const pb=builderProblems();
+  return pb.ok?`<div class="msg good">${B('Your chart is ready. Press the button to continue.','Tu diagrama está listo. Presiona el botón para continuar.')}</div>`
+    :`<div class="msg warn"><div style="font-weight:700;margin-bottom:4px">${B('Still needed before you can continue:','Todavía falta esto para continuar:')}</div><ul style="margin:0;padding-left:20px">${pb.miss.map(m=>`<li>${m}</li>`).join('')}</ul></div>`;
 }
-
+function markNeeds(){
+  const sp=$('#selProb'); if(sp) sp.classList.toggle('need',!S.p3.prob);
+  const ic=$('#inCustom'); if(ic) ic.classList.toggle('need',S.p3.prob==='other'&&S.p3.custom.trim().length<2);
+  document.querySelectorAll('[data-f]').forEach(el=>{ if(el.dataset.f==='s'||el.dataset.f==='r') return; el.classList.toggle('need',el.value.trim().length<2); });
+}
+function reflNeed(){const n=15-S.refl.trim().length; return n>0?B(`Keep writing: ${n} more letters.`,`Sigue escribiendo: faltan ${n} letras.`):'';}
 function viewRefl(){
   const ok=S.refl.trim().length>=15;
   return `${stepper('refl')}
@@ -555,6 +570,7 @@ function viewRefl(){
     <p class="lead">${B('How did splitting things into parts, steps, and yes or no questions help you? What was the hardest part of building your chart?','¿Cómo te ayudó dividir las cosas en partes, pasos y preguntas de sí o no? ¿Qué fue lo más difícil de armar tu diagrama?')}</p>
     <textarea id="inRefl" aria-label="Reflection" placeholder="It helped me… The hardest part was…  /  Me ayudó… Lo más difícil fue…">${esc(S.refl)}</textarea>
     <p class="muted" style="margin:6px 0 0">${B('You can write in English or Spanish.','Puedes escribir en inglés o en español.')}</p>
+    <div class="msg warn" id="reflneed" style="margin-top:8px">${reflNeed()}</div>
     <div class="row" style="margin-top:14px"><button class="btn" id="btnRefl" data-act="next" data-to="turnin" ${ok?'':'disabled'}>${B('Go to turn in','Ir a entregar')}</button></div>
   </section>`;
 }
@@ -659,11 +675,11 @@ function render(){
   document.querySelectorAll('.langtog button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.l===S.lang));
   const v={welcome:viewWelcome,p1:viewP1,p2:viewP2,p3:viewP3,refl:viewRefl,turnin:viewTurnin}[S.stage];
   $('#app').innerHTML=v(); save();
-  if(S.stage==='p3') $('#p3status').innerHTML=p3Status();
+  if(S.stage==='p3'){ $('#p3status').innerHTML=p3Status(); markNeeds(); }
 }
 function go(stage){S.stage=stage; render(); window.scrollTo(0,0);}
 function refreshP3(){
-  $('#prevwrap').innerHTML=previewHTML(); $('#p3status').innerHTML=p3Status();
+  $('#prevwrap').innerHTML=previewHTML(); $('#p3status').innerHTML=p3Status(); markNeeds();
   $('#btnP3').disabled=!builderProblems().ok; save();
 }
 
@@ -724,7 +740,7 @@ document.addEventListener('input',e=>{
   if(id==='inName'){S.name=t.value; save(); const b=$('#btnStart'); if(b) b.disabled=S.name.trim().length<2;}
   else if(id==='inPeriod'){S.period=t.value; save();}
   else if(id==='inCustom'){S.p3.custom=t.value; refreshP3();}
-  else if(id==='inRefl'){S.refl=t.value; save(); const b=$('#btnRefl'); if(b) b.disabled=S.refl.trim().length<15;}
+  else if(id==='inRefl'){S.refl=t.value; save(); const b=$('#btnRefl'); if(b) b.disabled=S.refl.trim().length<15; const rn=$('#reflneed'); if(rn) rn.innerHTML=reflNeed();}
   else if(t.dataset&&t.dataset.f){S.p3.blocks[+t.dataset.i][t.dataset.f]=t.value; refreshP3();}
 });
 document.addEventListener('change',e=>{
