@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>U3L02: Packet Tracer First Contact - Build the Game Day Network</title>
+<style>
+  :root{
+    --navy:#0B1F3A; --green:#8FC53E; --cream:#F4F1E9; --gold:#D9A441;
+    --ink:#1b2430; --muted:#55606e; --line:#d9d3c3; --card:#ffffff;
+    --head: Cambria, "Iowa Old Style", Georgia, serif;
+    --body: Calibri, Inter, "Segoe UI", Arial, sans-serif;
+    --mono: "IBM Plex Mono", Consolas, "Courier New", monospace;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--cream);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.55}
+  a{color:var(--navy)}
+  :focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+  .topbar{background:var(--navy);color:#fff;padding:10px 20px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+  .topbar .brand{font-family:var(--head);font-weight:700;letter-spacing:.02em}
+  .topbar a{color:var(--green);text-decoration:none;font-weight:600}
+  .topbar a:hover{text-decoration:underline}
+  main{max-width:900px;margin:0 auto;padding:24px 20px 60px}
+  .eyebrow{color:var(--muted);font-size:.85rem;text-transform:uppercase;letter-spacing:.08em;margin:0}
+  h1{font-family:var(--head);color:var(--navy);font-size:2.1rem;line-height:1.2;margin:.2em 0 .1em}
+  .sub{color:var(--muted);margin:0 0 18px}
+  h2{font-family:var(--head);color:var(--navy);font-size:1.5rem;margin:36px 0 8px;padding-bottom:6px;border-bottom:3px solid var(--green)}
+  h3{font-family:var(--head);color:var(--navy);margin:20px 0 6px;font-size:1.15rem}
+  .idbar{display:flex;gap:14px;flex-wrap:wrap;background:#fff;border:1px solid var(--line);border-radius:8px;padding:12px 14px;margin:14px 0 8px}
+  .idbar label{display:flex;gap:8px;align-items:center;font-weight:600}
+  input[type=text],textarea{font:inherit;border:1px solid #b8b09b;border-radius:6px;padding:7px 9px;background:#fff;color:var(--ink);width:100%}
+  .idbar input[type=text]{width:220px}
+  .idbar .period{width:90px}
+  textarea{min-height:74px;resize:vertical}
+  table{width:100%;border-collapse:collapse;background:#fff;margin:10px 0 16px;font-size:.98rem}
+  th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+  th{background:var(--navy);color:#fff;font-weight:600}
+  td input[type=text]{padding:5px 7px}
+  .scroll{overflow-x:auto}
+  code,.mono{font-family:var(--mono);background:#eef0e4;border-radius:4px;padding:1px 6px;font-size:.92em}
+  .callout{background:#fff;border-left:6px solid var(--green);border-radius:6px;padding:12px 16px;margin:14px 0}
+  .callout.note{border-left-color:var(--gold)}
+  .mission{background:var(--card);border:1px solid var(--line);border-left:8px solid var(--green);border-radius:10px;padding:16px 20px;margin:18px 0;break-inside:avoid}
+  .mission h3{margin-top:0;display:flex;align-items:center;gap:12px}
+  .badge{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;background:var(--navy);color:var(--green);font-family:var(--head);font-weight:700;flex:none}
+  .time{margin-left:auto;font-size:.82rem;font-weight:600;color:var(--muted);background:var(--cream);border-radius:999px;padding:2px 10px;white-space:nowrap}
+  .goal{font-weight:600;color:var(--navy);margin:.2em 0 .6em}
+  ol.steps{padding-left:22px;margin:.4em 0}
+  ol.steps li{margin:.35em 0}
+  .check{display:flex;gap:10px;align-items:flex-start;background:var(--cream);border-radius:8px;padding:10px 12px;margin:12px 0 6px}
+  .check input{width:20px;height:20px;margin-top:3px;accent-color:var(--navy);flex:none}
+  details{background:#fbfaf5;border:1px dashed #b8b09b;border-radius:8px;padding:8px 12px;margin:8px 0}
+  summary{cursor:pointer;font-weight:600;color:var(--navy)}
+  .lights{display:flex;gap:14px;flex-wrap:wrap;margin:8px 0}
+  .lights span{display:inline-flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--line);border-radius:999px;padding:3px 12px 3px 6px;font-size:.95rem}
+  .dot{width:16px;height:16px;border-radius:50%;display:inline-block;border:2px solid rgba(0,0,0,.25)}
+  .dot.g{background:#2fb344}.dot.a{background:#f59f00}.dot.r{background:#e03131}
+  .stretch{border-left-color:var(--gold)}
+  .stretch .badge{color:var(--gold)}
+  dl.vocab dt{font-weight:700;color:var(--navy);margin-top:10px}
+  dl.vocab dd{margin:0 0 0 0}
+  .actions{margin:26px 0 6px;display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+  button.pdf{font:inherit;font-weight:700;background:var(--navy);color:#fff;border:0;border-radius:8px;padding:12px 20px;cursor:pointer}
+  button.pdf:hover{background:#163459}
+  .hint{color:var(--muted);font-size:.92rem}
+  @media (max-width:640px){ h1{font-size:1.65rem} .time{display:none} }
+  @media print{
+    body{background:#fff;font-size:11.5pt}
+    .topbar,.actions,.noprint{display:none !important}
+    main{max-width:none;padding:0}
+    .mission,.callout,table,tr{break-inside:avoid}
+    .mission{border:1px solid #999;border-left:6px solid #555}
+    h2{break-after:avoid}
+    textarea{border:1px solid #888}
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <span class="brand">🐾 Bulldog Networking — AP Networking</span>
+  <a href="https://whatwasithinking.us/ap-networking/index.html">← Back to AP Networking</a>
+</div>
+
+<main>
+  <p class="eyebrow">AP Networking · Local Unit 3 · U3L02</p>
+  <h1>Packet Tracer First Contact: Build the Game Day Network</h1>
+  <p class="sub">Putting your U3L01 plan on the screen — CB 3.1.B (applied), with a preview of 3.3.A and 3.3.C</p>
+
+  <div class="idbar">
+    <label>Name: <input type="text" id="name" autocomplete="name"></label>
+    <label>Period: <input type="text" id="period" class="period"></label>
+  </div>
+  <p class="hint noprint">Work through the missions in order. Tick each checkpoint as you reach it, answer the questions at the bottom, then use the "Download as PDF" button to save a copy to turn in. Your teacher will tell you how to turn in your Packet Tracer file.</p>
+
+  <h2>The Situation</h2>
+  <p>Last class you planned the <strong>Bulldog Esports Invitational</strong> network on paper: which devices, wired or wireless, and how many switch ports. Now it's setup day, and you're going to build a <strong>scale model</strong> of that network in <strong>Cisco Packet Tracer</strong>.</p>
+  <p>Packet Tracer is a <strong>network simulator</strong>. You build devices and cables on the screen, give them settings, and test them, all without touching real equipment. That means you're allowed to break things. In fact, today you'll break something on purpose, and then fix it.</p>
+  <div class="callout note">
+    <strong>Scale model rule:</strong> you can't place 150 devices in 50 minutes, so <em>one device stands in for each group</em> from your U3L01 plan.
+  </div>
+  <p class="hint">Packet Tracer's menus can look a little different from one version to the next. If something isn't exactly where this guide says, look around the same area. If you're still stuck, ask.</p>
+
+  <h2>Mission Board</h2>
+
+  <!-- MISSION 1 -->
+  <section class="mission" aria-labelledby="m1">
+    <h3 id="m1"><span class="badge">1</span> Launch and Save <span class="time">about 5 min</span></h3>
+    <p class="goal">Goal: open a blank Packet Tracer file and save it with your name on it.</p>
+    <ol class="steps">
+      <li>Open <strong>Packet Tracer</strong> on your virtual machine. Your teacher will point you to it. If you're asked to sign in, follow your teacher's directions.</li>
+      <li>Start a new, empty file.</li>
+      <li>Save it right away as <code>LastName_U3L02</code>, in the place your teacher tells you.</li>
+    </ol>
+    <h3 style="font-size:1rem">A quick tour of the screen</h3>
+    <ul>
+      <li>The big blank area in the middle is the <strong>workspace</strong>. You build here.</li>
+      <li>The panel along the <strong>bottom-left</strong> is the <strong>device palette</strong>. Pick a category first, then pick a model.</li>
+      <li>In the <strong>bottom-right</strong> corner you can switch between <strong>Realtime</strong> and <strong>Simulation</strong> modes. You'll use Simulation in Mission 6.</li>
+    </ul>
+    <div class="check"><input type="checkbox" id="c1"><label for="c1">Checkpoint: my file is open, empty, and saved with my last name in the file name.</label></div>
+    <details><summary>Stuck?</summary>It's a big program running on a remote computer, so the first launch can be slow. Give it a minute or two. If nothing appears after that, raise your hand.</details>
+  </section>
+
+  <!-- MISSION 2 -->
+  <section class="mission" aria-labelledby="m2">
+    <h3 id="m2"><span class="badge">2</span> Build the Wired Core <span class="time">about 12 min</span></h3>
+    <p class="goal">Goal: place the devices, name them, and wire them up.</p>
+    <div class="scroll"><table>
+      <thead><tr><th>Place this</th><th>Rename it</th><th>It stands in for (U3L01)</th></tr></thead>
+      <tbody>
+        <tr><td>1 router (any model)</td><td><code>Gateway</code></td><td>The router connecting the gym to the internet</td></tr>
+        <tr><td>1 switch (a 2960 is a good choice)</td><td><code>Gym-Switch</code></td><td>The switch your wired devices plug into</td></tr>
+        <tr><td>2 PCs</td><td><code>Player 1</code>, <code>Player 2</code></td><td>Players (wired for low lag)</td></tr>
+        <tr><td>1 PC</td><td><code>Caster</code></td><td>Casters and stream crew</td></tr>
+        <tr><td>1 PC</td><td><code>Admin</code></td><td>Tournament admins</td></tr>
+        <tr><td>1 server</td><td><code>Tournament Server</code></td><td>The event's local server</td></tr>
+      </tbody>
+    </table></div>
+    <ol class="steps">
+      <li>Pick a category in the palette (end devices, or network devices), then click a model and click once in the workspace to drop it.</li>
+      <li>Click each device and change its <strong>display name</strong> to match the table.</li>
+      <li>Connect devices with cables. In the connections category, choose the tool that <strong>automatically picks the connection type</strong>, then click one device and then the other. Connect every end device to the switch, then the switch to the router.</li>
+    </ol>
+    <p><strong>Count it:</strong> how many switch ports did you use? Use the same rule as U3L01 Part 2 (wired devices plus the router connection). <input type="text" style="width:120px" aria-label="Switch ports used"> ports</p>
+    <div class="check"><input type="checkbox" id="c2"><label for="c2">Checkpoint: all six devices are named, and every cable is connected at both ends.</label></div>
+    <details><summary>Stuck?</summary>If a cable won't attach, click the cable tool again and make sure you click a device, not empty space. To delete a wrong cable, use the delete tool and click on it.</details>
+  </section>
+
+  <!-- MISSION 3 -->
+  <section class="mission" aria-labelledby="m3">
+    <h3 id="m3"><span class="badge">3</span> Read the Lights <span class="time">about 5 min</span></h3>
+    <p class="goal">Goal: get a green link light at <em>both</em> ends of every cable.</p>
+    <p>Look at the small dot at each end of each cable. Back in Unit 2 you learned what red, orange, and unlit lights mean on real equipment. This is the same idea.</p>
+    <div class="lights">
+      <span><i class="dot g"></i> Green: the link is up</span>
+      <span><i class="dot a"></i> Amber/orange: a switch port is getting ready. Wait a bit.</span>
+      <span><i class="dot r"></i> Red: no link. Something is wrong.</span>
+    </div>
+    <p>Wait about 30 seconds, or use the <strong>fast forward time</strong> button near the bottom-left of the screen, until the amber lights settle. Any red lights left? Fix them before moving on.</p>
+    <div class="check"><input type="checkbox" id="c3"><label for="c3">Checkpoint: every link light is green.</label></div>
+    <p><strong>If you had a red light, what did you do to fix it?</strong></p>
+    <textarea aria-label="What did you do to fix a red light?"></textarea>
+    <details><summary>Hint 1</summary>Is the red light on the router's end only, or on both ends?</details>
+    <details><summary>Hint 2</summary>Routers ship with their ports turned off. Click the router, open its <strong>Config</strong> tab, pick the port the switch is plugged into, and look for the port status setting.</details>
+  </section>
+
+  <!-- MISSION 4 -->
+  <section class="mission" aria-labelledby="m4">
+    <h3 id="m4"><span class="badge">4</span> Give Every Device an Address <span class="time">about 12 min</span></h3>
+    <p class="goal">Goal: configure every device so it matches this plan.</p>
+    <p>Real designers write the addressing plan down <em>before</em> they type anything. Here is yours:</p>
+    <div class="scroll"><table>
+      <thead><tr><th>Device</th><th>IP address</th><th>Subnet mask</th><th>Default gateway</th></tr></thead>
+      <tbody>
+        <tr><td>Gateway (router port facing the switch)</td><td><code>192.168.1.1</code></td><td><code>255.255.255.0</code></td><td>(none)</td></tr>
+        <tr><td>Player 1</td><td><code>192.168.1.11</code></td><td><code>255.255.255.0</code></td><td><code>192.168.1.1</code></td></tr>
+        <tr><td>Player 2</td><td><code>192.168.1.12</code></td><td><code>255.255.255.0</code></td><td><code>192.168.1.1</code></td></tr>
+        <tr><td>Caster</td><td><code>192.168.1.21</code></td><td><code>255.255.255.0</code></td><td><code>192.168.1.1</code></td></tr>
+        <tr><td>Admin</td><td><code>192.168.1.31</code></td><td><code>255.255.255.0</code></td><td><code>192.168.1.1</code></td></tr>
+        <tr><td>Tournament Server</td><td><code>192.168.1.100</code></td><td><code>255.255.255.0</code></td><td><code>192.168.1.1</code></td></tr>
+      </tbody>
+    </table></div>
+    <ol class="steps">
+      <li><strong>End devices:</strong> click the device, open the <strong>Desktop</strong> tab, and choose <strong>IP Configuration</strong>. Select the static option and enter the address, mask, and default gateway from the plan.</li>
+      <li><strong>Router:</strong> click it, open the <strong>Config</strong> tab, choose the port connected to the switch, and enter its IP address and mask.</li>
+      <li><strong>Check your work:</strong> on Player 1, open the Desktop tab, then <strong>Command Prompt</strong>, and type <code>ipconfig</code>. Do the numbers match the plan?</li>
+    </ol>
+    <div class="check"><input type="checkbox" id="c4"><label for="c4">Checkpoint: <code>ipconfig</code> on Player 1 matches my plan.</label></div>
+    <details><summary>Stuck?</summary>Every device needs a <em>different</em> last number, but the same mask. Look at the first three numbers of each address. Do they all match the router's?</details>
+  </section>
+
+  <!-- MISSION 5 -->
+  <section class="mission" aria-labelledby="m5">
+    <h3 id="m5"><span class="badge">5</span> Prove It Works, Then Break It <span class="time">about 10 min</span></h3>
+    <p class="goal">Goal: use <code>ping</code> to test the network, then cause and fix a problem.</p>
+    <p><strong>Part A: Test.</strong> From Player 1's Command Prompt, ping each target by typing <code>ping</code>, a space, and the address. Record what happens.</p>
+    <div class="scroll"><table>
+      <thead><tr><th>From Player 1 to…</th><th>Address</th><th>Result (replies or no replies?)</th></tr></thead>
+      <tbody>
+        <tr><td>Gateway</td><td><code>192.168.1.1</code></td><td><input type="text" aria-label="Ping result gateway"></td></tr>
+        <tr><td>Tournament Server</td><td><code>192.168.1.100</code></td><td><input type="text" aria-label="Ping result server"></td></tr>
+        <tr><td>Caster</td><td><code>192.168.1.21</code></td><td><input type="text" aria-label="Ping result caster"></td></tr>
+      </tbody>
+    </table></div>
+    <p class="hint">The very first ping on a new network sometimes gets no reply while the devices get introduced to each other. Run it again before you decide something is broken.</p>
+    <p><strong>Part B: Break it on purpose.</strong></p>
+    <ol class="steps">
+      <li>On Player 2, change the IP address to <code>192.168.5.12</code>. Leave everything else alone.</li>
+      <li>From Player 2, ping the Tournament Server (<code>192.168.1.100</code>). What happens? <input type="text" aria-label="Result after breaking Player 2" style="width:60%"></li>
+      <li>Fix Player 2 so the ping works again.</li>
+    </ol>
+    <div class="check"><input type="checkbox" id="c5"><label for="c5">Checkpoint: pings from Player 1 work, I saw Player 2 fail, and I fixed it.</label></div>
+  </section>
+
+  <!-- MISSION 6 -->
+  <section class="mission" aria-labelledby="m6">
+    <h3 id="m6"><span class="badge">6</span> Watch a Packet Travel <span class="time">about 5 min</span></h3>
+    <p class="goal">Goal: see data move through your network, one step at a time.</p>
+    <ol class="steps">
+      <li>Switch to <strong>Simulation</strong> mode (bottom-right corner).</li>
+      <li>In the right-hand toolbar, pick <strong>Add Simple PDU</strong> (it looks like a closed envelope). Click <strong>Player 1</strong>, then click the <strong>Tournament Server</strong>.</li>
+      <li>Use the <strong>Capture / Forward</strong> button in the simulation panel to step the packet forward, and watch the envelope.</li>
+      <li>Switch back to <strong>Realtime</strong> mode when you're done.</li>
+    </ol>
+    <p><strong>Predict, then check:</strong> which devices did the packet pass through, and did it go to the router? Why do you think that is?</p>
+    <textarea aria-label="Which devices did the packet pass through and why?"></textarea>
+    <div class="check"><input type="checkbox" id="c6"><label for="c6">Checkpoint: I watched a packet travel and wrote down which devices it touched.</label></div>
+  </section>
+
+  <!-- STRETCH -->
+  <section class="mission stretch" aria-labelledby="ms">
+    <h3 id="ms"><span class="badge">★</span> Stretch Missions (finished early?) <span class="time">optional</span></h3>
+    <p><strong>A. Add Wi-Fi.</strong> Add a wireless access point and connect it to the switch. Add a tablet or smartphone (they have Wi-Fi built in; laptops would need a hardware swap, so skip those today). Give the tablet an address from the same network and ping the server.</p>
+    <p><strong>B. A pretend internet.</strong> Add a second server. Give the router's second port the address <code>203.0.113.1</code> with mask <code>255.255.255.0</code>. Give the new server <code>203.0.113.10</code>, the same mask, and default gateway <code>203.0.113.1</code>. Connect it to that port and ping it from Player 1. Then run Mission 6 again with this server. What's different about the path?</p>
+  </section>
+
+  <h2>Debrief Questions</h2>
+  <p><strong>1.</strong> What do green, amber, and red link lights tell you, and why do they matter when you troubleshoot?</p>
+  <textarea aria-label="Question 1"></textarea>
+  <p><strong>2.</strong> Every device on your network needed a different IP address but the same subnet mask and the same first three numbers. Why? Use what happened to Player 2 in Mission 5 as evidence.</p>
+  <textarea aria-label="Question 2"></textarea>
+  <p><strong>3.</strong> What could you do in Packet Tracer that your paper plan from U3L01 couldn't show you? What couldn't Packet Tracer show you?</p>
+  <textarea aria-label="Question 3"></textarea>
+
+  <h2>Vocabulary</h2>
+  <p class="hint">Now that you've done it, here are the names for what you used.</p>
+  <dl class="vocab">
+    <dt>Network simulator</dt><dd>Software that lets you build and test a pretend network on a screen.</dd>
+    <dt>Link light</dt><dd>A small light at each end of a cable showing whether the connection is working.</dd>
+    <dt>Static IP address</dt><dd>An address you type in by hand instead of having a device receive one automatically.</dd>
+    <dt>Subnet mask</dt><dd>Numbers that tell a device which part of an address identifies the network.</dd>
+    <dt>Default gateway</dt><dd>The router address a device uses to reach devices on other networks.</dd>
+    <dt>Ping</dt><dd>A test that sends a small message to another device and reports whether it answers.</dd>
+    <dt>Simulation mode</dt><dd>A view that slows data down so you can watch each packet's trip.</dd>
+  </dl>
+
+  <h2>Quick Reference</h2>
+  <div class="scroll"><table>
+    <thead><tr><th>I want to…</th><th>Try this</th></tr></thead>
+    <tbody>
+      <tr><td>Add a device</td><td>Pick a category in the bottom-left palette, choose a model, click once in the workspace.</td></tr>
+      <tr><td>Open a device's settings</td><td>Click the device. Tabs like <strong>Config</strong> and <strong>Desktop</strong> appear.</td></tr>
+      <tr><td>Set a PC's IP address</td><td>Desktop tab, then IP Configuration.</td></tr>
+      <tr><td>Set a router port's address</td><td>Config tab, then the port, then address and mask. Make sure the port is on.</td></tr>
+      <tr><td>Run a command</td><td>Desktop tab, then Command Prompt. Useful: <code>ipconfig</code>, <code>ping</code>, <code>tracert</code>.</td></tr>
+      <tr><td>Watch packets move</td><td>Simulation mode (bottom-right), Add Simple PDU, then Capture / Forward.</td></tr>
+      <tr><td>Save my work</td><td>Save the file with your last name in the file name, in the place your teacher gave you.</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="actions noprint">
+    <button class="pdf" type="button" onclick="window.print()">📄 Download as PDF</button>
+    <span class="hint">In the print dialog, set <strong>Destination</strong> to <strong>Save as PDF</strong>, then save.</span>
+  </div>
+</main>
+</body>
+</html>
