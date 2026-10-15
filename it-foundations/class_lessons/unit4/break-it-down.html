@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Break It Down — Unit 4, Lesson 2</title>
+<style>
+:root{--navy:#0F2238;--navy2:#1B3553;--teal:#14907F;--teal-d:#0C6B5E;--mint:#CDEFE4;--amber:#F2B134;--amber-d:#A86F08;--coral:#E8604C;--coral-l:#FCE4DF;--bg:#EEF3F7;--line:#C9D5E0;--sub:#475C72;--ok:#0C6B5E}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:Calibri,Carlito,"Segoe UI",system-ui,sans-serif;background:var(--bg);color:var(--navy);font-size:17px;line-height:1.45;-webkit-text-size-adjust:100%}
+h1,h2,h3{font-family:Cambria,Caladea,Georgia,serif;margin:0;line-height:1.15}
+button,select,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* both languages always visible; toggle swaps which is primary */
+.bi{display:flex;flex-direction:column}
+.bi.inline{display:inline-flex;vertical-align:top}
+body[data-lang="en"] .bi .en{order:1;font-weight:700}
+body[data-lang="en"] .bi .es{order:2;font-style:italic;font-weight:400;font-size:.86em;color:var(--sub)}
+body[data-lang="es"] .bi .es{order:1;font-weight:700}
+body[data-lang="es"] .bi .en{order:2;font-style:italic;font-weight:400;font-size:.86em;color:var(--sub)}
+.on-dark .bi .en,.on-dark .bi .es{color:#fff}
+body[data-lang="en"] .on-dark .bi .es,body[data-lang="es"] .on-dark .bi .en{color:#BCD0E2}
+.btn .bi{align-items:center;text-align:center}
+.btn .bi .en,.btn .bi .es{color:inherit !important}
+
+header{background:var(--navy);color:#fff;padding:12px 18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+header .back{color:#BCD0E2;text-decoration:none;font-size:15px;border:1px solid #3B5675;padding:6px 10px;border-radius:6px}
+header .ttl{flex:1;min-width:180px}
+header h1{font-size:26px}
+header .sub{font-size:14px;color:#BCD0E2}
+.langtog{display:flex;border:1px solid #3B5675;border-radius:8px;overflow:hidden}
+.langtog button{background:transparent;color:#BCD0E2;border:0;padding:7px 14px;font-weight:700}
+.langtog button[aria-pressed="true"]{background:var(--teal);color:#fff}
+main{max-width:1000px;margin:0 auto;padding:16px 16px 60px}
+.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:18px;margin-top:16px}
+.card h2{font-size:23px;margin-bottom:8px}
+.lead{font-size:18px;margin:0}
+.muted{color:var(--sub)}
+.stepper{display:flex;gap:6px;flex-wrap:wrap;list-style:none;padding:0;margin:14px 0 0}
+.stepper li{flex:1 1 90px;min-width:84px;border-top:5px solid var(--line);padding-top:5px;font-size:13px;color:var(--sub)}
+.stepper li.done{border-color:var(--teal);color:var(--teal-d)}
+.stepper li.now{border-color:var(--amber);color:var(--navy)}
+.stepper .bi .en,.stepper .bi .es{font-size:13px !important}
+.btn{border:0;border-radius:10px;padding:11px 20px;background:var(--teal);color:#fff;min-height:48px}
+.btn:hover:not(:disabled){background:var(--teal-d)}
+.btn:disabled{background:#B8C6D2;color:#fff;cursor:not-allowed}
+.btn.alt{background:var(--navy)}
+.btn.alt:hover:not(:disabled){background:var(--navy2)}
+.btn.ghost{background:#fff;color:var(--navy);border:2px solid var(--navy)}
+.btn.ghost:hover:not(:disabled){background:#E1EAF2}
+.btn.small{min-height:38px;padding:6px 14px}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.hero{background:var(--navy);color:#fff;border-radius:12px;padding:26px 22px;margin-top:16px}
+.hero h2{font-size:34px;margin-bottom:10px;color:#fff}
+.how{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;margin-top:16px}
+.how>div{background:var(--navy2);border-radius:10px;padding:12px 14px}
+.how .n{font-family:Cambria,Caladea,Georgia,serif;font-size:26px;color:var(--amber);display:block}
+label.f{display:block;margin-top:14px}
+label.f .bi{margin-bottom:4px}
+input[type=text],textarea,select{width:100%;border:2px solid var(--line);border-radius:8px;padding:10px 12px;background:#fff;min-height:46px}
+input[type=text]:focus,textarea:focus,select:focus{border-color:var(--teal)}
+textarea{min-height:120px;resize:vertical}
+.fields{display:grid;grid-template-columns:2fr 1fr;gap:12px;max-width:520px}
+
+/* status + results */
+.status{min-height:48px;margin:6px 0}
+.msg.good{color:var(--ok)}
+.msg.warn{color:#8A3A00}
+.tagrev{display:inline-block;background:var(--amber);color:var(--navy);border-radius:6px;padding:2px 8px;font-size:13px;font-weight:700}
+.checkbar{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-top:14px}
+.result{border:3px solid var(--teal)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin:10px 0}
+.stat{background:var(--bg);border-radius:10px;padding:10px 14px}
+.stat .big{font-family:Cambria,Caladea,Georgia,serif;font-size:34px;font-weight:700;display:block;line-height:1.1}
+
+/* Part 1: sort tasks into groups */
+.pool{display:flex;flex-wrap:wrap;gap:10px;min-height:60px;padding:10px;background:#F6F9FB;border:2px dashed var(--line);border-radius:10px}
+.task{background:#fff;border:2px solid var(--navy);border-radius:10px;padding:8px 12px;text-align:left;box-shadow:0 2px 0 var(--navy);max-width:260px;font-size:16px}
+.task:hover:not(:disabled){background:var(--mint)}
+.task.sel{outline:5px solid var(--teal);outline-offset:2px;background:var(--mint)}
+.task:disabled{cursor:default;opacity:1}
+.groups{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:12px;margin-top:12px}
+.group{border:3px solid var(--navy);border-radius:12px;padding:10px;background:#fff;text-align:left;min-height:170px;display:flex;flex-direction:column;gap:8px}
+.group.target{background:#F1FAF7}
+.group>.gh{font-family:Cambria,Caladea,Georgia,serif;font-size:19px;border-bottom:2px solid var(--line);padding-bottom:6px}
+.group .placed{display:flex;flex-direction:column;gap:6px}
+.group .task{box-shadow:none;max-width:none;width:100%}
+.hold{padding:8px 12px;background:var(--mint);border-radius:8px;margin-bottom:8px}
+
+/* Part 2/3: shapes */
+.shape{position:relative;display:flex;align-items:center;justify-content:center;text-align:center;padding:10px 18px;border:3px solid var(--navy);background:#fff;min-width:200px;max-width:100%}
+.shape.oval{border-radius:999px}
+.shape.rect{border-radius:8px}
+.shape.dia{border:0;background:transparent;padding:38px 78px;min-height:118px;min-width:300px}
+.diabg{position:absolute;left:0;top:0;width:100%;height:100%}
+.diabg polygon{fill:#fff;stroke:#0F2238;stroke-width:3;vector-effect:non-scaling-stroke}
+.shape .txt{position:relative;font-size:16px}
+button.slot{padding:0;background:none;border:0;display:block;max-width:100%}
+button.slot .shape{width:100%}
+button.slot.empty .shape{border-style:dashed;background:#F6F9FB;color:var(--sub)}
+button.slot.empty .diabg polygon{fill:#F6F9FB;stroke-dasharray:7 5}
+button.slot:hover:not(:disabled) .shape{background:var(--mint)}
+button.slot:hover:not(:disabled) .diabg polygon{fill:#CDEFE4}
+button.slot.bad .shape{border-color:var(--coral)}
+button.slot.bad .diabg polygon{stroke:#E8604C}
+.flow{display:flex;flex-direction:column;align-items:center;gap:4px;margin:12px auto 0}
+.flow .arrow{font-size:26px;line-height:1;color:var(--navy)}
+.flow .lab{font-weight:700;color:var(--teal-d);font-size:15px}
+.decrow{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap}
+.decrow .side{display:flex;align-items:center;gap:8px}
+.loopnote{font-size:14px;color:var(--sub);max-width:150px}
+.bank{display:flex;flex-wrap:wrap;gap:14px;align-items:center;padding:12px;background:#F6F9FB;border:2px dashed var(--line);border-radius:10px;margin-top:10px;min-height:70px}
+.bank .shape{min-width:0;cursor:pointer}
+.bank .dia{min-width:0;padding:34px 60px;min-height:104px}
+.blk{background:none;border:0;padding:0}
+.blk.sel .shape{outline:5px solid var(--teal);outline-offset:3px}
+.blk.sel .dia .diabg{filter:drop-shadow(0 0 0 #14907F)}
+.blk.sel .shape.dia{outline:none}
+.blk.sel .shape.dia .diabg polygon{stroke:#14907F;stroke-width:6}
+.legend{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;margin:10px 0}
+.legend>div{display:flex;gap:12px;align-items:center}
+.legend .shape{min-width:0;width:90px;height:50px;padding:0}
+.legend .shape.dia{padding:0;min-width:0;min-height:0;width:90px;height:60px}
+
+/* Part 3: builder */
+.bcard{border:2px solid var(--line);border-radius:10px;padding:10px 12px;margin-top:10px;background:#fff}
+.bcard .top{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+.bcard .top .kind{flex:1;font-family:Cambria,Caladea,Georgia,serif;font-size:18px}
+.bcard.dec{border-color:var(--teal)}
+.ico{border:2px solid var(--line);background:#fff;border-radius:6px;min-width:38px;height:38px;padding:0 8px}
+.ico:hover:not(:disabled){border-color:var(--teal);background:var(--mint)}
+.ico:disabled{opacity:.35;cursor:not-allowed}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:620px){.two,.fields{grid-template-columns:1fr}}
+.prev{background:#F6F9FB;border:2px solid var(--line);border-radius:12px;padding:14px;margin-top:12px}
+.prev .flow{margin-top:0}
+.branches{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;align-items:flex-start}
+.branches>div{display:flex;flex-direction:column;align-items:center;gap:4px}
+.prev .shape{min-width:160px}
+.prev .shape.dia{min-width:260px}
+.prev .shape .txt{overflow-wrap:anywhere}
+.sumbox{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:14px;min-height:260px;background:#F6F9FB}
+.copied{color:var(--ok);font-weight:700}
+.reset{background:none;border:0;color:var(--sub);text-decoration:underline;font-size:14px;margin-top:22px}
+@media (prefers-reduced-motion:reduce){*{transition:none !important;animation:none !important}}
+</style>
+</head>
+<body data-lang="en">
+<header class="on-dark">
+  <a class="back" href="../index.html"><span class="bi inline"><span class="en">← Lessons</span><span class="es">← Lecciones</span></span></a>
+  <div class="ttl"><h1>Break It Down</h1>
+    <div class="sub"><span class="bi inline"><span class="en">Unit 4 · Lesson 2</span><span class="es">Unidad 4 · Lección 2</span></span></div></div>
+  <div class="langtog" role="group" aria-label="Main language / Idioma principal">
+    <button type="button" data-act="lang" data-l="en" aria-pressed="true">EN</button>
+    <button type="button" data-act="lang" data-l="es" aria-pressed="false">ES</button>
+  </div>
+</header>
+<main id="app"></main>
+<div id="live" class="sr" aria-live="polite"></div>
+<script>
+(function(){
+'use strict';
+const KEY='u4l02-breakitdown-v1';
+const B=(en,es,c)=>`<span class="bi${c?' '+c:''}"><span class="en">${en}</span><span class="es">${es}</span></span>`;
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const $=s=>document.querySelector(s);
+
+/* ================= content ================= */
+const GROUPS=[
+  {id:'guests',en:'Guests',es:'Invitados'},{id:'food',en:'Food',es:'Comida'},
+  {id:'place',en:'Place',es:'Lugar'},{id:'fun',en:'Fun',es:'Diversión'}];
+const TASKS=[
+  {id:'t1',g:'guests',en:'Make the guest list',es:'Hacer la lista de invitados'},
+  {id:'t2',g:'guests',en:'Send the invitations',es:'Enviar las invitaciones'},
+  {id:'t3',g:'guests',en:'Keep track of who says yes',es:'Llevar la cuenta de quién dice que sí'},
+  {id:'t4',g:'food',en:'Order the cake',es:'Pedir el pastel'},
+  {id:'t5',g:'food',en:'Buy drinks',es:'Comprar bebidas'},
+  {id:'t6',g:'food',en:'Cook the main dish',es:'Cocinar el plato principal'},
+  {id:'t7',g:'place',en:'Pick a location',es:'Elegir un lugar'},
+  {id:'t8',g:'place',en:'Set up tables and chairs',es:'Poner mesas y sillas'},
+  {id:'t9',g:'place',en:'Hang decorations',es:'Colgar decoraciones'},
+  {id:'t10',g:'fun',en:'Make a playlist',es:'Hacer una lista de música'},
+  {id:'t11',g:'fun',en:'Plan a game',es:'Planear un juego'},
+  {id:'t12',g:'fun',en:'Set up a photo corner',es:'Armar un rincón para fotos'}];
+const TASK={}; TASKS.forEach(t=>TASK[t.id]=t);
+const GRP={}; GROUPS.forEach(g=>GRP[g.id]=g);
+
+const BLOCKS=[
+  {id:'b_start',k:'oval',en:"My phone won't turn on",es:'Mi teléfono no enciende'},
+  {id:'b_plug',k:'rect',en:'Plug the phone into a charger',es:'Conecta el teléfono a un cargador'},
+  {id:'b_light',k:'dia',en:'Is the charging light on?',es:'¿Está encendida la luz de carga?'},
+  {id:'b_wait',k:'rect',en:'Wait 10 minutes',es:'Espera 10 minutos'},
+  {id:'b_cable',k:'rect',en:'Try a different cable',es:'Prueba con otro cable'},
+  {id:'b_end',k:'oval',en:'The phone turns on',es:'El teléfono enciende'}];
+const BLK={}; BLOCKS.forEach(b=>BLK[b.id]=b);
+const SLOTS=[
+  {id:'s_start',k:'oval',ans:'b_start'},{id:'s_a',k:'rect',ans:'b_plug'},{id:'s_d',k:'dia',ans:'b_light'},
+  {id:'s_c',k:'rect',ans:'b_cable'},{id:'s_b',k:'rect',ans:'b_wait'},{id:'s_end',k:'oval',ans:'b_end'}];
+
+const PROBLEMS=[
+  {id:'wifi',en:"My Chromebook won't connect to Wi-Fi",es:'Mi Chromebook no se conecta al Wi-Fi'},
+  {id:'late',en:"I'm running late for school",es:'Voy tarde para la escuela'},
+  {id:'eat',en:"I can't decide what to eat",es:'No sé qué comer'},
+  {id:'game',en:"My game won't load",es:'Mi juego no carga'},
+  {id:'other',en:'Something else (I will type it)',es:'Otra cosa (la voy a escribir)'}];
+
+const OUT_TXT={first:'right on the 1st check',second:'right on the 2nd check',revealed:'revealed'};
+
+/* ================= state ================= */
+function emptyPart(){return {checks:0,status:'open',msg:null,c1:null,c2:null,item:{},sel:null};}
+function fresh(){
+  const p1=emptyPart(); p1.place={}; TASKS.forEach(t=>p1.place[t.id]=null);
+  const p2=emptyPart(); p2.place={}; SLOTS.forEach(s=>p2.place[s.id]=null);
+  return {v:1,name:'',period:'',lang:'en',stage:'welcome',p1,p2,
+    p3:{prob:'',custom:'',blocks:[{t:'step',a:'',y:'',n:''},{t:'step',a:'',y:'',n:''},{t:'dec',a:'',y:'',n:''}]},refl:''};
+}
+let S;
+function load(){try{const o=JSON.parse(localStorage.getItem(KEY)); if(o&&o.v===1&&o.p1&&o.p2&&o.p3) return o;}catch(e){} return fresh();}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+const TR1={}; TASKS.forEach(t=>TR1[t.id]=t.g);
+const TR2={}; SLOTS.forEach(s=>TR2[s.id]=s.ans);
+
+/* ================= shared pieces ================= */
+const STEPS=[['p1',B('Part 1','Parte 1')],['p2',B('Part 2','Parte 2')],['p3',B('Part 3','Parte 3')],['refl',B('Reflect','Reflexión')],['turnin',B('Turn in','Entregar')]];
+function stepper(stage){const idx=STEPS.findIndex(s=>s[0]===stage);
+  return `<ol class="stepper">${STEPS.map((s,i)=>`<li class="${i<idx?'done':i===idx?'now':''}" ${i===idx?'aria-current="step"':''}>${s[1]}</li>`).join('')}</ol>`;}
+function shape(kind,inner,extra){
+  return `<div class="shape ${kind}${extra?' '+extra:''}">${kind==='dia'?'<svg class="diabg" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="50,3 97,50 50,97 3,50"/></svg>':''}<div class="txt">${inner}</div></div>`;
+}
+function announce(t){const l=$('#live'); if(l){l.textContent=''; setTimeout(()=>{l.textContent=t;},30);}}
+function outcomeOf(P){const v=Object.values(P.item); return {first:v.filter(x=>x==='first').length,second:v.filter(x=>x==='second').length,revealed:v.filter(x=>x==='revealed').length,n:v.length};}
+
+/* generic checker for part 1 and part 2 */
+function runCheck(P,ids,truth){
+  if(P.status==='done') return;
+  if(ids.some(i=>!P.place[i])) return;
+  P.checks++;
+  const res={}; let k=0; ids.forEach(i=>{res[i]=P.place[i]===truth[i]; if(res[i]) k++;});
+  P['c'+P.checks]=res;
+  if(k===ids.length || P.checks>=2){
+    ids.forEach(i=>{
+      const c1=P.c1[i], c2=P.c2?P.c2[i]:null;
+      if(P.checks===1) P.item[i]='first';
+      else P.item[i]= (c1&&c2)?'first':(!c1&&c2)?'second':'revealed';
+    });
+    const allRight=k===ids.length;
+    ids.forEach(i=>{P.place[i]=truth[i];});
+    P.status='done'; P.sel=null;
+    P.msg={t: allRight?(P.checks===1?'first':'second'):'revealed'};
+  } else P.msg={t:'wrong',k:k,n:ids.length};
+}
+function msgHTML(P){
+  const m=P.msg; if(!m) return '';
+  if(m.t==='first') return `<div class="msg good">${B('Perfect! Everything is in the right place.','¡Perfecto! Todo está en su lugar.')}</div>`;
+  if(m.t==='second') return `<div class="msg good">${B('Got it on the second check. Everything is in the right place.','Lo lograste en la segunda revisión. Todo está en su lugar.')}</div>`;
+  if(m.t==='wrong') return `<div class="msg warn">${B(`Not yet. ${m.k} of ${m.n} are in the right place. You have 1 check left. Think about it, then check again.`,`Todavía no. ${m.k} de ${m.n} están en su lugar. Te queda 1 revisión. Piénsalo y revisa otra vez.`)}</div>`;
+  if(m.t==='revealed') return `<div class="msg warn">${B('Out of checks. The correct answer is now showing. Look at it and think about what you missed.','Ya no tienes revisiones. Se muestra la respuesta correcta. Míralo y piensa qué se te pasó.')} <span class="tagrev">${B('revealed','mostrado','inline')}</span></div>`;
+  return '';
+}
+function resultStats(P,label){
+  const o=outcomeOf(P);
+  return `<div class="stats">
+    <div class="stat"><span class="big">${o.first}</span>${B('right on the 1st check','bien en la 1.ª revisión')}</div>
+    <div class="stat"><span class="big">${o.second}</span>${B('fixed on the 2nd check','corregidas en la 2.ª revisión')}</div>
+    <div class="stat"><span class="big">${o.revealed}</span>${B('revealed','mostradas')}</div></div>`;
+}
+
+/* ================= views ================= */
+function viewWelcome(){return `
+  <section class="hero on-dark">
+    <h2>${B('Break It Down','Divídelo en partes')}</h2>
+    <p class="lead">${B('Big problems are easier when you split them up. Today you will break one into parts, fill in a chart that shows what to do step by step, and then chart a problem of your own.','Los problemas grandes son más fáciles cuando los divides. Hoy vas a dividir uno en partes, completar un diagrama que muestra qué hacer paso a paso, y luego hacer el diagrama de un problema tuyo.')}</p>
+    <div class="how">
+      <div><span class="n">1</span>${B('Sort 12 party tasks into 4 groups.','Clasifica 12 tareas de una fiesta en 4 grupos.')}</div>
+      <div><span class="n">2</span>${B('Fill in a chart for fixing a phone.','Completa un diagrama para arreglar un teléfono.')}</div>
+      <div><span class="n">3</span>${B('Build a chart for a problem you pick.','Arma un diagrama para un problema que elijas.')}</div>
+    </div>
+    <p style="margin-top:14px">${B('You get 2 checks in Part 1 and 2 checks in Part 2. Think first, then check.','Tienes 2 revisiones en la Parte 1 y 2 en la Parte 2. Primero piensa, luego revisa.')}</p>
+  </section>
+  <section class="card">
+    <h2>${B('Before you start','Antes de empezar')}</h2>
+    <div class="fields">
+      <label class="f">${B('Your name','Tu nombre')}<input type="text" id="inName" autocomplete="off" maxlength="60" value="${esc(S.name)}"></label>
+      <label class="f">${B('Period','Periodo')}<input type="text" id="inPeriod" autocomplete="off" maxlength="10" value="${esc(S.period)}"></label>
+    </div>
+    <div class="row" style="margin-top:18px"><button class="btn" id="btnStart" data-act="start" ${S.name.trim().length<2?'disabled':''}>${B('Start Part 1','Empezar Parte 1')}</button></div>
+  </section>`;}
+
+function taskBtn(t,opts){
+  return `<button type="button" class="task${opts.sel?' sel':''}" data-act="card" data-id="${t.id}" ${opts.dis?'disabled':''}>${B(esc(t.en),esc(t.es))}</button>`;
+}
+function viewP1(){
+  const P=S.p1, done=P.status==='done';
+  const unplaced=TASKS.filter(t=>!P.place[t.id]);
+  const allPlaced=unplaced.length===0;
+  const held=P.sel?TASK[P.sel]:null;
+  return `${stepper('p1')}
+  <section class="card" style="margin-top:12px">
+    <h2>${B('Part 1: Break a big problem into parts','Parte 1: Divide un problema grande en partes')}</h2>
+    <p class="lead">${B('Planning a surprise party is a big problem. Sort these 12 tasks into the 4 groups. Tap a task, then tap the group it belongs in. Tap a task inside a group to take it back out.','Planear una fiesta sorpresa es un problema grande. Clasifica estas 12 tareas en los 4 grupos. Toca una tarea y luego toca el grupo al que pertenece. Toca una tarea dentro de un grupo para sacarla.')}</p>
+  </section>
+  <section class="card">
+    ${!done?`<div class="status" id="statusline">${held?`<div class="hold">${B(`Holding: ${esc(held.en)}. Now tap a group.`,`Tienes: ${esc(held.es)}. Ahora toca un grupo.`)}</div>`:(allPlaced?B('Everything is placed. Press Check when you are ready.','Todo está colocado. Presiona Revisar cuando estés listo.'):B('Tap a task to pick it up.','Toca una tarea para tomarla.'))}</div>`:''}
+    <div class="pool" id="pool" aria-label="Tasks to sort">${unplaced.map(t=>taskBtn(t,{sel:P.sel===t.id,dis:done})).join('')||`<span class="muted">${B('No tasks left to place.','No quedan tareas por colocar.')}</span>`}</div>
+    <div class="groups">${GROUPS.map(g=>`
+      <div class="group${P.sel?' target':''}" role="group" aria-label="${g.en}">
+        <button type="button" class="gh" data-act="group" data-id="${g.id}" style="background:none;border:0;padding:0 0 6px;text-align:left" ${done?'disabled':''}>${B(g.en,g.es)}</button>
+        <div class="placed">${TASKS.filter(t=>P.place[t.id]===g.id).map(t=>taskBtn(t,{dis:done})).join('')}</div>
+        ${!done?`<button type="button" class="btn ghost small" data-act="group" data-id="${g.id}">${B('Put it here','Ponerla aquí')}</button>`:''}
+      </div>`).join('')}</div>
+    <div class="checkbar">
+      <button class="btn alt" id="btnCheck" data-act="check" ${(done||!allPlaced)?'disabled':''}>${B(`Check my groups (${2-P.checks} left)`,`Revisar mis grupos (${2-P.checks} restantes)`)}</button>
+      <div style="flex:1;min-width:220px">${msgHTML(P)}</div>
+    </div>
+  </section>
+  ${done?`<section class="card result" id="result-p1"><h2>${B('Your results','Tus resultados')}</h2>${resultStats(P)}
+    <p>${B('You split one big problem into 4 smaller ones. Different people could work on each group at the same time, and each group is much easier to plan than the whole party.','Dividiste un problema grande en 4 más pequeños. Personas distintas podrían trabajar en cada grupo al mismo tiempo, y cada grupo es mucho más fácil de planear que toda la fiesta.')}</p>
+    <div class="row"><button class="btn" data-act="next" data-to="p2">${B('Go to Part 2','Ir a la Parte 2')}</button></div></section>`:''}`;
+}
+
+function slotHTML(s,P,done){
+  const bid=P.place[s.id], b=bid?BLK[bid]:null;
+  const bad=done&&P.item[s.id]==='revealed';
+  const inner=b?B(esc(b.en),esc(b.es)):`<span aria-hidden="true">?</span>`;
+  return `<button type="button" class="slot${b?'':' empty'}${bad?' bad':''}" data-act="slot" data-id="${s.id}" aria-label="Empty ${s.k} shape" ${done?'disabled':''}>${shape(s.k,inner)}</button>`;
+}
+function viewP2(){
+  const P=S.p2, done=P.status==='done';
+  const bank=BLOCKS.filter(b=>!Object.values(P.place).includes(b.id));
+  const allPlaced=SLOTS.every(s=>P.place[s.id]);
+  const held=P.sel?BLK[P.sel]:null;
+  const sl=id=>SLOTS.find(s=>s.id===id);
+  const arrow='<div class="arrow" aria-hidden="true">↓</div>';
+  return `${stepper('p2')}
+  <section class="card" style="margin-top:12px">
+    <h2>${B('Part 2: Fill in the chart','Parte 2: Completa el diagrama')}</h2>
+    <p class="lead">${B('This chart shows the steps for fixing a phone that will not turn on. Tap a block in the tray, then tap the empty shape where it belongs. The shape and the arrows are clues.','Este diagrama muestra los pasos para arreglar un teléfono que no enciende. Toca un bloque de la bandeja y luego toca la forma vacía donde va. La forma y las flechas son pistas.')}</p>
+  </section>
+  <section class="card">
+    ${!done?`<div class="status" id="statusline">${held?`<div class="hold">${B(`Holding: ${esc(held.en)}. Now tap a shape.`,`Tienes: ${esc(held.es)}. Ahora toca una forma.`)}</div>`:(allPlaced?B('Every shape is filled. Press Check when you are ready.','Todas las formas están llenas. Presiona Revisar cuando estés listo.'):B('Tap a block in the tray to pick it up.','Toca un bloque de la bandeja para tomarlo.'))}</div>`:''}
+    <div class="bank" id="bank" aria-label="Block tray">${bank.map(b=>`<button type="button" class="blk${P.sel===b.id?' sel':''}" data-act="blk" data-id="${b.id}" ${done?'disabled':''}>${shape(b.k,B(esc(b.en),esc(b.es)))}</button>`).join('')||`<span class="muted">${B('The tray is empty.','La bandeja está vacía.')}</span>`}</div>
+    <div class="flow" id="flow">
+      ${slotHTML(sl('s_start'),P,done)}${arrow}
+      ${slotHTML(sl('s_a'),P,done)}${arrow}
+      <div class="decrow">
+        ${slotHTML(sl('s_d'),P,done)}
+        <div class="side"><span class="lab">No →</span>${slotHTML(sl('s_c'),P,done)}<span class="loopnote">${B('↩ then ask the question again','↩ y vuelve a hacer la pregunta','')}</span></div>
+      </div>
+      <div class="lab">${B('Yes','Sí')}</div>${arrow}
+      ${slotHTML(sl('s_b'),P,done)}${arrow}
+      ${slotHTML(sl('s_end'),P,done)}
+    </div>
+    <div class="checkbar">
+      <button class="btn alt" id="btnCheck" data-act="check" ${(done||!allPlaced)?'disabled':''}>${B(`Check my chart (${2-P.checks} left)`,`Revisar mi diagrama (${2-P.checks} restantes)`)}</button>
+      <div style="flex:1;min-width:220px">${msgHTML(P)}</div>
+    </div>
+  </section>
+  ${done?`<section class="card result" id="result-p2"><h2>${B('Your results','Tus resultados')}</h2>${resultStats(P)}
+    <h3 style="font-size:19px;margin:6px 0">${B('What each shape means','Qué significa cada forma')}</h3>
+    <div class="legend">
+      <div>${shape('oval','')}<div>${B('Oval: where it starts and where it ends','Óvalo: dónde empieza y dónde termina')}</div></div>
+      <div>${shape('rect','')}<div>${B('Rectangle: one step to do','Rectángulo: un paso por hacer')}</div></div>
+      <div>${shape('dia','')}<div>${B('Diamond: a yes or no question that picks the path','Rombo: una pregunta de sí o no que elige el camino')}</div></div>
+    </div>
+    <p>${B('Notice the loop: when the answer is No, you fix something and ask the question again.','Fíjate en el ciclo: cuando la respuesta es No, arreglas algo y haces la pregunta otra vez.')}</p>
+    <div class="row"><button class="btn" data-act="next" data-to="p3">${B('Go to Part 3','Ir a la Parte 3')}</button></div></section>`:''}`;
+}
+
+/* ---- Part 3 builder ---- */
+function probText(){
+  const p=S.p3; if(p.prob==='other') return p.custom.trim();
+  const o=PROBLEMS.find(x=>x.id===p.prob); return o?o.en:'';
+}
+function probBi(){
+  const p=S.p3; if(p.prob==='other') return esc(p.custom.trim()||'…');
+  const o=PROBLEMS.find(x=>x.id===p.prob); return o?B(esc(o.en),esc(o.es)):'…';
+}
+function builderProblems(){
+  const p3=S.p3; const st=p3.blocks.filter(b=>b.t==='step').length, dc=p3.blocks.filter(b=>b.t==='dec').length;
+  const txtOk=p3.blocks.every(b=>b.a.trim().length>=3 && (b.t==='step'||(b.y.trim().length>=3&&b.n.trim().length>=3)));
+  const probOk=p3.prob && (p3.prob!=='other'||p3.custom.trim().length>=3);
+  return {st,dc,txtOk,probOk,ok:!!(probOk&&st>=3&&dc>=1&&txtOk)};
+}
+function previewHTML(){
+  const p3=S.p3; const arrow='<div class="arrow" aria-hidden="true">↓</div>';
+  const parts=[shape('oval',probBi()), ];
+  p3.blocks.forEach(b=>{
+    parts.push(arrow);
+    if(b.t==='step') parts.push(shape('rect',esc(b.a.trim()||'…')));
+    else parts.push(shape('dia',esc(b.a.trim()||'?'))+`<div class="branches"><div><span class="lab" style="font-weight:700;color:#0C6B5E">${B('Yes','Sí','inline')}</span>${shape('rect',esc(b.y.trim()||'…'))}</div><div><span class="lab" style="font-weight:700;color:#0C6B5E">No</span>${shape('rect',esc(b.n.trim()||'…'))}</div></div>`);
+  });
+  parts.push(arrow); parts.push(shape('oval',B('Problem solved','Problema resuelto')));
+  return `<div class="flow" id="flowprev">${parts.join('')}</div>`;
+}
+function viewP3(){
+  const p3=S.p3, pb=builderProblems(), n=p3.blocks.length;
+  return `${stepper('p3')}
+  <section class="card" style="margin-top:12px">
+    <h2>${B('Part 3: Chart your own problem','Parte 3: Haz el diagrama de tu problema')}</h2>
+    <p class="lead">${B('Pick a problem. Then build a chart that shows how to solve it. You need at least 3 steps (rectangles) and at least 1 yes or no question (diamond). Write the words yourself.','Elige un problema. Luego arma un diagrama que muestre cómo resolverlo. Necesitas al menos 3 pasos (rectángulos) y al menos 1 pregunta de sí o no (rombo). Escribe tú las palabras.')}</p>
+    <label class="f">${B('My problem','Mi problema')}<select id="selProb">
+      <option value="">${esc('Choose… / Elige…')}</option>
+      ${PROBLEMS.map(o=>`<option value="${o.id}" ${p3.prob===o.id?'selected':''}>${esc(o.en)} / ${esc(o.es)}</option>`).join('')}</select></label>
+    <div id="customWrap" ${p3.prob==='other'?'':'hidden'}><label class="f">${B('Type your problem','Escribe tu problema')}<input type="text" id="inCustom" maxlength="90" autocomplete="off" value="${esc(p3.custom)}"></label></div>
+  </section>
+  <section class="card">
+    <h2>${B('Build it','Arma tu diagrama')}</h2>
+    <div id="blocks">${p3.blocks.map((b,i)=>`
+      <div class="bcard${b.t==='dec'?' dec':''}">
+        <div class="top"><span class="kind">${b.t==='dec'?B('Yes or no question','Pregunta de sí o no'):B('Step','Paso')}</span>
+          <button type="button" class="ico" data-act="up" data-i="${i}" aria-label="Move up" ${i===0?'disabled':''}>↑</button>
+          <button type="button" class="ico" data-act="down" data-i="${i}" aria-label="Move down" ${i===n-1?'disabled':''}>↓</button>
+          <button type="button" class="ico" data-act="del" data-i="${i}" aria-label="Delete block" ${n<=2?'disabled':''}>✕</button></div>
+        <label class="f" style="margin-top:0">${b.t==='dec'?B('The question','La pregunta'):B('What do I do?','¿Qué hago?')}<input type="text" data-f="a" data-i="${i}" maxlength="90" autocomplete="off" value="${esc(b.a)}"></label>
+        ${b.t==='dec'?`<div class="two"><label class="f">${B('If yes, I…','Si es sí, yo…')}<input type="text" data-f="y" data-i="${i}" maxlength="70" autocomplete="off" value="${esc(b.y)}"></label>
+          <label class="f">${B('If no, I…','Si es no, yo…')}<input type="text" data-f="n" data-i="${i}" maxlength="70" autocomplete="off" value="${esc(b.n)}"></label></div>`:''}
+      </div>`).join('')}</div>
+    <div class="row" style="margin-top:12px">
+      <button class="btn ghost small" data-act="addstep" ${n>=8?'disabled':''}>${B('+ Add a step','+ Agregar un paso')}</button>
+      <button class="btn ghost small" data-act="adddec" ${n>=8?'disabled':''}>${B('+ Add a yes or no question','+ Agregar una pregunta de sí o no')}</button>
+    </div>
+    <h3 style="font-size:19px;margin-top:18px">${B('Your chart','Tu diagrama')}</h3>
+    <div class="prev" id="prevwrap">${previewHTML()}</div>
+    <div class="status" id="p3status" style="margin-top:10px"></div>
+    <div class="row"><button class="btn" id="btnP3" data-act="next" data-to="refl" ${pb.ok?'':'disabled'}>${B('Go to reflection','Ir a la reflexión')}</button></div>
+  </section>`;
+}
+function p3Status(){
+  const pb=builderProblems(); const bits=[];
+  if(!pb.probOk) bits.push(B('Pick a problem.','Elige un problema.'));
+  if(pb.st<3) bits.push(B(`Steps so far: ${pb.st} of 3 needed.`,`Pasos hasta ahora: ${pb.st} de 3 necesarios.`));
+  if(pb.dc<1) bits.push(B('Add at least 1 yes or no question.','Agrega al menos 1 pregunta de sí o no.'));
+  if(!pb.txtOk) bits.push(B('Fill in every box with at least 3 letters.','Llena cada casilla con al menos 3 letras.'));
+  return bits.length?`<div class="msg warn">${bits.join('')}</div>`:`<div class="msg good">${B('Your chart is ready.','Tu diagrama está listo.')}</div>`;
+}
+
+function viewRefl(){
+  const ok=S.refl.trim().length>=15;
+  return `${stepper('refl')}
+  <section class="card">
+    <h2>${B('Reflect','Reflexiona')}</h2>
+    <p class="lead">${B('How did splitting things into parts, steps, and yes or no questions help you? What was the hardest part of building your chart?','¿Cómo te ayudó dividir las cosas en partes, pasos y preguntas de sí o no? ¿Qué fue lo más difícil de armar tu diagrama?')}</p>
+    <textarea id="inRefl" aria-label="Reflection" placeholder="It helped me… The hardest part was…  /  Me ayudó… Lo más difícil fue…">${esc(S.refl)}</textarea>
+    <p class="muted" style="margin:6px 0 0">${B('You can write in English or Spanish.','Puedes escribir en inglés o en español.')}</p>
+    <div class="row" style="margin-top:14px"><button class="btn" id="btnRefl" data-act="next" data-to="turnin" ${ok?'':'disabled'}>${B('Go to turn in','Ir a entregar')}</button></div>
+  </section>`;
+}
+
+function outline(){
+  const p3=S.p3; const L=[]; L.push('START: '+probText());
+  p3.blocks.forEach((b,i)=>{
+    if(b.t==='step') L.push((i+1)+'. STEP: '+b.a.trim());
+    else L.push((i+1)+'. QUESTION: '+b.a.trim()+'  | YES: '+b.y.trim()+'  | NO: '+b.n.trim());
+  });
+  L.push('END: Problem solved'); return L.join('\n');
+}
+function brk(P){const o=outcomeOf(P); return `${o.first} right on 1st check, ${o.second} fixed on 2nd check, ${o.revealed} revealed`;}
+function summary(){
+  const L=['BREAK IT DOWN — Unit 4, Lesson 2','Name: '+S.name.trim()+'   Period: '+(S.period.trim()||'—'),'Date: '+new Date().toLocaleString(),''];
+  L.push('PART 1 (12 party tasks into 4 groups): '+(S.p1.status==='done'?brk(S.p1):'not finished'));
+  L.push('PART 2 (fill in the phone chart, 6 blocks): '+(S.p2.status==='done'?brk(S.p2):'not finished'));
+  L.push('','PART 3 — MY CHART:',outline(),'','REFLECTION:',S.refl.trim());
+  return L.join('\n');
+}
+function viewTurnin(){return `${stepper('turnin')}
+  <section class="card">
+    <h2>${B('Turn it in','Entrégalo')}</h2>
+    <div class="stats">
+      <div class="stat"><span class="big" style="font-size:22px">${B('Part 1','Parte 1')}</span><span class="muted">${esc(brk(S.p1))}</span></div>
+      <div class="stat"><span class="big" style="font-size:22px">${B('Part 2','Parte 2')}</span><span class="muted">${esc(brk(S.p2))}</span></div>
+    </div>
+    <ol style="padding-left:22px;margin:8px 0 0">
+      <li style="margin-bottom:8px">${B('Press Copy my summary.','Presiona Copiar mi resumen.')}</li>
+      <li style="margin-bottom:8px">${B('Open the Canvas assignment and choose Text Entry.','Abre la tarea en Canvas y elige Entrada de texto.')}</li>
+      <li>${B('Paste, then press Submit.','Pega y presiona Enviar.')}</li></ol>
+    <textarea id="sumbox" class="sumbox" readonly aria-label="Summary" style="margin-top:14px">${esc(summary())}</textarea>
+    <div class="row" style="margin-top:12px"><button class="btn" data-act="copy">${B('Copy my summary','Copiar mi resumen')}</button><span id="copymsg" class="copied" role="status"></span></div>
+  </section>
+  <section class="card"><h2>${B('Your chart','Tu diagrama')}</h2><div class="prev">${previewHTML()}</div></section>
+  <button class="reset" data-act="reset">${B('Start over (clears this device)','Empezar de nuevo (borra este dispositivo)','inline')}</button>`;}
+
+/* ================= render ================= */
+function render(){
+  document.body.setAttribute('data-lang',S.lang); document.documentElement.lang=S.lang;
+  document.querySelectorAll('.langtog button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.l===S.lang));
+  const v={welcome:viewWelcome,p1:viewP1,p2:viewP2,p3:viewP3,refl:viewRefl,turnin:viewTurnin}[S.stage];
+  $('#app').innerHTML=v(); save();
+  if(S.stage==='p3') $('#p3status').innerHTML=p3Status();
+}
+function go(stage){S.stage=stage; render(); window.scrollTo(0,0);}
+function refreshP3(){
+  $('#prevwrap').innerHTML=previewHTML(); $('#p3status').innerHTML=p3Status();
+  $('#btnP3').disabled=!builderProblems().ok; save();
+}
+
+/* ================= actions ================= */
+function cardClick(id){
+  const P=S.p1; if(P.status==='done') return;
+  if(P.place[id]){P.place[id]=null; P.sel=id;}      // take it back out and hold it
+  else P.sel=(P.sel===id)?null:id;
+  render();
+}
+function groupClick(g){
+  const P=S.p1; if(P.status==='done'||!P.sel) return;
+  P.place[P.sel]=g; P.sel=null; render();
+}
+function blkClick(id){const P=S.p2; if(P.status==='done') return; P.sel=(P.sel===id)?null:id; render();}
+function slotClick(sid){
+  const P=S.p2; if(P.status==='done') return;
+  const cur=P.place[sid];
+  if(P.sel){ P.place[sid]=P.sel; P.sel=null; }       // a held block replaces whatever was there (it returns to the tray)
+  else if(cur){ P.place[sid]=null; P.sel=cur; }       // empty-handed: pick the block back up
+  render();
+}
+function doCheck(){
+  if(S.stage==='p1'){runCheck(S.p1,TASKS.map(t=>t.id),TR1); render(); announce(S.p1.status==='done'?'Part 1 finished':'Check done');}
+  else if(S.stage==='p2'){runCheck(S.p2,SLOTS.map(s=>s.id),TR2); render(); announce(S.p2.status==='done'?'Part 2 finished':'Check done');}
+  const r=$('#result-'+S.stage); if(r) r.scrollIntoView({block:'start'});
+}
+function addBlock(t){ if(S.p3.blocks.length>=8) return; S.p3.blocks.push({t,a:'',y:'',n:''}); render(); }
+function move(i,d){const a=S.p3.blocks,j=i+d; if(j<0||j>=a.length) return; const t=a[i]; a[i]=a[j]; a[j]=t; render();}
+function del(i){ if(S.p3.blocks.length<=2) return; S.p3.blocks.splice(i,1); render(); }
+function doCopy(){
+  const ta=$('#sumbox'); ta.value=summary(); const m=$('#copymsg');
+  const ok=()=>{m.innerHTML=B('Copied! Now paste it into Canvas.','¡Copiado! Ahora pégalo en Canvas.','inline');};
+  const fb=()=>{ta.focus();ta.select();try{document.execCommand('copy');ok();}catch(e){m.innerHTML=B('Select the text and press Ctrl+C.','Selecciona el texto y presiona Ctrl+C.','inline');}};
+  if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(ta.value).then(ok,fb); else fb();
+}
+document.addEventListener('click',e=>{
+  const t=e.target.closest('[data-act]'); if(!t||t.disabled) return; const a=t.dataset.act;
+  if(a==='lang'){S.lang=t.dataset.l; render();}
+  else if(a==='start'){ if(S.name.trim().length>=2) go('p1'); }
+  else if(a==='card') cardClick(t.dataset.id);
+  else if(a==='group') groupClick(t.dataset.id);
+  else if(a==='blk') blkClick(t.dataset.id);
+  else if(a==='slot') slotClick(t.dataset.id);
+  else if(a==='check') doCheck();
+  else if(a==='next') go(t.dataset.to);
+  else if(a==='up') move(+t.dataset.i,-1);
+  else if(a==='down') move(+t.dataset.i,1);
+  else if(a==='del') del(+t.dataset.i);
+  else if(a==='addstep') addBlock('step');
+  else if(a==='adddec') addBlock('dec');
+  else if(a==='copy') doCopy();
+  else if(a==='reset'){ if(confirm('Start over? This clears your work on this device. / ¿Empezar de nuevo? Esto borra tu trabajo en este dispositivo.')){try{localStorage.removeItem(KEY);}catch(x){} S=fresh(); render();} }
+});
+document.addEventListener('input',e=>{
+  const t=e.target, id=t.id;
+  if(id==='inName'){S.name=t.value; save(); const b=$('#btnStart'); if(b) b.disabled=S.name.trim().length<2;}
+  else if(id==='inPeriod'){S.period=t.value; save();}
+  else if(id==='inCustom'){S.p3.custom=t.value; refreshP3();}
+  else if(id==='inRefl'){S.refl=t.value; save(); const b=$('#btnRefl'); if(b) b.disabled=S.refl.trim().length<15;}
+  else if(t.dataset&&t.dataset.f){S.p3.blocks[+t.dataset.i][t.dataset.f]=t.value; refreshP3();}
+});
+document.addEventListener('change',e=>{
+  if(e.target.id==='selProb'){S.p3.prob=e.target.value; const w=$('#customWrap'); if(w) w.hidden=S.p3.prob!=='other'; refreshP3();}
+});
+
+S=load();
+if(!['welcome','p1','p2','p3','refl','turnin'].includes(S.stage)) S.stage='welcome';
+render();
+window.__S=()=>S; window.__T={tr1:TR1,tr2:TR2};
+})();
+</script>
+</body>
+</html>
