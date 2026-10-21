@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>U3L03: Two Roads - Same Segment or Through the Router?</title>
+<style>
+  :root{
+    --navy:#0B1F3A; --green:#8FC53E; --cream:#F4F1E9; --gold:#D9A441;
+    --ink:#1b2430; --muted:#55606e; --line:#d9d3c3; --card:#ffffff;
+    --head: Cambria, "Iowa Old Style", Georgia, serif;
+    --body: Calibri, Inter, "Segoe UI", Arial, sans-serif;
+    --mono: "IBM Plex Mono", Consolas, "Courier New", monospace;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--cream);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.55}
+  a{color:var(--navy)}
+  :focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+  .topbar{background:var(--navy);color:#fff;padding:10px 20px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+  .topbar .brand{font-family:var(--head);font-weight:700;letter-spacing:.02em}
+  .topbar a{color:var(--green);text-decoration:none;font-weight:600}
+  .topbar a:hover{text-decoration:underline}
+  main{max-width:900px;margin:0 auto;padding:24px 20px 60px}
+  .eyebrow{color:var(--muted);font-size:.85rem;text-transform:uppercase;letter-spacing:.08em;margin:0}
+  h1{font-family:var(--head);color:var(--navy);font-size:2.1rem;line-height:1.2;margin:.2em 0 .1em}
+  .sub{color:var(--muted);margin:0 0 18px}
+  h2{font-family:var(--head);color:var(--navy);font-size:1.5rem;margin:36px 0 8px;padding-bottom:6px;border-bottom:3px solid var(--green)}
+  h3{font-family:var(--head);color:var(--navy);margin:20px 0 6px;font-size:1.15rem}
+  .idbar{display:flex;gap:14px;flex-wrap:wrap;background:#fff;border:1px solid var(--line);border-radius:8px;padding:12px 14px;margin:14px 0 8px}
+  .idbar label{display:flex;gap:8px;align-items:center;font-weight:600}
+  input[type=text],textarea{font:inherit;border:1px solid #b8b09b;border-radius:6px;padding:7px 9px;background:#fff;color:var(--ink);width:100%}
+  .idbar input[type=text]{width:220px}
+  .idbar .period{width:90px}
+  textarea{min-height:74px;resize:vertical}
+  table{width:100%;border-collapse:collapse;background:#fff;margin:10px 0 16px;font-size:.98rem}
+  th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+  th{background:var(--navy);color:#fff;font-weight:600}
+  td input[type=text]{padding:5px 7px}
+  .scroll{overflow-x:auto}
+  code,.mono{font-family:var(--mono);background:#eef0e4;border-radius:4px;padding:1px 6px;font-size:.92em}
+  .callout{background:#fff;border-left:6px solid var(--green);border-radius:6px;padding:12px 16px;margin:14px 0}
+  .callout.note{border-left-color:var(--gold)}
+  .mission{background:var(--card);border:1px solid var(--line);border-left:8px solid var(--green);border-radius:10px;padding:16px 20px;margin:18px 0;break-inside:avoid}
+  .mission h3{margin-top:0;display:flex;align-items:center;gap:12px}
+  .badge{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;background:var(--navy);color:var(--green);font-family:var(--head);font-weight:700;flex:none}
+  .time{margin-left:auto;font-size:.82rem;font-weight:600;color:var(--muted);background:var(--cream);border-radius:999px;padding:2px 10px;white-space:nowrap}
+  .goal{font-weight:600;color:var(--navy);margin:.2em 0 .6em}
+  ol.steps{padding-left:22px;margin:.4em 0}
+  ol.steps li{margin:.35em 0}
+  .check{display:flex;gap:10px;align-items:flex-start;background:var(--cream);border-radius:8px;padding:10px 12px;margin:12px 0 6px}
+  .check input{width:20px;height:20px;margin-top:3px;accent-color:var(--navy);flex:none}
+  details{background:#fbfaf5;border:1px dashed #b8b09b;border-radius:8px;padding:8px 12px;margin:8px 0}
+  summary{cursor:pointer;font-weight:600;color:var(--navy)}
+  .lights{display:flex;gap:14px;flex-wrap:wrap;margin:8px 0}
+  .lights span{display:inline-flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--line);border-radius:999px;padding:3px 12px 3px 6px;font-size:.95rem}
+  .dot{width:16px;height:16px;border-radius:50%;display:inline-block;border:2px solid rgba(0,0,0,.25)}
+  .dot.g{background:#2fb344}.dot.a{background:#f59f00}.dot.r{background:#e03131}
+  .stretch{border-left-color:var(--gold)}
+  .stretch .badge{color:var(--gold)}
+  dl.vocab dt{font-weight:700;color:var(--navy);margin-top:10px}
+  dl.vocab dd{margin:0 0 0 0}
+  .actions{margin:26px 0 6px;display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+  button.pdf{font:inherit;font-weight:700;background:var(--navy);color:#fff;border:0;border-radius:8px;padding:12px 20px;cursor:pointer}
+  button.pdf:hover{background:#163459}
+  .hint{color:var(--muted);font-size:.92rem}
+  @media (max-width:640px){ h1{font-size:1.65rem} .time{display:none} }
+  @media print{
+    body{background:#fff;font-size:11.5pt}
+    .topbar,.actions,.noprint{display:none !important}
+    main{max-width:none;padding:0}
+    .mission,.callout,table,tr{break-inside:avoid}
+    .mission{border:1px solid #999;border-left:6px solid #555}
+    h2{break-after:avoid}
+    textarea{border:1px solid #888}
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <span class="brand">🐾 Bulldog Networking — AP Networking</span>
+  <a href="https://whatwasithinking.us/ap-networking/index.html">← Back to AP Networking</a>
+</div>
+
+<main>
+  <p class="eyebrow">AP Networking · Local Unit 3 · U3L03</p>
+  <h1>Two Roads: Same Segment or Through the Router?</h1>
+  <p class="sub">How data travel through a segmented network — CB 3.2.A (activity first, concept after)</p>
+
+  <div class="idbar">
+    <label>Name: <input type="text" id="name" autocomplete="name"></label>
+    <label>Period: <input type="text" id="period" class="period"></label>
+  </div>
+  <p class="hint noprint">You'll build on the Packet Tracer file you saved last time. Work through the missions in order, tick each checkpoint, then use the "Download as PDF" button to save a copy to turn in. Your teacher will tell you how to turn in your Packet Tracer file.</p>
+
+  <h2>The Situation</h2>
+  <p>At the <strong>Bulldog Esports Invitational</strong>, a player's PC talks to the tournament server in the gym all match long. At the same time, the livestream crew sends video out to the internet. Both trips start at a device on your network. <strong>Do they take the same road?</strong></p>
+  <p>Make a prediction <em>before</em> you build anything. Guessing wrong is fine; that's how you'll notice what you learned.</p>
+  <p><strong>My prediction:</strong></p>
+  <p>Player 1 → Tournament Server passes through: <input type="text" aria-label="Prediction trip to server" style="width:60%"></p>
+  <p>Player 1 → a server on the internet passes through: <input type="text" aria-label="Prediction trip to internet" style="width:60%"></p>
+  <p>I think they are (the same / different) because: <input type="text" aria-label="Prediction reason" style="width:60%"></p>
+  <p class="hint">Packet Tracer's menus can look a little different from one version to the next. If something isn't exactly where this guide says, look around the same area. If you're still stuck, ask.</p>
+
+  <h2>Mission Board</h2>
+
+  <section class="mission" aria-labelledby="m1">
+    <h3 id="m1"><span class="badge">1</span> Reopen Your Network <span class="time">about 5 min</span></h3>
+    <p class="goal">Goal: get your Game Day network from last time working again.</p>
+    <ol class="steps">
+      <li>Open <strong>Packet Tracer</strong> and open your <code>LastName_U3L02</code> file.</li>
+      <li>Check that the link lights are green.</li>
+      <li>From Player 1's Command Prompt, ping the Tournament Server (<code>192.168.1.100</code>).</li>
+    </ol>
+    <div class="check"><input type="checkbox" id="c1"><label for="c1">Checkpoint: my network opens, the lights are green, and the ping to the Tournament Server gets replies.</label></div>
+    <details><summary>Stuck?</summary>If your file is missing or won't open, don't panic. Sit with a partner whose file works and build along on their computer. Tell your teacher.</details>
+  </section>
+
+  <section class="mission" aria-labelledby="m2">
+    <h3 id="m2"><span class="badge">2</span> Add a Second Segment <span class="time">about 10 min</span></h3>
+    <p class="goal">Goal: add a "pretend internet" on the far side of your router.</p>
+    <p>The addresses starting <code>203.0.113</code> are set aside for examples, so they make a safe pretend internet.</p>
+    <div class="scroll"><table>
+      <thead><tr><th>Device</th><th>IP address</th><th>Subnet mask</th><th>Default gateway</th></tr></thead>
+      <tbody>
+        <tr><td>Router's <strong>second</strong> port (not the one to the switch)</td><td><code>203.0.113.1</code></td><td><code>255.255.255.0</code></td><td>(none)</td></tr>
+        <tr><td>Internet Server (new server)</td><td><code>203.0.113.10</code></td><td><code>255.255.255.0</code></td><td><code>203.0.113.1</code></td></tr>
+      </tbody>
+    </table></div>
+    <ol class="steps">
+      <li>Add a new server and rename it <code>Internet Server</code>.</li>
+      <li>Connect it <strong>directly to the router's second port</strong> with the automatic cable tool. Do not connect it to the switch.</li>
+      <li>Give the router's second port its address from the table, and make sure the port is on.</li>
+      <li>Give the Internet Server its address, mask, and default gateway.</li>
+      <li>From Player 1, ping <code>203.0.113.10</code>. Result: <input type="text" aria-label="Ping to Internet Server result" style="width:40%"></li>
+    </ol>
+    <div class="check"><input type="checkbox" id="c2"><label for="c2">Checkpoint: both ends of the new cable are green, and Player 1 can ping the Internet Server.</label></div>
+    <details><summary>Hint 1</summary>Red light on the router end only? That has happened before. What did you do last time?</details>
+    <details><summary>Hint 2</summary>The first ping on a new link sometimes gets no reply. Run it again before troubleshooting.</details>
+  </section>
+
+  <section class="mission" aria-labelledby="m3">
+    <h3 id="m3"><span class="badge">3</span> Watch Two Trips <span class="time">about 10 min</span></h3>
+    <p class="goal">Goal: see exactly which devices each packet passes through.</p>
+    <ol class="steps">
+      <li>Switch to <strong>Simulation</strong> mode (bottom-right corner).</li>
+      <li><strong>Trip A:</strong> use <strong>Add Simple PDU</strong> (the closed envelope) to send from <strong>Player 1</strong> to the <strong>Tournament Server</strong>. Step it forward with <strong>Capture / Forward</strong> and watch.</li>
+      <li><strong>Trip B:</strong> send a new packet from <strong>Player 1</strong> to the <strong>Internet Server</strong>. Step it forward and watch.</li>
+      <li>Switch back to <strong>Realtime</strong> mode.</li>
+    </ol>
+    <div class="scroll"><table>
+      <thead><tr><th>Trip</th><th>Devices the packet passed through, in order</th><th>Did it go through the router?</th></tr></thead>
+      <tbody>
+        <tr><td>A: Player 1 → Tournament Server</td><td><input type="text" aria-label="Trip A path"></td><td><input type="text" aria-label="Trip A router"></td></tr>
+        <tr><td>B: Player 1 → Internet Server</td><td><input type="text" aria-label="Trip B path"></td><td><input type="text" aria-label="Trip B router"></td></tr>
+      </tbody>
+    </table></div>
+    <div class="check"><input type="checkbox" id="c3"><label for="c3">Checkpoint: I watched both trips and filled in the table.</label></div>
+    <details><summary>Stuck?</summary>If old envelopes are in the way, look for a reset or delete option in the simulation panel.</details>
+  </section>
+
+  <section class="mission" aria-labelledby="m4">
+    <h3 id="m4"><span class="badge">4</span> Take Away the Gateway <span class="time">about 5 min</span></h3>
+    <p class="goal">Goal: find out what a default gateway is really for.</p>
+    <p><strong>Predict first:</strong> if Player 1 forgets its default gateway, which ping will stop working? <input type="text" aria-label="Prediction which ping fails" style="width:50%"></p>
+    <ol class="steps">
+      <li>In Realtime mode, on Player 1, open <strong>IP Configuration</strong> and <strong>write down</strong> the default gateway (<code>192.168.1.1</code>). Then clear that box.</li>
+      <li>Ping the Tournament Server (<code>192.168.1.100</code>). Result: <input type="text" aria-label="Result server ping without gateway" style="width:35%"></li>
+      <li>Ping the Internet Server (<code>203.0.113.10</code>). Result: <input type="text" aria-label="Result internet ping without gateway" style="width:35%"></li>
+      <li>Put the default gateway back and ping the Internet Server again. Result: <input type="text" aria-label="Result after restoring gateway" style="width:35%"></li>
+    </ol>
+    <div class="check"><input type="checkbox" id="c4"><label for="c4">Checkpoint: I saw one ping fail, one keep working, and I put the gateway back.</label></div>
+  </section>
+
+  <h2>Concept: How Data Choose a Road</h2>
+  <div class="callout">
+    <p>Before a device sends data, it puts a <strong>header</strong> on the packet with the <strong>source address</strong> and the <strong>destination address</strong>. Then it compares its <em>own</em> IP address and subnet mask with the destination address.</p>
+    <ul>
+      <li><strong>Same network segment:</strong> the data go straight to the destination through the switch. The router is never involved (your Trip A).</li>
+      <li><strong>Different network segment:</strong> the data go to the <strong>default gateway</strong>, which is the router. The router sends them on toward the right segment (your Trip B).</li>
+    </ul>
+    <p>A <strong>segmented network</strong> divides devices into groups to improve performance, management, and security. Each segment has its own range of addresses.</p>
+  </div>
+
+  <h2>Debrief Questions</h2>
+  <p class="hint">Finish these in class if you have time. Otherwise they are due at the start of our next class.</p>
+  <p><strong>1.</strong> In your own words, how does a device decide whether to send data directly or to the default gateway? Use what happened in Mission 4 as evidence.</p>
+  <textarea aria-label="Question 1"></textarea>
+  <p><strong>2.</strong> During a match, Player 1 only talks to the Tournament Server. Why does it still need a default gateway?</p>
+  <textarea aria-label="Question 2"></textarea>
+  <p><strong>3.</strong> At the real Invitational, which groups from your U3L01 plan would send the most traffic through the router, and which would mostly stay on the local segment? Explain.</p>
+  <textarea aria-label="Question 3"></textarea>
+
+  <h2>Vocabulary</h2>
+  <dl class="vocab">
+    <dt>Network segment</dt><dd>A group of devices set apart from others, with its own range of IP addresses.</dd>
+    <dt>Segmented network</dt><dd>A network divided into segments to improve performance, management, and security.</dd>
+    <dt>Packet header</dt><dd>The front part of a packet. It holds the source and destination addresses, plus other routing information.</dd>
+    <dt>Subnet mask</dt><dd>Numbers that tell a device which part of an address identifies the network.</dd>
+    <dt>Default gateway</dt><dd>The router address a device uses when the destination is on a different segment.</dd>
+    <dt>Router</dt><dd>A device that connects segments and forwards packets between them.</dd>
+  </dl>
+
+  <div class="actions noprint">
+    <button class="pdf" type="button" onclick="window.print()">📄 Download as PDF</button>
+    <span class="hint">In the print dialog, set <strong>Destination</strong> to <strong>Save as PDF</strong>, then save.</span>
+  </div>
+</main>
+</body>
+</html>
