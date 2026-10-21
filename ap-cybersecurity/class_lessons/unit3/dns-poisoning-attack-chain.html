@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DNS Poisoning Attack Chain · AP Cybersecurity Unit 3</title>
+<style>
+:root{
+  --green:#1B4332; --dark:#122B21; --gold:#D4A017; --cream:#FBF8F1; --olive:#6B7F3A;
+  --red:#B23A2E; --ink:#2A2A2A; --mute:#5A5A5A; --line:#C9C3B0; --ok:#2E7D4F;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--cream);color:var(--ink);font-family:"Calibri","Carlito",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;font-size:17px;line-height:1.45}
+h1,h2,h3{font-family:"Cambria","Georgia",serif;color:var(--green);margin:0 0 .4em}
+header{background:var(--dark);color:#fff;padding:14px 22px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+header h1{color:#fff;font-size:1.35rem;margin:0}
+header .tag{color:var(--gold);font-weight:700;font-size:.9rem}
+header a{color:var(--gold);font-size:.9rem}
+main{max-width:980px;margin:0 auto;padding:18px 18px 60px}
+.card{background:#fff;border:1.5px solid var(--line);border-radius:10px;padding:18px 20px;margin-bottom:16px}
+.card.dark{background:var(--green);color:#fff;border-color:var(--green)}
+.card.dark h2,.card.dark h3{color:var(--gold)}
+button{font:inherit;cursor:pointer;border-radius:8px;border:2px solid var(--green);background:var(--green);color:#fff;padding:9px 16px;font-weight:700}
+button:hover:not(:disabled){background:var(--dark)}
+button:disabled{opacity:.45;cursor:not-allowed}
+button.alt{background:#fff;color:var(--green)}
+button.danger{background:var(--red);border-color:var(--red)}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+label{display:block;font-weight:700;margin:10px 0 4px}
+input,select{font:inherit;padding:9px 10px;border:2px solid var(--line);border-radius:8px;width:100%;max-width:340px}
+.progress{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+.progress div{flex:1;min-width:110px;padding:6px 8px;border-radius:6px;background:#E8E2CF;font-size:.82rem;font-weight:700;color:var(--mute);text-align:center}
+.progress div.on{background:var(--gold);color:var(--dark)}
+.progress div.done{background:var(--green);color:#fff}
+.stage{display:none}.stage.show{display:block}
+.grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:16px}
+@media(max-width:760px){.grid{grid-template-columns:1fr}}
+svg{width:100%;height:auto;background:#F4F0E4;border-radius:8px;border:1.5px solid var(--line)}
+.nodeRect{fill:var(--green);stroke:none}
+.nodeRect.bad{fill:var(--red)}
+.nodeText{fill:#fff;font:700 14px "Calibri","Carlito",Arial,sans-serif;text-anchor:middle}
+.nodeSub{fill:#F3EFE2;font:12px "Calibri","Carlito",Arial,sans-serif;text-anchor:middle}
+.link{stroke:#9A9580;stroke-width:3}
+table.arp{border-collapse:collapse;width:100%;font-size:.92rem}
+table.arp th{background:var(--green);color:#fff;text-align:left;padding:7px 8px}
+table.arp td{border:1px solid var(--line);padding:7px 8px;font-family:Consolas,"Courier New",monospace;font-size:.85rem}
+table.arp td.who{font-family:inherit;font-size:.9rem;color:var(--mute)}
+table.arp tr.poisoned td{background:var(--red);color:#fff;font-weight:700}
+table.arp tr.poisoned td.who{color:#fff}
+.note{font-size:.88rem;color:var(--mute)}
+.q{margin-top:14px;padding-top:14px;border-top:2px dashed var(--line)}
+.q p{font-weight:700;margin:0 0 8px}
+.opts{display:flex;flex-direction:column;gap:8px}
+.opts button{background:#fff;color:var(--ink);border:2px solid var(--line);text-align:left;font-weight:600}
+.opts button:hover:not(:disabled){background:#F4F0E4}
+.opts button.right{background:#E3F2E8;border-color:var(--ok);color:#14532d}
+.opts button.wrong{background:#FBE4E1;border-color:var(--red);color:#7f1d1d}
+.fb{margin-top:10px;padding:10px 12px;border-radius:8px;display:none;font-size:.95rem}
+.fb.show{display:block}
+.fb.good{background:#E3F2E8;border:1.5px solid var(--ok)}
+.fb.bad{background:#FBE4E1;border:1.5px solid var(--red)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:10px 0}
+.toggle{display:inline-flex;align-items:center;gap:8px;font-weight:700}
+.status{font-weight:700;margin:6px 0;min-height:1.4em}
+.safety{font-size:.85rem;background:#FFF6DA;border:1.5px solid var(--gold);border-radius:8px;padding:8px 12px;margin-bottom:14px}
+#results{display:none}
+.resRow{display:flex;justify-content:space-between;gap:10px;border-bottom:1px solid var(--line);padding:6px 0;font-size:.95rem}
+.badge{font-weight:700;padding:2px 10px;border-radius:99px;font-size:.82rem;white-space:nowrap}
+.badge.y{background:#E3F2E8;color:#14532d}.badge.n{background:#FBE4E1;color:#7f1d1d}
+.big{font-family:"Cambria","Georgia",serif;font-size:2.2rem;color:var(--green);font-weight:700}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+@media print{
+  body{background:#fff;font-size:12pt}
+  header,#gate,#sim,.noprint{display:none!important}
+  #results{display:block!important}
+  .card{border:1px solid #999;break-inside:avoid}
+}
+</style>
+<style>
+.brief h3{margin-top:1.1em;font-size:1.15rem}
+.brief p{margin:.3em 0 .6em}
+.brief ol{margin:.3em 0 .6em 1.2em;padding-left:.6em}
+.brief li{margin-bottom:.35em}
+.callout{background:#EEF3EC;border:1.5px solid var(--green);border-radius:8px;padding:10px 14px;margin:10px 0}
+.warn{background:#FFF6DA;border:1.5px solid var(--gold);border-radius:8px;padding:10px 14px;margin:10px 0}
+.chain{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.chain li{display:flex;align-items:stretch;gap:10px;background:#fff;border:2px solid var(--line);border-radius:10px;padding:8px 10px}
+.chain li .pos{min-width:34px;display:flex;align-items:center;justify-content:center;background:var(--green);color:var(--gold);font-family:"Cambria","Georgia",serif;font-weight:700;font-size:1.2rem;border-radius:8px}
+.chain li .txt{flex:1;align-self:center}
+.chain li .mv{display:flex;flex-direction:column;gap:4px}
+.chain li .mv button{padding:2px 12px;font-size:.9rem;line-height:1.1}
+.chain li.locked{background:#F4F0E4}
+.chain li.hl{border-color:var(--red);background:#FBE4E1}
+.scoreLine{font-weight:700;margin:10px 0}
+.hide{display:none}
+</style>
+</head>
+<body>
+<header>
+  <div><div class="tag">AP CYBERSECURITY · UNIT 3 · LO 3.1.A.3</div><h1>Attack Chain: Who Stole Priya's Password?</h1></div>
+  <a href="../../">&larr; Back to class site</a>
+</header>
+<main>
+
+<!-- ENTRY PAGE -->
+<section id="entry">
+  <div class="card brief">
+    <h2>Read this first</h2>
+    <div class="warn"><strong>Everything in this tool is a made-up scenario.</strong> You are not attacking anything. You are an analyst reconstructing an attack that already happened.</div>
+
+    <h3>Your mission</h3>
+    <p>You work for <strong>Meridian Analytics</strong>, a fictional company. A staff member named Priya reports that her account on the company's HR portal was used by someone else, even though she never shared her password. Your job is to rebuild how it happened: put the attack's events in order, then find the exact step where her credentials were stolen.</p>
+
+    <h3>Background: what DNS does</h3>
+    <p>People type names like <em>hr.meridian-analytics.example</em>, but computers deliver data using IP addresses. The <strong>domain name system (DNS)</strong> is the lookup service that connects the two. A DNS server stores <strong>DNS records</strong>. Each record pairs a name with an IP address. When you type a name, your device asks a DNS server, and the answer tells your browser where to go.</p>
+
+    <h3>Background: how the attack works</h3>
+    <p>In a <strong>DNS poisoning</strong> attack, an adversary pretends to be an <strong>authoritative name server (NS)</strong>, meaning an official source for a domain's records. The adversary plants a <strong>fake DNS record</strong> on a DNS server. Now, when someone looks up the real name, the server hands back the adversary's IP address, and the browser lands on a <strong>malicious website</strong>.</p>
+    <p>If that website is a fake login page that looks just like the real one, the adversary can carry out <strong>credential harvesting</strong>: people type their real credentials into the fake page, and the adversary captures and uses them.</p>
+    <div class="callout"><strong>Key idea:</strong> poisoning is how the adversary redirects people. Harvesting is how the adversary collects the credentials. They are two different parts of the same chain.</div>
+
+    <h3>How to use this tool</h3>
+    <ol>
+      <li>Read this page, then answer the four <strong>reading check</strong> questions below. You can retry, but your first try is recorded.</li>
+      <li>Enter your name and period, then click <strong>Begin</strong>.</li>
+      <li><strong>Part 1:</strong> You will see eight events from the attack in scrambled order. Use the <strong>&#9650; and &#9660; buttons</strong> on each card to move it up or down. When you think the order is right, click <strong>Check order</strong>. It tells you <em>how many</em> cards are in the correct position, but not <em>which ones</em>. Keep adjusting until all eight are correct.</li>
+      <li><strong>Part 2:</strong> Answer six questions about the chain. You can retry any question; your first try is recorded.</li>
+      <li>Click <strong>See my results</strong>, then <strong>Download as PDF</strong>, and submit the PDF in Canvas.</li>
+    </ol>
+    <div class="warn"><strong>Do not refresh or close this tab.</strong> If you do, your progress is lost and you start over.</div>
+    <p class="note">This activity is completion-graded. Finish every part and submit your PDF. Your reading check answers are included in your results.</p>
+  </div>
+
+  <div class="card">
+    <h2>Reading check</h2>
+    <div id="rc1"></div><div id="rc2" style="display:none"></div><div id="rc3" style="display:none"></div><div id="rc4" style="display:none"></div>
+  </div>
+
+  <div class="card" id="gate" style="display:none">
+    <h2>Almost there</h2>
+    <label for="nm">First and last name</label>
+    <input id="nm" autocomplete="off" placeholder="e.g., Jordan Rivera">
+    <label for="per">Period</label>
+    <select id="per"><option value="">Choose…</option><option>1</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option></select>
+    <div class="row"><button id="startBtn">Begin</button><span id="gateErr" style="color:var(--red);font-weight:700"></span></div>
+  </div>
+</section>
+
+<!-- ACTIVITY -->
+<section id="act" class="hide">
+  <div class="card">
+    <h2>Part 1: Rebuild the attack chain</h2>
+    <p>These eight events are scrambled. Put them in the order they happened, from the first step the adversary takes to the last.</p>
+    <ul class="chain" id="chain"></ul>
+    <div class="row"><button id="checkBtn">Check order</button><span class="scoreLine" id="chk"></span></div>
+  </div>
+  <div id="part2" class="hide">
+    <div class="card">
+      <h2>Part 2: Analyze the chain</h2>
+      <p>The correct order is now locked in above. Use it to answer each question.</p>
+    </div>
+    <div class="card">
+      <div id="q1"></div><div id="q2" style="display:none"></div><div id="q3" style="display:none"></div>
+      <div id="q4" style="display:none"></div><div id="q5" style="display:none"></div><div id="q6" style="display:none"></div>
+      <div id="finishRow" class="row hide"><button id="resBtn">See my results</button></div>
+    </div>
+  </div>
+</section>
+
+<!-- RESULTS -->
+<section id="results" class="hide">
+  <div class="card dark">
+    <h2>Activity complete</h2>
+    <p><strong id="rName"></strong> · Period <strong id="rPer"></strong> · <span id="rDate"></span></p>
+    <p>Mr. Sullivan's AP Cybersecurity · Unit 3 · DNS Poisoning Attack Chain (completion-graded)</p>
+  </div>
+  <div class="card">
+    <div class="big" id="rScore"></div>
+    <p class="note">First-try accuracy, including the reading check. This is practice; read the explanations for any you missed.</p>
+    <div id="rList"></div>
+  </div>
+  <div class="card">
+    <h3>Takeaways</h3>
+    <p><strong>DNS poisoning</strong> plants a fake DNS record on a DNS server so a real name leads to the adversary's site. <strong>Credential harvesting</strong> is the fake login page capturing the credentials people type. In this chain, nothing was wrong with Priya's device or the real portal; the lie was told to DNS.</p>
+  </div>
+  <div class="row noprint">
+    <button id="printBtn">Download as PDF</button>
+    <button class="alt" id="againBtn">Run it again</button>
+    <span class="note">In the print window, change the destination to "Save as PDF", then upload the file to Canvas.</span>
+  </div>
+</section>
+</main>
+
+<script>
+(function(){
+"use strict";
+const $=id=>document.getElementById(id);
+const results=[];
+
+// ---------- question engine ----------
+function ask(boxId,id,text,options,correctIdx,explainRight,explainWrong,onCorrect){
+  const box=$(boxId);box.style.display="block";
+  const rec={id,text,firstTry:null,attempts:0};results.push(rec);
+  box.innerHTML=`<div class="q" style="margin-top:0;padding-top:0;border:none"><p>${text}</p><div class="opts"></div><div class="fb"></div></div>`;
+  const wrap=box.querySelector(".opts"),fb=box.querySelector(".fb");
+  const idxs=options.map((_,i)=>i);for(let k=idxs.length-1;k>0;k--){const j=Math.floor(Math.random()*(k+1));[idxs[k],idxs[j]]=[idxs[j],idxs[k]];}
+  idxs.forEach(i=>{const o=options[i];
+    const b=document.createElement("button");b.textContent=o;
+    b.addEventListener("click",()=>{
+      rec.attempts++;
+      if(i===correctIdx){
+        if(rec.firstTry===null)rec.firstTry=true;
+        b.classList.add("right");wrap.querySelectorAll("button").forEach(x=>x.disabled=true);
+        fb.className="fb show good";fb.innerHTML="<strong>Correct.</strong> "+explainRight;
+        onCorrect&&onCorrect();
+      }else{
+        if(rec.firstTry===null)rec.firstTry=false;
+        b.classList.add("wrong");b.disabled=true;
+        fb.className="fb show bad";fb.innerHTML="<strong>Not quite.</strong> "+(explainWrong[i]||"Re-read the briefing and try again.");
+      }
+    });
+    wrap.appendChild(b);
+  });
+}
+
+// ---------- reading check ----------
+ask("rc1","r1","According to the briefing, what does a DNS server do?",
+ ["It pairs a name with an IP address when a device asks for a lookup","It encrypts a user's password before it is sent","It blocks fake login pages automatically","It assigns MAC addresses to devices"],0,
+ "A DNS server stores records that pair names with IP addresses.",
+ {1:"That is not what the briefing says DNS does.",2:"DNS does not filter websites in this briefing.",3:"MAC addresses are the ARP topic from earlier. DNS works with names and IP addresses."},
+ ()=>rc2());
+function rc2(){ask("rc2","r2","How do you change the position of a card in Part 1?",
+ ["Drag the card with the mouse","Use the ▲ and ▼ buttons on the card","Type the position number into a box","Right-click the card"],1,
+ "The briefing says to use the ▲ and ▼ buttons on each card.",
+ {0:"The briefing does not mention dragging.",2:"There is no box for typing positions.",3:"Right-click is not used in this tool."},
+ ()=>{$("rc3").style.display="block";rc3();});}
+function rc3(){ask("rc3","r3","What does the Check order button tell you?",
+ ["Exactly which cards are wrong","The answer to every question","How many cards are in the correct position, but not which ones","Nothing until all eight cards are correct"],2,
+ "It reports how many cards are in the right place, not which ones. You have to figure out the rest.",
+ {0:"Re-read the Part 1 instructions. It does not say which ones.",1:"It only checks card order.",3:"It gives a count every time you click it."},
+ ()=>{$("rc4").style.display="block";rc4();});}
+function rc4(){ask("rc4","r4","What do you do when you are finished?",
+ ["Close the tab; the teacher sees your answers automatically","Click See my results, download the PDF, and submit it in Canvas","Email the page link to Mr. Sullivan","Take a photo of the screen"],1,
+ "Results, then Download as PDF, then submit the PDF in Canvas.",
+ {0:"Nothing is sent automatically, and closing the tab loses your progress.",2:"The briefing says to submit in Canvas.",3:"A photo is not the submission method in the briefing."},
+ ()=>{$("gate").style.display="block";$("gate").scrollIntoView({behavior:"smooth",block:"center"});});}
+// ---------- the chain ----------
+const STEPS=[
+ {short:"The adversary plants a fake DNS record on a DNS server",full:"The adversary pretends to be an authoritative name server and plants a fake DNS record on a DNS server."},
+ {short:"Priya types the HR portal's address",full:"Priya types the HR portal's web address into her browser."},
+ {short:"Her device asks DNS for the portal's IP address",full:"Her device asks the DNS server which IP address goes with that name."},
+ {short:"DNS answers with the adversary's IP address",full:"The poisoned DNS server answers with the IP address of the adversary's website."},
+ {short:"A fake login page loads",full:"Her browser loads a login page that looks exactly like the real one."},
+ {short:"Priya enters her username and password",full:"Priya types her real username and password into the page."},
+ {short:"The fake site captures her username and password",full:"The adversary's website captures the username and password she typed."},
+ {short:"The adversary logs in to the real portal as Priya",full:"The adversary uses the captured credentials to log in to the real HR portal as Priya."}
+];
+let order=[]; // current arrangement as array of STEPS indexes
+function shuffle(){
+  let a;
+  do{a=STEPS.map((_,i)=>i);for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}}
+  while(a.some((v,i)=>v===i));
+  return a;
+}
+function renderChain(locked){
+  const ul=$("chain");ul.innerHTML="";
+  order.forEach((idx,pos)=>{
+    const li=document.createElement("li");if(locked)li.className="locked";
+    li.innerHTML=`<div class="pos">${pos+1}</div><div class="txt">${STEPS[idx].full}</div>`;
+    if(!locked){
+      const mv=document.createElement("div");mv.className="mv";
+      const up=document.createElement("button");up.textContent="▲";up.className="alt";up.setAttribute("aria-label","Move this event earlier");up.disabled=pos===0;
+      const dn=document.createElement("button");dn.textContent="▼";dn.className="alt";dn.setAttribute("aria-label","Move this event later");dn.disabled=pos===order.length-1;
+      up.addEventListener("click",()=>{swap(pos,pos-1,idx);});
+      dn.addEventListener("click",()=>{swap(pos,pos+1,idx);});
+      mv.appendChild(up);mv.appendChild(dn);li.appendChild(mv);
+    }
+    ul.appendChild(li);
+  });
+}
+function swap(a,b,idx){
+  [order[a],order[b]]=[order[b],order[a]];renderChain(false);
+  $("chk").textContent="";
+  const btns=$("chain").querySelectorAll("li")[b].querySelectorAll(".mv button");
+  // keep focus on the moved card's matching button
+  const target=b<a?btns[0]:btns[1];(target&&!target.disabled?target:btns[b<a?1:0])?.focus();
+}
+const chainRec={id:"chain",text:"Put the eight events of the attack in order",firstTry:null,attempts:0};
+$("checkBtn").addEventListener("click",()=>{
+  chainRec.attempts++;
+  const correct=order.filter((v,i)=>v===i).length;
+  if(correct===STEPS.length){
+    if(chainRec.firstTry===null)chainRec.firstTry=true;
+    $("chk").textContent="All 8 correct. Nice work.";$("chk").style.color="var(--ok)";
+    $("checkBtn").disabled=true;renderChain(true);startPart2();
+  }else{
+    if(chainRec.firstTry===null)chainRec.firstTry=false;
+    $("chk").textContent=`${correct} of 8 are in the correct position. Keep adjusting.`;$("chk").style.color="var(--red)";
+  }
+});
+
+// ---------- part 2 ----------
+function startPart2(){
+  results.push(chainRec);
+  $("part2").classList.remove("hide");
+  const lab=n=>`Step ${n}: ${STEPS[n-1].short}`;
+  ask("q1","q1","Which step is the <strong>DNS poisoning</strong> itself?",
+    [lab(1),lab(4),lab(5),lab(7)],0,
+    "Poisoning is planting the fake DNS record. Step 4 is the result of it: DNS answers with the wrong IP address.",
+    {1:"Step 4 is where the poisoned record gets used. The poisoning happened earlier.",2:"That is what happens after the browser is redirected.",3:"That is the harvesting, not the poisoning."},
+    ()=>{$("q2").style.display="block";});
+  window.__q2=function(){ask("q2","q2","Which step is the <strong>credential harvesting</strong>?",
+    [lab(5),lab(6),lab(7),lab(8)],2,
+    "Harvesting is the fake site capturing the credentials. Step 6 is what Priya does that makes it possible, and step 8 is the adversary using what was harvested.",
+    {0:"The fake page loading sets up the harvest, but nothing has been captured yet.",1:"That is Priya's action. She does not harvest her own credentials.",3:"That is how the adversary uses the credentials after they have been harvested."},
+    ()=>{$("q3").style.display="block";window.__q3();});};
+  window.__q3=function(){ask("q3","q3","What did the adversary lie about?",
+    ["Which IP address goes with the portal's name","Which MAC address goes with Priya's IP address","What Priya's password is","How fast Priya's network connection is"],0,
+    "DNS pairs names with IP addresses, and the fake record gives the wrong answer. (Compare with ARP poisoning, which lies about IP-to-MAC pairs on the local network.)",
+    {1:"That is ARP poisoning from day 1. This attack targets DNS, not the ARP table.",2:"Priya's password is what the adversary wants, not what it lies about.",3:"Speed has nothing to do with this chain."},
+    ()=>{$("q4").style.display="block";window.__q4();});};
+  window.__q4=function(){ask("q4","q4","Why did Priya not notice anything wrong?",
+    ["She typed the correct address and the page looked right, so nothing seemed off","Her laptop was infected with malware","The real portal was hacked","She skipped the DNS lookup"],0,
+    "The lie was told to DNS, not to Priya. She typed the right name and saw a convincing page. That is why this attack is hard to notice.",
+    {1:"Nothing in the chain says her laptop was infected.",2:"The real portal was not the problem; the redirect sent her somewhere else.",3:"Every web lookup involves DNS. She did not skip it."},
+    ()=>{$("q5").style.display="block";window.__q5();});};
+  window.__q5=function(){ask("q5","q5","<strong>Triage first.</strong> Which part of the CIA triad was compromised by what the adversary captured in step 7?",
+    ["Confidentiality","Integrity","Availability"],0,
+    "The username and password are secrets, and the adversary now has them. That is a confidentiality violation. (Step 8 then adds an integrity risk, since the adversary can act as Priya.)",
+    {1:"Nothing was altered in step 7. The data was captured.",2:"Priya's portal was still working. The data was exposed, not made unavailable."},
+    ()=>{$("q6").style.display="block";window.__q6();});};
+  window.__q6=function(){ask("q6","q6","Which statement correctly compares ARP poisoning and DNS poisoning?",
+    ["ARP poisoning falsifies IP-to-MAC pairs on a local network; DNS poisoning plants a fake DNS record so a name leads to the wrong IP address","They are the same attack with different names","ARP poisoning attacks websites; DNS poisoning attacks switches","DNS poisoning only works if the adversary has Priya's password"],0,
+    "Both are poisoning attacks that redirect traffic by corrupting a lookup, but they corrupt different lookups.",
+    {1:"They corrupt different lookups: ARP pairs IP with MAC, DNS pairs names with IP.",2:"It is the other way around, roughly: ARP stays on the local network, DNS redirects browsers to websites.",3:"The adversary does not need a password to poison; stealing it is the goal."},
+    ()=>{$("finishRow").classList.remove("hide");});};
+  window.__q2();
+}
+
+// ---------- gate / flow ----------
+$("startBtn").addEventListener("click",()=>{
+  if(!$("nm").value.trim()||!$("per").value){$("gateErr").textContent="Enter your name and choose a period.";return;}
+  $("entry").classList.add("hide");$("act").classList.remove("hide");
+  order=shuffle();renderChain(false);window.scrollTo(0,0);
+});
+$("resBtn").addEventListener("click",()=>{
+  $("act").classList.add("hide");$("results").classList.remove("hide");
+  $("rName").textContent=$("nm").value.trim();$("rPer").textContent=$("per").value;
+  $("rDate").textContent=new Date().toLocaleDateString(undefined,{year:"numeric",month:"long",day:"numeric"});
+  const first=results.filter(r=>r.firstTry).length;
+  $("rScore").textContent=first+" / "+results.length+" correct on first try";
+  const rc=results.filter(r=>r.id.startsWith("r"));
+  const rcOk=rc.filter(r=>r.firstTry).length;
+  $("rList").innerHTML=`<p class="scoreLine">Reading check: ${rcOk} of ${rc.length} correct on first try${chainRec.attempts?` · Order checks needed: ${chainRec.attempts}`:""}</p>`+
+   results.map((r,i)=>`<div class="resRow"><div>${i+1}. ${r.text.replace(/<[^>]+>/g,"")}</div><div><span class="badge ${r.firstTry?"y":"n"}">${r.firstTry?"First try":"Needed retry"}</span></div></div>`).join("");
+  window.scrollTo(0,0);
+});
+$("printBtn").addEventListener("click",()=>window.print());
+$("againBtn").addEventListener("click",()=>location.reload());
+})();
+</script>
+</body>
+</html>
