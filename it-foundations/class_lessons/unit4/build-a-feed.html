@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Build a Feed — Unit 4, Lesson 5</title>
+<style>
+:root{--navy:#0F2238;--navy2:#1B3553;--teal:#14907F;--teal-d:#0C6B5E;--mint:#CDEFE4;--amber:#F2B134;--amber-d:#A86F08;--coral:#E8604C;--coral-l:#FCE4DF;--bg:#EEF3F7;--line:#C9D5E0;--sub:#475C72;--ok:#0C6B5E}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:Calibri,Carlito,"Segoe UI",system-ui,sans-serif;background:var(--bg);color:var(--navy);font-size:17px;line-height:1.45;-webkit-text-size-adjust:100%}
+h1,h2,h3{font-family:Cambria,Caladea,Georgia,serif;margin:0;line-height:1.15}
+button,select,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* both languages always visible; toggle swaps which is primary */
+.bi{display:flex;flex-direction:column}
+.bi.inline{display:inline-flex;vertical-align:top}
+body[data-lang="en"] .bi .en{order:1;font-weight:700}
+body[data-lang="en"] .bi .es{order:2;font-style:italic;font-weight:400;font-size:.86em;color:var(--sub)}
+body[data-lang="es"] .bi .es{order:1;font-weight:700}
+body[data-lang="es"] .bi .en{order:2;font-style:italic;font-weight:400;font-size:.86em;color:var(--sub)}
+.on-dark .bi .en,.on-dark .bi .es{color:#fff}
+body[data-lang="en"] .on-dark .bi .es,body[data-lang="es"] .on-dark .bi .en{color:#BCD0E2}
+.btn .bi{align-items:center;text-align:center}
+.btn .bi .en,.btn .bi .es{color:inherit !important}
+
+header{background:var(--navy);color:#fff;padding:12px 18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+header .back{color:#BCD0E2;text-decoration:none;font-size:15px;border:1px solid #3B5675;padding:6px 10px;border-radius:6px}
+header .ttl{flex:1;min-width:180px}
+header h1{font-size:26px}
+header .sub{font-size:14px;color:#BCD0E2}
+.langtog{display:flex;border:1px solid #3B5675;border-radius:8px;overflow:hidden}
+.langtog button{background:transparent;color:#BCD0E2;border:0;padding:7px 14px;font-weight:700}
+.langtog button[aria-pressed="true"]{background:var(--teal);color:#fff}
+main{max-width:1000px;margin:0 auto;padding:16px 16px 60px}
+.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:18px;margin-top:16px}
+.card h2{font-size:23px;margin-bottom:8px}
+.lead{font-size:18px;margin:0}
+.muted{color:var(--sub)}
+.stepper{display:flex;gap:6px;flex-wrap:wrap;list-style:none;padding:0;margin:14px 0 0}
+.stepper li{flex:1 1 90px;min-width:84px;border-top:5px solid var(--line);padding-top:5px;font-size:13px;color:var(--sub)}
+.stepper li.done{border-color:var(--teal);color:var(--teal-d)}
+.stepper li.now{border-color:var(--amber);color:var(--navy)}
+.stepper .bi .en,.stepper .bi .es{font-size:13px !important}
+.btn{border:0;border-radius:10px;padding:11px 20px;background:var(--teal);color:#fff;min-height:48px}
+.btn:hover:not(:disabled){background:var(--teal-d)}
+.btn:disabled{background:#B8C6D2;color:#fff;cursor:not-allowed}
+.btn.alt{background:var(--navy)}
+.btn.alt:hover:not(:disabled){background:var(--navy2)}
+.btn.ghost{background:#fff;color:var(--navy);border:2px solid var(--navy)}
+.btn.amber{background:var(--amber);color:var(--navy)}
+.btn.amber:hover:not(:disabled){background:#E09E1C}
+.btn.amber:disabled{background:#B8C6D2;color:#fff}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.hero{background:var(--navy);color:#fff;border-radius:12px;padding:26px 22px;margin-top:16px}
+.hero h2{font-size:34px;margin-bottom:10px;color:#fff}
+.how{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;margin-top:16px}
+.how>div{background:var(--navy2);border-radius:10px;padding:12px 14px}
+.how .n{font-family:Cambria,Caladea,Georgia,serif;font-size:26px;color:var(--amber);display:block}
+label.f{display:block;margin-top:14px}
+label.f .bi{margin-bottom:4px}
+input[type=text],textarea{width:100%;border:2px solid var(--line);border-radius:8px;padding:10px 12px;background:#fff;min-height:46px}
+input[type=text]:focus,textarea:focus{border-color:var(--teal)}
+textarea{min-height:120px;resize:vertical}
+.fields{display:grid;grid-template-columns:2fr 1fr;gap:12px;max-width:520px}
+@media (max-width:620px){.fields{grid-template-columns:1fr}}
+.msg.good{color:var(--ok)}
+.msg.warn{color:#8A3A00}
+
+/* Part 1: number game */
+.guessrow{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap}
+.guessrow .gin{width:170px}
+.guessrow input{font-size:28px;text-align:center;font-weight:700}
+.fb{min-height:64px;margin:12px 0;font-size:20px}
+.fb .big{font-family:Cambria,Caladea,Georgia,serif;font-size:30px;font-weight:700}
+.fb.up .big{color:var(--teal-d)}
+.fb.down .big{color:#9A3412}
+.fb.win .big{color:var(--ok)}
+.log{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:8px}
+.log li{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:5px 10px;font-weight:700;font-size:18px;display:flex;align-items:center;gap:8px}
+.log li.dup{background:var(--coral-l);border-color:var(--coral)}
+.log .tag{font-size:12px;font-weight:700;color:#A12C1B}
+.rangebar{position:relative;height:30px;background:#fff;border:2px solid var(--navy);border-radius:8px;overflow:hidden;margin:6px 0}
+.rangebar .fill{position:absolute;top:0;bottom:0;background:var(--mint);border-left:3px solid var(--teal);border-right:3px solid var(--teal)}
+.rangelab{display:flex;justify-content:space-between;font-size:14px;color:var(--sub)}
+
+/* Part 2: card wall */
+.target{display:inline-flex;align-items:baseline;gap:10px;background:var(--navy);color:#fff;border-radius:10px;padding:8px 16px}
+.target .num{font-family:Cambria,Caladea,Georgia,serif;font-size:34px;font-weight:700;color:var(--amber)}
+.wall{display:grid;grid-template-columns:repeat(8,1fr);gap:8px;margin-top:12px}
+@media (max-width:620px){.wall{grid-template-columns:repeat(4,1fr)}}
+.tile{aspect-ratio:1/1.1;min-height:56px;border-radius:10px;border:3px solid var(--navy);font-family:Cambria,Caladea,Georgia,serif;font-weight:700;font-size:22px;display:flex;align-items:center;justify-content:center;padding:0}
+.tile.down{background:var(--amber);box-shadow:0 3px 0 var(--amber-d);color:var(--navy)}
+.tile.down:hover:not(:disabled){transform:translateY(-2px)}
+.tile.down .pos{font-size:16px;background:#fff;border:2px solid var(--navy);border-radius:6px;min-width:30px;padding:0 4px}
+.tile.up{background:#fff;color:var(--navy)}
+.tile.up.found{background:var(--mint);border-color:var(--teal);outline:4px solid var(--teal)}
+.tile.up.bad{border-color:var(--coral)}
+.tile.rev{background:#F6F9FB;color:var(--sub);border-style:dashed;border-color:var(--line)}
+.tile:disabled{cursor:default}
+.tilepos{display:block;font-size:11px;font-weight:400;color:var(--sub);font-family:Calibri,Carlito,sans-serif}
+
+/* results */
+.result{border:3px solid var(--teal)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin:10px 0}
+.stat{background:var(--bg);border-radius:10px;padding:10px 14px}
+.stat .big{font-family:Cambria,Caladea,Georgia,serif;font-size:34px;font-weight:700;display:block;line-height:1.1}
+.bars{margin-top:8px}
+.bar{display:grid;grid-template-columns:minmax(150px,240px) 1fr 40px;gap:10px;align-items:center;margin:6px 0}
+.bar .track{background:var(--bg);border-radius:6px;height:20px;overflow:hidden}
+.bar .fill{height:100%;border-radius:6px}
+.bar .num{font-weight:700;text-align:right}
+@media (max-width:560px){.bar{grid-template-columns:1fr 1fr 34px}}
+.strats{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-top:10px}
+.strat{text-align:left;background:#fff;border:3px solid var(--line);border-radius:12px;padding:12px 14px}
+.strat:hover{border-color:var(--teal)}
+.strat[aria-pressed="true"]{border-color:var(--teal);background:var(--mint)}
+.strat .h{font-family:Cambria,Caladea,Georgia,serif;font-size:19px;margin-bottom:4px}
+.strat .bi .en,.strat .bi .es{font-weight:400}
+body[data-lang="en"] .strat .bi .en{font-weight:600}
+body[data-lang="es"] .strat .bi .es{font-weight:600}
+body[data-lang="en"] .strat .h .bi .en,body[data-lang="es"] .strat .h .bi .es{font-weight:700}
+.sumbox{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:14px;min-height:240px;background:#F6F9FB}
+.copied{color:var(--ok);font-weight:700}
+.challenge{border:3px dashed var(--amber)}
+.reset{background:none;border:0;color:var(--sub);text-decoration:underline;font-size:14px;margin-top:22px}
+
+/* ---- Build a Feed ---- */
+.persona{background:var(--mint);border-radius:12px;padding:14px 16px;margin-top:12px}
+.sliders{display:flex;flex-direction:column;gap:14px}
+.sl{border-bottom:1px solid var(--line);padding-bottom:12px}
+.sl:last-child{border-bottom:0}
+.sl .top{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.sl output{font-family:Cambria,Caladea,Georgia,serif;font-size:26px;font-weight:700;color:var(--teal-d);min-width:28px;text-align:right}
+.sl input[type=range]{width:100%;accent-color:#14907F;height:34px}
+.sl .hint{font-size:14px;color:var(--sub)}
+.scale{display:flex;justify-content:space-between;font-size:12px;color:var(--sub)}
+.layout{display:grid;grid-template-columns:minmax(300px,380px) 1fr;gap:16px;align-items:start}
+@media (max-width:860px){.layout{grid-template-columns:1fr}}
+.meter{background:var(--navy);color:#fff;border-radius:12px;padding:12px 16px;margin-bottom:12px}
+.meter .big{font-family:Cambria,Caladea,Georgia,serif;font-size:38px;font-weight:700;color:var(--amber);line-height:1}
+.meter .goal{height:14px;background:#2B476A;border-radius:7px;position:relative;margin-top:8px;overflow:hidden}
+.meter .goal .bar{position:absolute;left:0;top:0;bottom:0;background:var(--amber);border-radius:7px}
+.meter .goal .line{position:absolute;top:-2px;bottom:-2px;width:3px;background:#fff}
+.meter.win .big{color:#7CE8C9}
+.meter.win .goal .bar{background:#7CE8C9}
+.feed{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.post{display:grid;grid-template-columns:38px 1fr 54px;gap:10px;align-items:start;background:#fff;border:2px solid var(--line);border-radius:12px;padding:10px 12px}
+.post.in{border-color:var(--teal);background:#F7FCFA}
+.post.out{opacity:.62}
+.post.wanted{box-shadow:inset 6px 0 0 var(--teal)}
+.post .rank{font-family:Cambria,Caladea,Georgia,serif;font-size:24px;font-weight:700;color:var(--navy2)}
+.post .who{font-size:14px;color:var(--sub);margin-bottom:2px}
+.post .txt{font-size:16px}
+.post .txt .bi .en,.post .txt .bi .es{font-weight:400}
+body[data-lang="en"] .post .txt .bi .en{font-weight:600}
+body[data-lang="es"] .post .txt .bi .es{font-weight:600}
+.badges{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.bdg{font-size:12px;border:1px solid var(--line);border-radius:6px;padding:1px 7px;background:var(--bg);color:var(--navy2);font-weight:600}
+.bdg.hot{background:var(--coral-l);border-color:var(--coral);color:#8A2A1A}
+.bdg.ad{background:#FFF3D6;border-color:var(--amber);color:#7A5200}
+.delta{font-weight:700;font-size:15px;text-align:right}
+.delta.up{color:var(--teal-d)} .delta.down{color:#9A3412}
+.cut{display:flex;align-items:center;gap:10px;color:var(--sub);font-size:14px;margin:4px 0}
+.cut:before,.cut:after{content:"";flex:1;border-top:3px dashed var(--coral)}
+.cols2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:860px){.cols2{grid-template-columns:1fr}}
+.wlist{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 10px}
+.wlist>span{display:inline-flex;gap:6px;align-items:baseline;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:2px 8px;font-size:14px;font-weight:700}
+.poll{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin-top:10px}
+.poll button{text-align:left;background:#fff;border:3px solid var(--line);border-radius:12px;padding:10px 14px}
+.poll button:hover{border-color:var(--teal)}
+.poll button[aria-pressed="true"]{border-color:var(--teal);background:var(--mint)}
+
+@media (prefers-reduced-motion:reduce){*{transition:none !important;animation:none !important}}
+</style>
+</head>
+<body data-lang="en">
+<header class="on-dark">
+  <a class="back" href="../index.html"><span class="bi inline"><span class="en">← Lessons</span><span class="es">← Lecciones</span></span></a>
+  <div class="ttl"><h1>Build a Feed</h1>
+    <div class="sub"><span class="bi inline"><span class="en">Unit 4 · Lesson 5</span><span class="es">Unidad 4 · Lección 5</span></span></div></div>
+  <div class="langtog" role="group" aria-label="Main language / Idioma principal">
+    <button type="button" data-act="lang" data-l="en" aria-pressed="true">EN</button>
+    <button type="button" data-act="lang" data-l="es" aria-pressed="false">ES</button>
+  </div>
+</header>
+<main id="app"></main>
+<div id="live" class="sr" aria-live="polite"></div>
+<script>
+(function(){
+'use strict';
+/* ===== tiny dependency-free PDF writer (Helvetica, WinAnsi, vector shapes) ===== */
+const PDFLIB=(function(){
+  const R=[278,278,355,556,556,889,667,191,333,333,389,584,278,333,278,278,556,556,556,556,556,556,556,556,556,556,278,278,584,584,584,556,1015,
+    667,667,722,722,667,611,778,722,278,500,667,556,833,722,778,667,778,722,667,611,722,667,944,667,667,611,278,278,278,469,556,333,
+    556,556,500,556,556,278,556,556,222,222,500,222,833,556,556,556,556,333,500,278,556,500,722,500,500,500,334,260,334,584];
+  const BD=[278,333,474,556,556,889,722,238,333,333,389,584,278,333,278,278,556,556,556,556,556,556,556,556,556,556,333,333,584,584,584,611,975,
+    722,722,722,722,667,611,778,722,278,556,722,611,833,722,778,667,778,722,667,611,722,667,944,667,667,611,333,278,333,584,556,333,
+    556,611,556,611,556,333,611,611,278,278,556,278,889,611,611,611,611,389,556,333,611,556,778,556,556,500,389,280,389,584];
+  const MAP={'\u2018':0x91,'\u2019':0x92,'\u201C':0x93,'\u201D':0x94,'\u2013':0x96,'\u2014':0x97,'\u2026':0x85,'\u2022':0x95};
+  function cw(ch,font){
+    let c=ch.codePointAt(0);
+    if(c<32||c>126){ if(ch==='\u00BF') c=63; else if(ch==='\u00A1') c=33; else { const b=ch.normalize('NFD')[0].codePointAt(0); c=(b>=32&&b<=126)?b:110; } }
+    const tab=font==='F2'?BD:R; return (tab[c-32]||556)/1000;
+  }
+  function sw(s,font,size){let w=0; for(const ch of s) w+=cw(ch,font); return w*size;}
+  function enc(s){
+    let o=''; s=String(s).normalize('NFC');
+    for(const ch of s){
+      let c=ch.codePointAt(0);
+      if(MAP[ch]) c=MAP[ch]; else if(c>255) c=63;
+      if(c===40||c===41||c===92) o+='\\'+String.fromCharCode(c);
+      else if(c<32) o+=' ';
+      else if(c>126) o+='\\'+c.toString(8).padStart(3,'0');
+      else o+=String.fromCharCode(c);
+    } return o;
+  }
+  function wrap(s,font,size,maxW){
+    const out=[];
+    String(s).split(/\r?\n/).forEach(par=>{
+      let line='';
+      par.split(/\s+/).filter(Boolean).forEach(w0=>{
+        let w=w0;
+        while(sw(w,font,size)>maxW){            // break very long words
+          let k=1; while(k<w.length&&sw(w.slice(0,k+1),font,size)<=maxW) k++;
+          if(line){out.push(line); line='';}
+          out.push(w.slice(0,k)); w=w.slice(k);
+        }
+        const t=line?line+' '+w:w;
+        if(sw(t,font,size)<=maxW) line=t; else {out.push(line); line=w;}
+      });
+      out.push(line);
+    });
+    return out;
+  }
+  const NAVY=[0.059,0.133,0.22], TEAL=[0.047,0.42,0.369], GRAY=[0.28,0.36,0.45], MINT=[0.804,0.937,0.894], AMBER=[0.992,0.941,0.816], WHITE=[1,1,1];
+  function doc(){
+    const W=612,H=792,M=54; const pages=[]; let cur=null; let y=M;
+    const f=n=>(Math.round(n*100)/100).toString();
+    const col=(c,s)=>`${f(c[0])} ${f(c[1])} ${f(c[2])} ${s?'RG':'rg'}\n`;
+    const d={W,H,M};
+    d.newPage=()=>{ if(cur!==null) pages.push(cur); cur=''; y=M; };
+    d.y=()=>y; d.setY=v=>{y=v;};
+    d.ensure=h=>{ if(cur===null||y+h>H-M) d.newPage(); };
+    d.text=(s,x,base,font,size,c)=>{ cur+=col(c||NAVY,false)+`BT /${font} ${size} Tf ${f(x)} ${f(H-base)} Td (${enc(s)}) Tj ET\n`; };
+    d.textC=(s,cx,base,font,size,c)=>{ d.text(s,cx-sw(s,font,size)/2,base,font,size,c); };
+    d.title=(en,sub)=>{ d.ensure(60); d.text(en,M,y+20,'F2',22,NAVY); d.text(sub,M,y+38,'F3',11,GRAY); y+=54; };
+    d.kv=(k,v)=>{ d.ensure(18); d.text(k+':',M,y+11,'F2',11,NAVY); const lines=wrap(v,'F1',11,W-2*M-150);
+      lines.forEach((l,i)=>{ if(i>0) d.ensure(15); d.text(l,M+150,y+11,'F1',11,NAVY); y+=15; }); if(!lines.length) y+=15; };
+    d.gap=n=>{y+=n;};
+    d.heading=(en,es)=>{ d.ensure(52); y+=10; d.text(en,M,y+12,'F2',13,TEAL); d.text(es,M,y+26,'F3',10.5,GRAY);
+      cur+=col(TEAL,true)+`0.8 w ${M} ${f(H-(y+31))} m ${W-M} ${f(H-(y+31))} l S\n`; y+=40; };
+    d.para=(s,o)=>{ o=o||{}; const size=o.size||11, font=o.font||'F1', lead=size*1.35, w=W-2*M-(o.indent||0);
+      wrap(s,font,size,w).forEach(l=>{ d.ensure(lead+2); d.text(l,M+(o.indent||0),y+size,font,size,o.color||NAVY); y+=lead; }); y+=4; };
+    d.line=(s,o)=>d.para(s,o);
+    /* ---- shapes (top-left coordinates) ---- */
+    function rr(x,top,w,h,r){const k=0.5523*r,X=x,Y=H-top;
+      return `${f(X+r)} ${f(Y)} m ${f(X+w-r)} ${f(Y)} l ${f(X+w-r+k)} ${f(Y)} ${f(X+w)} ${f(Y-r+k)} ${f(X+w)} ${f(Y-r)} c ${f(X+w)} ${f(Y-h+r)} l `+
+        `${f(X+w)} ${f(Y-h+r-k)} ${f(X+w-r+k)} ${f(Y-h)} ${f(X+w-r)} ${f(Y-h)} c ${f(X+r)} ${f(Y-h)} l ${f(X+r-k)} ${f(Y-h)} ${f(X)} ${f(Y-h+r-k)} ${f(X)} ${f(Y-h+r)} c `+
+        `${f(X)} ${f(Y-r)} l ${f(X)} ${f(Y-r+k)} ${f(X+r-k)} ${f(Y)} ${f(X+r)} ${f(Y)} c h\n`;}
+    d.box=(x,top,w,h,r,fill)=>{ cur+='q\n'+col(fill,false)+col(NAVY,true)+'1.2 w\n'+rr(x,top,w,h,Math.min(r,h/2,w/2))+'B\nQ\n'; };
+    d.diamond=(cx,top,w,h,fill)=>{ const Y=H-top; cur+='q\n'+col(fill,false)+col(NAVY,true)+`1.2 w\n${f(cx)} ${f(Y)} m ${f(cx+w/2)} ${f(Y-h/2)} l ${f(cx)} ${f(Y-h)} l ${f(cx-w/2)} ${f(Y-h/2)} l h B\nQ\n`; };
+    d.seg=(x1,y1,x2,y2)=>{ cur+='q\n'+col(NAVY,true)+`1.2 w ${f(x1)} ${f(H-y1)} m ${f(x2)} ${f(H-y2)} l S\nQ\n`; };
+    d.arrow=(x,y1,y2)=>{ d.seg(x,y1,x,y2-4); cur+='q\n'+col(NAVY,false)+`${f(x-4)} ${f(H-(y2-6))} m ${f(x+4)} ${f(H-(y2-6))} l ${f(x)} ${f(H-y2)} l f\nQ\n`; };
+    d.centerLines=(lines,cx,top,h,size,font,c)=>{ const lead=size*1.2, tot=lines.length*lead; let b=top+(h-tot)/2+lead*0.78;
+      lines.forEach(l=>{ d.textC(l,cx,b,font||'F1',size,c); b+=lead; }); };
+    d.wrap=(s,font,size,w)=>wrap(s,font,size,w);
+    d.build=title=>{
+      if(cur!==null) pages.push(cur); if(!pages.length) pages.push('');
+      const n=pages.length, objs=[]; const kids=[];
+      objs[1]='<< /Type /Catalog /Pages 2 0 R >>';
+      for(let i=0;i<n;i++) kids.push((6+2*i)+' 0 R');
+      objs[2]=`<< /Type /Pages /Kids [${kids.join(' ')}] /Count ${n} >>`;
+      objs[3]='<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>';
+      objs[4]='<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>';
+      objs[5]='<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Oblique /Encoding /WinAnsiEncoding >>';
+      pages.forEach((p,i)=>{
+        objs[6+2*i]=`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${W} ${H}] /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R >> >> /Contents ${7+2*i} 0 R >>`;
+        objs[7+2*i]=`<< /Length ${p.length} >>\nstream\n${p}endstream`;
+      });
+      const info=6+2*n; objs[info]=`<< /Title (${enc(title||'')}) /Producer (Class Resources Site) >>`;
+      let out='%PDF-1.4\n%\u00E2\u00E3\u00CF\u00D3\n'; const off=[];
+      for(let i=1;i<=info;i++){ off[i]=out.length; out+=`${i} 0 obj\n${objs[i]}\nendobj\n`; }
+      const xr=out.length; out+=`xref\n0 ${info+1}\n0000000000 65535 f \n`;
+      for(let i=1;i<=info;i++) out+=String(off[i]).padStart(10,'0')+' 00000 n \n';
+      out+=`trailer\n<< /Size ${info+1} /Root 1 0 R /Info ${info} 0 R >>\nstartxref\n${xr}\n%%EOF`;
+      const u=new Uint8Array(out.length); for(let i=0;i<out.length;i++) u[i]=out.charCodeAt(i)&255; return u;
+    };
+    d.newPage();
+    return d;
+  }
+  function fold(s){return String(s).normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^A-Za-z0-9]+/g,'_').replace(/^_+|_+$/g,'')||'student';}
+  function download(bytes,name){
+    const blob=new Blob([bytes],{type:'application/pdf'}), url=URL.createObjectURL(blob);
+    const a=document.createElement('a'); a.href=url; a.download=name; document.body.appendChild(a); a.click();
+    setTimeout(()=>{URL.revokeObjectURL(url); a.remove();},2000);
+  }
+  return {doc,fold,download,width:sw,NAVY,TEAL,GRAY,MINT,AMBER,WHITE};
+})();
+
+const KEY='u4l05-buildafeed-v1';
+const B=(en,es,c)=>`<span class="bi${c?' '+c:''}"><span class="en">${en}</span><span class="es">${es}</span></span>`;
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const $=s=>document.querySelector(s);
+
+/* ================= content ================= */
+// attributes: c closeness 0-3, i interest match 0-3, r recency 0-3, p popularity 0-3, d drama 0-3, s sponsored 0/3
+const POSTS=[
+ {id:'p1', who:'Sam',            c:3,i:3,r:2,p:1,d:0,s:0, want:1, topic:['Art','Arte'],
+  en:'Finished the club mural! Come see it Friday.', es:'¡Terminé el mural del club! Ven a verlo el viernes.'},
+ {id:'p2', who:'Jordan',         c:2,i:3,r:3,p:1,d:0,s:0, want:1, topic:['Soccer','Fútbol'],
+  en:"Practice highlights from today (the goal at 0:42!)", es:'Lo mejor del entrenamiento de hoy (¡el gol en 0:42!)'},
+ {id:'p3', who:'Lena',           c:3,i:0,r:1,p:0,d:0,s:0, want:1, topic:['Baking','Repostería'],
+  en:'My first batch of cookies actually worked!', es:'¡Mi primera tanda de galletas por fin salió bien!'},
+ {id:'p4', who:'@brushandbloom', c:1,i:3,r:2,p:2,d:0,s:0, want:1, topic:['Art','Arte'],
+  en:'Time-lapse of a watercolor sunset', es:'Video acelerado de un atardecer en acuarela'},
+ {id:'p5', who:'Captain Reyes',  c:2,i:3,r:3,p:0,d:0,s:0, want:1, topic:['Soccer','Fútbol'],
+  en:"Saturday's game moved to 10 AM.", es:'El partido del sábado se cambió a las 10 AM.'},
+ {id:'p6', who:'SportsBuzz',     c:0,i:2,r:3,p:3,d:3,s:0, want:0, topic:['Soccer gossip','Chismes de fútbol'],
+  en:'BREAKING: Star player says something SHOCKING about his coach', es:'ÚLTIMA HORA: Un jugador estrella dice algo IMPACTANTE sobre su entrenador'},
+ {id:'p7', who:'CelebWatch',     c:0,i:0,r:3,p:3,d:3,s:0, want:0, topic:['Celebrities','Famosos'],
+  en:'Two celebrities are feuding. Who is right? Vote now!', es:'Dos famosos están peleados. ¿Quién tiene la razón? ¡Vota ahora!'},
+ {id:'p8', who:'ZoomKicks',      c:0,i:1,r:3,p:2,d:1,s:3, want:0, topic:['Ad','Anuncio'],
+  en:'Ad: 50% off sneakers. Today only!', es:'Anuncio: 50% de descuento en tenis. ¡Solo hoy!'},
+ {id:'p9', who:'LOLclips',       c:0,i:0,r:2,p:3,d:0,s:0, want:0, topic:['Memes','Memes'],
+  en:'Cats falling off couches: the ultimate compilation', es:'Gatos cayéndose de los sillones: la recopilación definitiva'},
+ {id:'p10',who:'HotTakeHank',    c:0,i:0,r:3,p:2,d:3,s:0, want:0, topic:['Opinions','Opiniones'],
+  en:'Hot take: pineapple on pizza is a crime. Argue in the comments.', es:'Opinión polémica: la piña en la pizza es un delito. Discutan en los comentarios.'},
+ {id:'p11',who:'Class group chat',c:1,i:0,r:3,p:2,d:3,s:0, want:0, topic:['Gossip','Chisme'],
+  en:'Someone posted screenshots from the class chat. People are MAD.', es:'Alguien publicó capturas del chat de la clase. La gente está ENOJADA.'},
+ {id:'p12',who:'GameVault',      c:0,i:0,r:2,p:2,d:1,s:3, want:0, topic:['Ad','Anuncio'],
+  en:'Ad: Get the new Game Pass free for 7 days.', es:'Anuncio: Consigue el nuevo Game Pass gratis por 7 días.'}
+];
+POSTS.forEach(p=>{ p.sec=4+8*p.d+6*p.p+4*(p.s/3)*3+2*p.r; });   // hidden "seconds spent scrolling" estimate
+const PBY={}; POSTS.forEach((p,i)=>{PBY[p.id]=p; p.idx=i;});
+const CRIT=[
+ {k:'c',en:'From someone Maya knows',es:'De alguien que Maya conoce',he:'Close friends and family score highest. Strangers score zero.',hs:'Las amistades cercanas y la familia puntúan más. Los desconocidos, cero.'},
+ {k:'i',en:'Matches her interests',es:'Coincide con sus intereses',he:'Art and soccer posts score high.',hs:'Las publicaciones de arte y fútbol puntúan alto.'},
+ {k:'r',en:'Newest first',es:'Más reciente primero',he:'Newer posts score higher.',hs:'Las publicaciones más nuevas puntúan más.'},
+ {k:'p',en:'Most likes',es:'Más "me gusta"',he:'Popular posts score higher.',hs:'Las publicaciones populares puntúan más.'},
+ {k:'d',en:'Drama and big reactions',es:'Drama y reacciones fuertes',he:'Posts that make people argue or react score higher.',hs:'Las publicaciones que hacen que la gente discuta o reaccione puntúan más.'},
+ {k:'s',en:'Paid ads',es:'Anuncios pagados',he:'Sponsored posts score higher.',hs:'Las publicaciones patrocinadas puntúan más.'}];
+const CLOSE=[['Stranger','Desconocido'],['Someone she follows','Alguien a quien sigue'],['Friend','Amistad'],['Close friend or family','Amistad cercana o familia']];
+const AGE=[['20h ago','hace 20 h'],['9h ago','hace 9 h'],['3h ago','hace 3 h'],['1h ago','hace 1 h']];
+const LIKES=[['12 likes','12 me gusta'],['85 likes','85 me gusta'],['900 likes','900 me gusta'],['12K likes','12 mil me gusta']];
+const GOAL1=5, GOAL2=200, TOPN=5, MINMOVES=3;
+const POLL={
+ a:{h:B('What people say they want','Lo que la gente dice que quiere'),d:B('Show friends, family, and the things they care about first.','Mostrar primero amistades, familia y lo que les importa.')},
+ b:{h:B('Time on the app','Tiempo en la app'),d:B('Show whatever keeps people scrolling the longest.','Mostrar lo que hace que la gente siga desplazándose más tiempo.')},
+ c:{h:B('A mix of both','Una mezcla de las dos'),d:B('Keep people happy and keep the app in business. Explain how in your reflection.','Mantener contentos a los usuarios y mantener el negocio de la app. Explica cómo en tu reflexión.')},
+ d:{h:B('Something else','Otra cosa'),d:B('I would build the feed around a different goal. I will explain.','Armaría el feed con otra meta. Lo voy a explicar.')}};
+
+/* ================= state ================= */
+const W0=()=>({c:3,i:3,r:3,p:3,d:3,s:3});
+function freshRound(){return {w:W0(),moves:0,status:'open',locks:0,prev:null};}
+function fresh(){return {v:1,name:'',period:'',lang:'en',stage:'welcome',f1:freshRound(),f2:freshRound(),poll:'',refl:''};}
+let S;
+function load(){try{const o=JSON.parse(localStorage.getItem(KEY)); if(o&&o.v===1&&o.f1&&o.f2) return o;}catch(e){} return fresh();}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+const score=(p,w)=>CRIT.reduce((a,c)=>a+w[c.k]*p[c.k],0);
+function ranking(w){return POSTS.slice().sort((a,b)=>score(b,w)-score(a,w)||a.idx-b.idx);}
+function top(w){return ranking(w).slice(0,TOPN);}
+const wantsIn=w=>top(w).filter(p=>p.want).length;
+const secsIn=w=>top(w).reduce((a,p)=>a+p.sec,0);
+
+/* ================= views ================= */
+const STEPS=[['f1',B('Round 1','Ronda 1')],['f2',B('Round 2','Ronda 2')],['cmp',B('Compare','Comparar')],['refl',B('Reflect','Reflexión')],['turnin',B('Turn in','Entregar')]];
+function stepper(stage){const idx=STEPS.findIndex(s=>s[0]===stage);
+  return `<ol class="stepper">${STEPS.map((s,i)=>`<li class="${i<idx?'done':i===idx?'now':''}" ${i===idx?'aria-current="step"':''}>${s[1]}</li>`).join('')}</ol>`;}
+const needLetters=(len,min)=>len>=min?'':B(`Keep writing: ${min-len} more letters.`,`Sigue escribiendo: faltan ${min-len} letras.`);
+
+function viewWelcome(){return `
+  <section class="hero on-dark">
+    <h2>${B('Build a Feed','Arma un feed')}</h2>
+    <p class="lead">${B('Every app you scroll decides which posts you see first. Nobody sorts them by hand. A set of rules scores every post and puts the highest scores on top. Today you set the rules.','Cada app que usas decide qué publicaciones ves primero. Nadie las ordena a mano. Un conjunto de reglas le pone puntos a cada publicación y pone las de más puntos arriba. Hoy tú pones las reglas.')}</p>
+    <div class="how">
+      <div><span class="n">1</span>${B('Move the sliders to decide what matters. The feed re-orders as you go.','Mueve los controles para decidir qué importa. El feed se reordena mientras lo haces.')}</div>
+      <div><span class="n">2</span>${B('Build one feed for a person, and one for a company.','Arma un feed para una persona y otro para una empresa.')}</div>
+      <div><span class="n">3</span>${B('Compare them, write what you noticed, and download your PDF.','Compáralos, escribe lo que notaste y descarga tu PDF.')}</div>
+    </div>
+    <p style="margin-top:14px">${B('All posts and people are made up.','Todas las publicaciones y personas son inventadas.')}</p>
+  </section>
+  <section class="card">
+    <h2>${B('Before you start','Antes de empezar')}</h2>
+    <div class="fields">
+      <label class="f">${B('Your name','Tu nombre')}<input type="text" id="inName" autocomplete="off" maxlength="60" value="${esc(S.name)}"></label>
+      <label class="f">${B('Period','Periodo')}<input type="text" id="inPeriod" autocomplete="off" maxlength="10" value="${esc(S.period)}"></label>
+    </div>
+    <div class="row" style="margin-top:18px"><button class="btn" id="btnStart" data-act="start" ${S.name.trim().length<2?'disabled':''}>${B('Start Round 1','Empezar Ronda 1')}</button></div>
+  </section>`;}
+
+function postHTML(p,rank,opts){
+  opts=opts||{};
+  const badges=[`<span class="bdg">${B(esc(p.topic[0]),esc(p.topic[1]),'inline')}</span>`,
+    `<span class="bdg">${B(AGE[p.r][0],AGE[p.r][1],'inline')}</span>`,`<span class="bdg">${B(LIKES[p.p][0],LIKES[p.p][1],'inline')}</span>`];
+  if(p.d>=3) badges.push(`<span class="bdg hot">${B('Big drama','Mucho drama','inline')}</span>`); else if(p.d>=1&&!p.s) badges.push(`<span class="bdg hot">${B('A little drama','Un poco de drama','inline')}</span>`);
+  if(p.s) badges.push(`<span class="bdg ad">${B('Sponsored','Patrocinado','inline')}</span>`);
+  const who=`${esc(p.who)} · ${B(CLOSE[p.c][0],CLOSE[p.c][1],'inline')}`;
+  const d=opts.delta||0; const dl=d>0?`<span class="delta up">▲${d}</span>`:d<0?`<span class="delta down">▼${-d}</span>`:'';
+  const sec=opts.showSec?`<span class="bdg">${p.sec}s</span>`:'';
+  return `<li class="post ${rank<=TOPN?'in':'out'}${opts.wanted&&p.want?' wanted':''}" data-post="${p.id}"><div class="rank">${rank}</div><div><div class="who">${who}</div><div class="txt">${B(esc(p.en),esc(p.es))}</div><div class="badges">${badges.join('')}${opts.wanted&&p.want?`<span class="bdg" style="border-color:#14907F;color:#0C6B5E">${B('Maya wants this','Maya quiere esto','inline')}</span>`:''}${sec}</div></div><div>${dl}</div></li>`;
+}
+function feedHTML(key){
+  const R=S[key], rk=ranking(R.w), prev=R.prev||{}; const done=R.status==='done';
+  const items=rk.map((p,i)=>{const rank=i+1; const delta=prev[p.id]?prev[p.id]-rank:0; return postHTML(p,rank,{delta,wanted:done||key==='f2'&&false,showSec:key==='f2'&&done});});
+  items.splice(TOPN,0,`<li class="cut" aria-hidden="true">${B('Maya stops scrolling here','Maya deja de desplazarse aquí','inline')}</li>`);
+  return `<ol class="feed" id="feedlist">${items.join('')}</ol>`;
+}
+function meterHTML(key){
+  const R=S[key], w=R.w;
+  if(key==='f1'){ const n=wantsIn(w), win=n>=GOAL1;
+    return `<div class="meter${win?' win':''}" id="meter"><div style="font-size:15px">${B('Posts Maya wants, in her top 5','Publicaciones que Maya quiere, en su top 5','')}</div><div class="big">${n} <span style="font-size:20px;color:#BCD0E2">/ 5</span></div><div class="goal" aria-hidden="true"><div class="bar" style="width:${n/5*100}%"></div></div></div>`; }
+  const sc=secsIn(w), win=sc>=GOAL2, max=240;
+  return `<div class="meter${win?' win':''}" id="meter"><div style="font-size:15px">${B('Predicted scroll time of the top 5 (goal: 200+)','Tiempo de desplazamiento previsto del top 5 (meta: 200+)','')}</div><div class="big">${sc} <span style="font-size:20px;color:#BCD0E2">${B('seconds','segundos','inline')}</span></div><div class="goal" aria-hidden="true"><div class="bar" style="width:${Math.min(100,sc/max*100)}%"></div><div class="line" style="left:${GOAL2/max*100}%"></div></div></div>`;
+}
+function slidersHTML(key){
+  const R=S[key], dis=R.status==='done';
+  return `<div class="sliders">${CRIT.map(c=>`<div class="sl"><div class="top"><label for="sl_${c.k}">${B(esc(c.en),esc(c.es))}</label><output id="o_${c.k}">${R.w[c.k]}</output></div>
+    <input type="range" id="sl_${c.k}" data-k="${c.k}" min="0" max="5" step="1" value="${R.w[c.k]}" ${dis?'disabled':''}>
+    <div class="scale"><span>${B('ignore','ignorar','inline')}</span><span>${B('most important','lo más importante','inline')}</span></div>
+    <div class="hint">${B(esc(c.he),esc(c.hs))}</div></div>`).join('')}</div>`;
+}
+function lockMsg(key){
+  const R=S[key]; const left=Math.max(0,MINMOVES-R.moves);
+  const win=key==='f1'?wantsIn(R.w)>=GOAL1:secsIn(R.w)>=GOAL2;
+  if(left>0) return `<div class="msg warn">${B(`Change at least ${left} more ${left===1?'slider':'sliders'} before you lock in your feed.`,`Cambia al menos ${left} ${left===1?'control':'controles'} más antes de fijar tu feed.`)}</div>`;
+  return win?`<div class="msg good">${B('You hit the goal. Lock it in, or keep adjusting.','Alcanzaste la meta. Fíjalo o sigue ajustando.')}</div>`
+    :`<div class="msg warn">${B('Not at the goal yet. Keep adjusting, or lock in anyway.','Todavía no llegas a la meta. Sigue ajustando o fíjalo así.')}</div>`;
+}
+function resultCard(key,next){
+  const R=S[key], w=R.w;
+  const n=wantsIn(w), sc=secsIn(w);
+  return `<section class="card result" id="result-${key}"><h2>${B('Your locked feed','Tu feed fijado')}</h2>
+    <div class="stats"><div class="stat"><span class="big">${n} / 5</span>${B("posts Maya wants, in her top 5","publicaciones que Maya quiere, en su top 5")}</div>
+      <div class="stat"><span class="big">${sc}</span>${B('predicted seconds of scrolling (top 5)','segundos de desplazamiento previstos (top 5)')}</div></div>
+    <p class="muted">${B('Posts Maya wants are marked in the feed above.','Las publicaciones que Maya quiere están marcadas en el feed de arriba.')}</p>
+    <div class="row"><button class="btn" data-act="next" data-to="${next}">${B('Next','Siguiente')}</button><button class="btn ghost" data-act="reopen" data-k="${key}">${B('Keep adjusting','Seguir ajustando')}</button></div></section>`;
+}
+function viewRound(key,next){
+  const R=S[key], done=R.status==='done';
+  const ttl=key==='f1'?B("Round 1: Maya's feed","Ronda 1: El feed de Maya"):B('Round 2: The keep-scrolling feed','Ronda 2: El feed para que sigan desplazándose');
+  const intro=key==='f1'
+   ?B("Meet Maya, who is 15. She loves art and soccer. She wants to see her close friends and family first. She does not care about drama or ads. Set the sliders so her top 5 posts are the ones she wants.","Ella es Maya, de 15 años. Le encantan el arte y el fútbol. Quiere ver primero a sus amistades cercanas y a su familia. No le importan el drama ni los anuncios. Mueve los controles para que sus 5 primeras publicaciones sean las que ella quiere.")
+   :B("Now you work for the app company. Your boss only cares about one number: how many seconds people keep scrolling. More scrolling means more ads seen and more money. Set the sliders so the predicted scroll time of the top 5 reaches 200 seconds or more.","Ahora trabajas para la empresa de la app. A tu jefe solo le importa un número: cuántos segundos la gente sigue desplazándose. Más desplazamiento significa más anuncios vistos y más dinero. Mueve los controles para que el tiempo de desplazamiento previsto del top 5 llegue a 200 segundos o más.");
+  return `${stepper(key)}
+  <section class="card" style="margin-top:12px"><h2>${ttl}</h2><p class="lead">${intro}</p>
+    <p class="muted" style="margin:8px 0 0">${B('Each post gets points from every slider. A slider set to 0 is ignored, and a slider set to 5 counts the most. The posts with the most points go on top.','Cada publicación recibe puntos de cada control. Un control en 0 se ignora y un control en 5 cuenta lo máximo. Las publicaciones con más puntos van arriba.')}</p></section>
+  <div class="layout" style="margin-top:16px">
+    <section class="card" style="margin-top:0"><h3 style="font-size:20px;margin-bottom:8px">${B('The rules (weights)','Las reglas (pesos)')}</h3><div id="slbox">${slidersHTML(key)}</div></section>
+    <div><div id="meterbox">${meterHTML(key)}</div>
+      <div id="feedbox">${feedHTML(key)}</div>
+      <div class="card" style="margin-top:12px"><div id="lockmsg">${done?'':lockMsg(key)}</div>
+        <div class="row" style="margin-top:10px"><button class="btn alt" id="btnLock" data-act="lock" ${(done||R.moves<MINMOVES)?'disabled':''}>${B('Lock in this feed','Fijar este feed')}</button></div></div></div>
+  </div>
+  ${done?resultCard(key,next):''}`;
+}
+
+function cmpCol(key,ttl){
+  const R=S[key], rk=ranking(R.w).slice(0,TOPN);
+  const wl=CRIT.map(c=>`<span>${B(esc(c.en),esc(c.es),'inline')}: ${R.w[c.k]}</span>`).join('');
+  return `<section class="card" style="margin-top:0"><h3 style="font-size:21px">${ttl}</h3><div class="wlist">${wl}</div>
+    <ol class="feed">${rk.map((p,i)=>postHTML(p,i+1,{wanted:true,showSec:true})).join('')}</ol>
+    <div class="stats"><div class="stat"><span class="big">${wantsIn(R.w)} / 5</span>${B('posts Maya wants','publicaciones que Maya quiere')}</div><div class="stat"><span class="big">${secsIn(R.w)}</span>${B('predicted seconds','segundos previstos')}</div></div></section>`;
+}
+function viewCmp(){
+  const a=new Set(top(S.f1.w).map(p=>p.id)), b=new Set(top(S.f2.w).map(p=>p.id));
+  const dropped=[...a].filter(x=>!b.has(x)).length;
+  return `${stepper('cmp')}
+  <section class="card" style="margin-top:12px"><h2>${B('Compare the two feeds','Compara los dos feeds')}</h2>
+    <p class="lead">${B(`Same 12 posts. Same app. Two sets of rules. ${dropped} of Maya's top 5 posts from Round 1 fell out of the keep-scrolling feed.`,`Las mismas 12 publicaciones. La misma app. Dos conjuntos de reglas. ${dropped} de las 5 publicaciones principales de Maya en la Ronda 1 salieron del feed para que sigan desplazándose.`)}</p></section>
+  <div class="cols2" style="margin-top:16px">${cmpCol('f1',B("Round 1: Maya's feed","Ronda 1: El feed de Maya"))}${cmpCol('f2',B('Round 2: The keep-scrolling feed','Ronda 2: El feed para que sigan desplazándose'))}</div>
+  <div class="row" style="margin-top:16px"><button class="btn" data-act="next" data-to="refl">${B('Go to reflection','Ir a la reflexión')}</button></div>`;
+}
+function reflNeed(){return needLetters(S.refl.trim().length,15)+(S.poll?'':B('Pick one of the four choices above.','Elige una de las cuatro opciones de arriba.'));}
+function viewRefl(){
+  const ok=S.refl.trim().length>=15&&!!S.poll;
+  return `${stepper('refl')}
+  <section class="card"><h2>${B('If you ran the app','Si tú manejaras la app')}</h2>
+    <p class="lead">${B('You can only pick one main goal for the feed. What would you build it around?','Solo puedes elegir una meta principal para el feed. ¿Alrededor de qué la armarías?')}</p>
+    <div class="poll">${Object.keys(POLL).map(k=>`<button type="button" data-act="poll" data-k="${k}" aria-pressed="${S.poll===k}"><div style="font-family:Cambria,Georgia,serif;font-size:19px;margin-bottom:4px">${POLL[k].h}</div>${POLL[k].d}</button>`).join('')}</div></section>
+  <section class="card"><h2>${B('Reflect','Reflexiona')}</h2>
+    <p class="lead">${B('What changed between the two feeds? Who decided what Maya sees, and what were they trying to get? Why did you pick your choice above?','¿Qué cambió entre los dos feeds? ¿Quién decidió lo que ve Maya y qué quería conseguir? ¿Por qué elegiste lo que elegiste arriba?')}</p>
+    <textarea id="inRefl" aria-label="Reflection" placeholder="The feeds were different because…  /  Los feeds fueron distintos porque…">${esc(S.refl)}</textarea>
+    <p class="muted" style="margin:6px 0 0">${B('You can write in English or Spanish.','Puedes escribir en inglés o en español.')}</p>
+    <div class="msg warn" id="reflneed" style="margin-top:8px">${reflNeed()}</div>
+    <div class="row" style="margin-top:10px"><button class="btn" id="btnRefl" data-act="next" data-to="turnin" ${ok?'':'disabled'}>${B('Go to turn in','Ir a entregar')}</button></div></section>`;
+}
+
+/* ---- turn-in ---- */
+const POLLB={a:['What people say they want','Lo que la gente dice que quiere'],b:['Time on the app','Tiempo en la app'],c:['A mix of both','Una mezcla de las dos'],d:['Something else','Otra cosa']};
+const wTxt=w=>CRIT.map(c=>c.en+' '+w[c.k]).join(', ');
+const topTxt=w=>top(w).map((p,i)=>(i+1)+'. '+p.who+': '+p.en).join('\n');
+function summary(){
+  const L=['BUILD A FEED — Unit 4, Lesson 5','Name: '+S.name.trim()+'   Period: '+(S.period.trim()||'—'),'Date: '+new Date().toLocaleString(),''];
+  [['f1',"ROUND 1 (Maya's feed)"],['f2','ROUND 2 (keep-scrolling feed)']].forEach(([k,nm])=>{const R=S[k]; L.push(nm+': '+(R.status==='done'?'locked':'not locked')+'; slider changes: '+R.moves); L.push('  Weights: '+wTxt(R.w)); L.push('  Maya wants in top 5: '+wantsIn(R.w)+' of 5; predicted scroll time: '+secsIn(R.w)+' seconds'); L.push(topTxt(R.w).split('\n').map(x=>'  '+x).join('\n')); L.push('');});
+  L.push('If I ran the app I would build it around: '+(POLLB[S.poll]?POLLB[S.poll][0]:'(none)'),'','REFLECTION:',S.refl.trim()); return L.join('\n');
+}
+function PDFNAME(){return 'U4L05_BuildAFeed_'+PDFLIB.fold(S.name)+'.pdf';}
+function buildPDF(){
+  const d=PDFLIB.doc(); d.title('Build a Feed','Unit 4 · Lesson 5   /   Unidad 4 · Lección 5');
+  d.kv('Name / Nombre',S.name.trim()); d.kv('Period / Periodo',S.period.trim()||'—'); d.kv('Date / Fecha',new Date().toLocaleString());
+  [['f1',"Round 1: Maya's feed","Ronda 1: El feed de Maya"],['f2','Round 2: The keep-scrolling feed','Ronda 2: El feed para que sigan desplazándose']].forEach(([k,en,es])=>{
+    const R=S[k]; d.heading(en,es);
+    d.line('Status / Estado: '+(R.status==='done'?'Locked / Fijado':'Not locked / Sin fijar')+'     Slider changes / Cambios de control: '+R.moves);
+    CRIT.forEach(c=>d.line(c.en+' / '+c.es+': '+R.w[c.k],{size:10.5}));
+    d.line('Posts Maya wants in top 5 / Publicaciones que Maya quiere en el top 5: '+wantsIn(R.w)+' of 5');
+    d.line('Predicted scroll time (top 5) / Tiempo previsto (top 5): '+secsIn(R.w)+' seconds / segundos');
+    d.para('Top 5 / Los 5 primeros:',{font:'F2',size:10.5}); top(R.w).forEach((p,i)=>d.para((i+1)+'. '+p.who+': '+p.en+'  /  '+p.es,{size:10,indent:12}));
+  });
+  d.heading('If I ran the app / Si yo manejara la app','Mi elección'); const pb=POLLB[S.poll]||['—','—']; d.para(pb[0]+' / '+pb[1]);
+  d.heading('Reflection','Reflexión'); d.para(S.refl.trim()||'—');
+  return d.build('Build a Feed - '+S.name.trim());
+}
+function doPDF(){
+  const m=$('#pdfmsg');
+  try{ PDFLIB.download(buildPDF(),PDFNAME()); m.innerHTML=B('Saved! Now upload the PDF to Canvas.','¡Guardado! Ahora sube el PDF a Canvas.','inline'); }
+  catch(err){ m.innerHTML=B('The PDF did not work. Use "Copy as text" below.','El PDF no funcionó. Usa "Copiar como texto" abajo.','inline'); const dt=document.querySelector('details'); if(dt) dt.open=true; }
+}
+function viewTurnin(){return `${stepper('turnin')}
+  <section class="card"><h2>${B('Turn it in','Entrégalo')}</h2>
+    <ol style="padding-left:22px;margin:8px 0 0">
+      <li style="margin-bottom:8px">${B('Press Download my PDF.','Presiona Descargar mi PDF.')}</li>
+      <li style="margin-bottom:8px">${B('Open the Canvas assignment and choose File Upload.','Abre la tarea en Canvas y elige Subir archivo.')}</li>
+      <li>${B('Upload the PDF, then press Submit.','Sube el PDF y presiona Enviar.')}</li></ol>
+    <div class="row" style="margin-top:14px"><button class="btn" id="btnPdf" data-act="pdf">${B('Download my PDF','Descargar mi PDF')}</button><span id="pdfmsg" class="copied" role="status"></span></div>
+    <details style="margin-top:16px"><summary style="cursor:pointer">${B('Trouble downloading? Copy as text instead','¿Problemas para descargar? Copia como texto')}</summary>
+      <textarea id="sumbox" class="sumbox" readonly aria-label="Summary" style="margin-top:10px">${esc(summary())}</textarea>
+      <div class="row" style="margin-top:10px"><button class="btn ghost" data-act="copy">${B('Copy as text','Copiar como texto')}</button><span id="copymsg" class="copied" role="status"></span></div></details>
+  </section>
+  <button class="reset" data-act="reset">${B('Start over (clears this device)','Empezar de nuevo (borra este dispositivo)','inline')}</button>`;}
+
+/* ================= render + actions ================= */
+function render(){
+  document.body.setAttribute('data-lang',S.lang); document.documentElement.lang=S.lang;
+  document.querySelectorAll('.langtog button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.l===S.lang));
+  const v={welcome:viewWelcome,f1:()=>viewRound('f1','f2'),f2:()=>viewRound('f2','cmp'),cmp:viewCmp,refl:viewRefl,turnin:viewTurnin}[S.stage];
+  $('#app').innerHTML=v(); save();
+}
+function go(st){S.stage=st; render(); window.scrollTo(0,0);}
+function liveUpdate(key){   // update feed + meter without rebuilding sliders (keeps the slider being dragged)
+  const R=S[key]; $('#feedbox').innerHTML=feedHTML(key); $('#meterbox').innerHTML=meterHTML(key);
+  const lm=$('#lockmsg'); if(lm) lm.innerHTML=lockMsg(key); const bl=$('#btnLock'); if(bl) bl.disabled=R.moves<MINMOVES;
+}
+function currentRound(){return S.stage==='f1'?'f1':S.stage==='f2'?'f2':null;}
+function snapshotPrev(key){const R=S[key]; R.prev={}; ranking(R.w).forEach((p,i)=>R.prev[p.id]=i+1);}
+document.addEventListener('input',e=>{
+  const t=e.target, id=t.id;
+  if(t.dataset&&t.dataset.k&&t.type==='range'){ const key=currentRound(); if(!key) return; const R=S[key];
+    if(!R.prev) snapshotPrev(key);
+    R.w[t.dataset.k]=+t.value; const o=$('#o_'+t.dataset.k); if(o) o.textContent=t.value; liveUpdate(key); save(); return; }
+  if(id==='inName'){S.name=t.value; save(); const b=$('#btnStart'); if(b) b.disabled=S.name.trim().length<2;}
+  else if(id==='inPeriod'){S.period=t.value; save();}
+  else if(id==='inRefl'){S.refl=t.value; save(); const b=$('#btnRefl'),n=$('#reflneed'); if(b) b.disabled=!(S.refl.trim().length>=15&&S.poll); if(n) n.innerHTML=reflNeed();}
+});
+document.addEventListener('change',e=>{   // fires when a slider is released: counts as one deliberate change
+  const t=e.target; if(t.dataset&&t.dataset.k&&t.type==='range'){ const key=currentRound(); if(!key) return; const R=S[key]; R.moves++; snapshotPrev(key); liveUpdate(key); save(); }
+});
+function doCopy(){
+  const ta=$('#sumbox'); ta.value=summary(); const m=$('#copymsg');
+  const ok=()=>{m.innerHTML=B('Copied! Now paste it into Canvas.','¡Copiado! Ahora pégalo en Canvas.','inline');};
+  const fb=()=>{ta.focus();ta.select();try{document.execCommand('copy');ok();}catch(x){m.innerHTML=B('Select the text and press Ctrl+C.','Selecciona el texto y presiona Ctrl+C.','inline');}};
+  if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(ta.value).then(ok,fb); else fb();
+}
+document.addEventListener('click',e=>{
+  const t=e.target.closest('[data-act]'); if(!t||t.disabled) return; const a=t.dataset.act;
+  if(a==='lang'){S.lang=t.dataset.l; render();}
+  else if(a==='start'){ if(S.name.trim().length>=2) go('f1'); }
+  else if(a==='lock'){ const key=currentRound(); const R=S[key]; if(R.moves<MINMOVES) return; R.status='done'; R.locks++; render(); const el=$('#result-'+key); if(el) el.scrollIntoView({block:'start'}); }
+  else if(a==='reopen'){ const R=S[t.dataset.k]; R.status='open'; render(); window.scrollTo(0,0); }
+  else if(a==='next') go(t.dataset.to);
+  else if(a==='poll'){S.poll=t.dataset.k; render();}
+  else if(a==='pdf') doPDF();
+  else if(a==='copy') doCopy();
+  else if(a==='reset'){ if(confirm('Start over? This clears your work on this device. / ¿Empezar de nuevo? Esto borra tu trabajo en este dispositivo.')){try{localStorage.removeItem(KEY);}catch(x){} S=fresh(); render();} }
+});
+
+S=load();
+if(!['welcome','f1','f2','cmp','refl','turnin'].includes(S.stage)) S.stage='welcome';
+if((S.stage==='cmp'||S.stage==='refl'||S.stage==='turnin')&&!(S.f1.status==='done'&&S.f2.status==='done')) S.stage='welcome';
+render();
+window.__S=()=>S; window.__H={posts:POSTS,rank:w=>ranking(w).map(p=>p.id),wants:wantsIn,secs:secsIn};
+})();
+
+</script>
+</body>
+</html>
