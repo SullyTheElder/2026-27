@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>U3L04: Be the Router - Reading a Routing Table</title>
+<style>
+  :root{
+    --navy:#0B1F3A; --green:#8FC53E; --cream:#F4F1E9; --gold:#D9A441;
+    --ink:#1b2430; --muted:#55606e; --line:#d9d3c3; --card:#ffffff;
+    --head: Cambria, "Iowa Old Style", Georgia, serif;
+    --body: Calibri, Inter, "Segoe UI", Arial, sans-serif;
+    --mono: "IBM Plex Mono", Consolas, "Courier New", monospace;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--cream);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.55}
+  a{color:var(--navy)}
+  :focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+  .topbar{background:var(--navy);color:#fff;padding:10px 20px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+  .topbar .brand{font-family:var(--head);font-weight:700;letter-spacing:.02em}
+  .topbar a{color:var(--green);text-decoration:none;font-weight:600}
+  .topbar a:hover{text-decoration:underline}
+  main{max-width:900px;margin:0 auto;padding:24px 20px 60px}
+  .eyebrow{color:var(--muted);font-size:.85rem;text-transform:uppercase;letter-spacing:.08em;margin:0}
+  h1{font-family:var(--head);color:var(--navy);font-size:2.1rem;line-height:1.2;margin:.2em 0 .1em}
+  .sub{color:var(--muted);margin:0 0 18px}
+  h2{font-family:var(--head);color:var(--navy);font-size:1.5rem;margin:36px 0 8px;padding-bottom:6px;border-bottom:3px solid var(--green)}
+  h3{font-family:var(--head);color:var(--navy);margin:20px 0 6px;font-size:1.15rem}
+  .idbar{display:flex;gap:14px;flex-wrap:wrap;background:#fff;border:1px solid var(--line);border-radius:8px;padding:12px 14px;margin:14px 0 8px}
+  .idbar label{display:flex;gap:8px;align-items:center;font-weight:600}
+  input[type=text],textarea{font:inherit;border:1px solid #b8b09b;border-radius:6px;padding:7px 9px;background:#fff;color:var(--ink);width:100%}
+  .idbar input[type=text]{width:220px}
+  .idbar .period{width:90px}
+  textarea{min-height:74px;resize:vertical}
+  table{width:100%;border-collapse:collapse;background:#fff;margin:10px 0 16px;font-size:.98rem}
+  th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+  th{background:var(--navy);color:#fff;font-weight:600}
+  td input[type=text]{padding:5px 7px}
+  .scroll{overflow-x:auto}
+  code,.mono{font-family:var(--mono);background:#eef0e4;border-radius:4px;padding:1px 6px;font-size:.92em}
+  .callout{background:#fff;border-left:6px solid var(--green);border-radius:6px;padding:12px 16px;margin:14px 0}
+  .callout.note{border-left-color:var(--gold)}
+  .mission{background:var(--card);border:1px solid var(--line);border-left:8px solid var(--green);border-radius:10px;padding:16px 20px;margin:18px 0;break-inside:avoid}
+  .mission h3{margin-top:0;display:flex;align-items:center;gap:12px}
+  .badge{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;background:var(--navy);color:var(--green);font-family:var(--head);font-weight:700;flex:none}
+  .time{margin-left:auto;font-size:.82rem;font-weight:600;color:var(--muted);background:var(--cream);border-radius:999px;padding:2px 10px;white-space:nowrap}
+  .goal{font-weight:600;color:var(--navy);margin:.2em 0 .6em}
+  ol.steps{padding-left:22px;margin:.4em 0}
+  ol.steps li{margin:.35em 0}
+  .check{display:flex;gap:10px;align-items:flex-start;background:var(--cream);border-radius:8px;padding:10px 12px;margin:12px 0 6px}
+  .check input{width:20px;height:20px;margin-top:3px;accent-color:var(--navy);flex:none}
+  details{background:#fbfaf5;border:1px dashed #b8b09b;border-radius:8px;padding:8px 12px;margin:8px 0}
+  summary{cursor:pointer;font-weight:600;color:var(--navy)}
+  .lights{display:flex;gap:14px;flex-wrap:wrap;margin:8px 0}
+  .lights span{display:inline-flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--line);border-radius:999px;padding:3px 12px 3px 6px;font-size:.95rem}
+  .dot{width:16px;height:16px;border-radius:50%;display:inline-block;border:2px solid rgba(0,0,0,.25)}
+  .dot.g{background:#2fb344}.dot.a{background:#f59f00}.dot.r{background:#e03131}
+  .stretch{border-left-color:var(--gold)}
+  .stretch .badge{color:var(--gold)}
+  dl.vocab dt{font-weight:700;color:var(--navy);margin-top:10px}
+  dl.vocab dd{margin:0 0 0 0}
+  .actions{margin:26px 0 6px;display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+  button.pdf{font:inherit;font-weight:700;background:var(--navy);color:#fff;border:0;border-radius:8px;padding:12px 20px;cursor:pointer}
+  button.pdf:hover{background:#163459}
+  .hint{color:var(--muted);font-size:.92rem}
+  .diagram{background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px;margin:14px 0}
+  .diagram svg{width:100%;height:auto;display:block}
+  @media (max-width:640px){ h1{font-size:1.65rem} .time{display:none} }
+  @media print{
+    body{background:#fff;font-size:11.5pt}
+    .topbar,.actions,.noprint{display:none !important}
+    main{max-width:none;padding:0}
+    .mission,.callout,table,tr{break-inside:avoid}
+    .mission{border:1px solid #999;border-left:6px solid #555}
+    h2{break-after:avoid}
+    textarea{border:1px solid #888}
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <span class="brand">🐾 Bulldog Networking — AP Networking</span>
+  <a href="https://whatwasithinking.us/ap-networking/index.html">← Back to AP Networking</a>
+</div>
+
+<main>
+  <p class="eyebrow">AP Networking · Local Unit 3 · U3L04</p>
+  <h1>Be the Router: Reading a Routing Table</h1>
+  <p class="sub">How a router decides where each packet goes — CB 3.2.A.3 (activity first, concept after)</p>
+
+  <div class="idbar">
+    <label>Name: <input type="text" id="name" autocomplete="name"></label>
+    <label>Period: <input type="text" id="period" class="period"></label>
+  </div>
+  <p class="hint noprint">No Packet Tracer needed today. Work through the parts in order, then use the "Download as PDF" button to save a copy to turn in.</p>
+
+  <h2>The Situation</h2>
+  <p>Last class you watched a packet skip the router, and another one go through it. Today <em>you</em> are the router. The Bulldog Esports Invitational network has grown: the gym LAN, a new <strong>Spectator Wi-Fi</strong> segment, and the pretend internet, all meeting at one router with three ports.</p>
+  <div class="diagram">
+  <svg viewBox="0 0 760 340" role="img" aria-labelledby="dt dd" xmlns="http://www.w3.org/2000/svg" font-family="Calibri, Inter, Arial, sans-serif">
+    <title id="dt">Router with three ports</title>
+    <desc id="dd">One router. Port 1 connects to the Gym LAN, 192.168.1.0/24, with Player 1 at .11, Caster at .21, Admin at .31, and Tournament Server at .100. Port 2 connects to Spectator Wi-Fi, 192.168.2.0/24, with a phone at .45 and a tablet at .77. Port 3 connects to the pretend internet, 203.0.113.0/24, with an Internet Server at .10.</desc>
+    <g stroke="#0B1F3A" stroke-width="3"><line x1="260" y1="170" x2="330" y2="170"/><line x1="430" y1="170" x2="540" y2="170"/><line x1="380" y1="210" x2="380" y2="250"/></g>
+    <rect x="330" y="130" width="100" height="80" rx="10" fill="#0B1F3A"/>
+    <text x="380" y="177" text-anchor="middle" font-size="20" font-weight="700" fill="#8FC53E">Router</text>
+    <rect x="10" y="60" width="250" height="180" rx="10" fill="#F4F1E9" stroke="#0B1F3A" stroke-width="2"/>
+    <text x="24" y="90" font-size="16" font-weight="700" fill="#0B1F3A">Gym LAN</text>
+    <text x="24" y="112" font-size="14" fill="#0B1F3A">192.168.1.0/24</text>
+    <g font-size="13" fill="#1b2430"><text x="24" y="145">Player 1  192.168.1.11</text><text x="24" y="168">Caster  192.168.1.21</text><text x="24" y="191">Admin  192.168.1.31</text><text x="24" y="214">Tournament Server  192.168.1.100</text></g>
+    <rect x="540" y="110" width="210" height="120" rx="10" fill="#F4F1E9" stroke="#0B1F3A" stroke-width="2"/>
+    <text x="554" y="140" font-size="16" font-weight="700" fill="#0B1F3A">Internet (pretend)</text>
+    <text x="554" y="162" font-size="14" fill="#0B1F3A">203.0.113.0/24</text>
+    <text x="554" y="195" font-size="13" fill="#1b2430">Internet Server  203.0.113.10</text>
+    <rect x="240" y="250" width="280" height="80" rx="10" fill="#F4F1E9" stroke="#0B1F3A" stroke-width="2"/>
+    <text x="254" y="272" font-size="16" font-weight="700" fill="#0B1F3A">Spectator Wi-Fi</text>
+    <text x="254" y="290" font-size="14" fill="#0B1F3A">192.168.2.0/24</text>
+    <text x="254" y="314" font-size="13" fill="#1b2430">Phone 192.168.2.45 · Tablet 192.168.2.77</text>
+    <g font-size="14" font-weight="700" fill="#0B1F3A"><text x="268" y="160">Port 1</text><text x="455" y="160">Port 3</text><text x="388" y="238">Port 2</text></g>
+  </svg>
+</div>
+  <p class="hint">The router's own address on each segment ends in <code>.1</code>. All three segments use the mask <code>255.255.255.0</code>, so the first three numbers of an address tell you which segment it is on.</p>
+
+  <h2>Mission Board</h2>
+
+  <section class="mission" aria-labelledby="p1">
+    <h3 id="p1"><span class="badge">1</span> Router Desk: No Cheat Sheet <span class="time">about 8 min</span></h3>
+    <p class="goal">Goal: decide which port each packet leaves from, using only the diagram.</p>
+    <p>These packets have just arrived at the router. For each one, which port should it leave from? Then write how you decided.</p>
+    <div class="scroll"><table>
+      <thead><tr><th>#</th><th>Packet (from → to)</th><th>Out of port</th><th>How did you decide?</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>Player 1 <code>192.168.1.11</code> → Internet Server <code>203.0.113.10</code></td><td><input type="text" aria-label="Packet 1 port" style="width:70px"></td><td><input type="text" aria-label="Packet 1 reason"></td></tr>
+        <tr><td>2</td><td>Spectator phone <code>192.168.2.45</code> → Caster <code>192.168.1.21</code></td><td><input type="text" aria-label="Packet 2 port" style="width:70px"></td><td><input type="text" aria-label="Packet 2 reason"></td></tr>
+        <tr><td>3</td><td>Internet Server <code>203.0.113.10</code> → Spectator tablet <code>192.168.2.77</code></td><td><input type="text" aria-label="Packet 3 port" style="width:70px"></td><td><input type="text" aria-label="Packet 3 reason"></td></tr>
+        <tr><td>4</td><td>Caster <code>192.168.1.21</code> → <code>203.0.113.55</code></td><td><input type="text" aria-label="Packet 4 port" style="width:70px"></td><td><input type="text" aria-label="Packet 4 reason"></td></tr>
+        <tr><td>5</td><td>Admin <code>192.168.1.31</code> → Spectator tablet <code>192.168.2.77</code></td><td><input type="text" aria-label="Packet 5 port" style="width:70px"></td><td><input type="text" aria-label="Packet 5 reason"></td></tr>
+      </tbody>
+    </table></div>
+    <div class="check"><input type="checkbox" id="c1"><label for="c1">Checkpoint: I picked a port for all five packets and wrote how I decided.</label></div>
+  </section>
+
+  <section class="mission" aria-labelledby="p2">
+    <h3 id="p2"><span class="badge">2</span> Write the Router's Cheat Sheet <span class="time">about 8 min</span></h3>
+    <p class="goal">Goal: turn the way you decided into a table the router could use.</p>
+    <p>Look at your "how did you decide" answers. Fill in one row for every group of addresses the router needs to know about.</p>
+    <div class="scroll"><table>
+      <thead><tr><th>If the destination starts with…</th><th>Send it out of…</th></tr></thead>
+      <tbody>
+        <tr><td><input type="text" aria-label="Row 1 destination network"></td><td><input type="text" aria-label="Row 1 port"></td></tr>
+        <tr><td><input type="text" aria-label="Row 2 destination network"></td><td><input type="text" aria-label="Row 2 port"></td></tr>
+        <tr><td><input type="text" aria-label="Row 3 destination network"></td><td><input type="text" aria-label="Row 3 port"></td></tr>
+      </tbody>
+    </table></div>
+    <p>How many rows did you need, and why that number? <input type="text" aria-label="Why that many rows" style="width:60%"></p>
+    <div class="check"><input type="checkbox" id="c2"><label for="c2">Checkpoint: my cheat sheet covers every segment in the diagram.</label></div>
+    <details><summary>Stuck?</summary>Think about how many different segments the router connects. Each one needs its own row.</details>
+  </section>
+
+  <section class="mission" aria-labelledby="p3">
+    <h3 id="p3"><span class="badge">3</span> Use Your Sheet <span class="time">about 12 min</span></h3>
+    <p class="goal">Goal: route a new batch of packets with your cheat sheet, and catch the tricky one.</p>
+    <p><strong>Part A.</strong> For each packet, decide: does it even reach the router? If it does, which port does it leave from?</p>
+    <div class="scroll"><table>
+      <thead><tr><th>#</th><th>Packet (from → to)</th><th>Does the router handle it?</th><th>Out of port</th></tr></thead>
+      <tbody>
+        <tr><td>A</td><td>Player 1 <code>192.168.1.11</code> → Tournament Server <code>192.168.1.100</code></td><td><input type="text" aria-label="Packet A router"></td><td><input type="text" aria-label="Packet A port" style="width:70px"></td></tr>
+        <tr><td>B</td><td>Spectator phone <code>192.168.2.45</code> → <code>203.0.113.99</code></td><td><input type="text" aria-label="Packet B router"></td><td><input type="text" aria-label="Packet B port" style="width:70px"></td></tr>
+        <tr><td>C</td><td>Internet Server <code>203.0.113.10</code> → Caster <code>192.168.1.21</code></td><td><input type="text" aria-label="Packet C router"></td><td><input type="text" aria-label="Packet C port" style="width:70px"></td></tr>
+        <tr><td>D</td><td>Spectator tablet <code>192.168.2.77</code> → Spectator phone <code>192.168.2.45</code></td><td><input type="text" aria-label="Packet D router"></td><td><input type="text" aria-label="Packet D port" style="width:70px"></td></tr>
+        <tr><td>E</td><td>Internet Server <code>203.0.113.200</code> → Tournament Server <code>192.168.1.100</code></td><td><input type="text" aria-label="Packet E router"></td><td><input type="text" aria-label="Packet E port" style="width:70px"></td></tr>
+        <tr><td>F</td><td>Caster <code>192.168.1.21</code> → Spectator phone <code>192.168.2.45</code></td><td><input type="text" aria-label="Packet F router"></td><td><input type="text" aria-label="Packet F port" style="width:70px"></td></tr>
+      </tbody>
+    </table></div>
+    <p><strong>Part B. Partner round.</strong> Swap seats with a partner. Each of you writes <strong>two packets</strong> using addresses from the diagram. Trade papers and route your partner's packets. Check each other's answers.</p>
+    <textarea aria-label="My two packets for my partner"></textarea>
+    <div class="check"><input type="checkbox" id="c3"><label for="c3">Checkpoint: I routed all six packets and my partner's two.</label></div>
+    <details><summary>Stuck on one?</summary>Does the sender's address start the same way as the destination's? If so, check last class: does the router even get involved?</details>
+  </section>
+
+  <section class="mission" aria-labelledby="p4">
+    <h3 id="p4"><span class="badge">4</span> Check Against the Real Thing <span class="time">about 6 min</span></h3>
+    <p class="goal">Goal: compare your cheat sheet with a real router's table.</p>
+    <p>Your teacher will show the actual routing table of a router from your Packet Tracer network on the screen. You don't need to type anything into it.</p>
+    <p>How does it compare with your cheat sheet? What matches, and what looks different? <textarea aria-label="Comparison with real routing table" style="margin-top:6px"></textarea></p>
+    <div class="check"><input type="checkbox" id="c4"><label for="c4">Checkpoint: I compared the real table with mine and wrote down one thing I noticed.</label></div>
+  </section>
+
+  <h2>Concept: The Routing Table</h2>
+  <div class="callout">
+    <p>The cheat sheet you wrote is what a router really has. A <strong>routing table</strong> lists the possible <strong>routes</strong> that packets can travel, one entry for each network the router knows how to reach.</p>
+    <ol>
+      <li>A packet arrives at the router.</li>
+      <li>The router compares the packet's <strong>destination address</strong> with the entries in its routing table.</li>
+      <li>The matching entry tells the router which <strong>segment</strong> the packet should go to.</li>
+      <li>The router forwards the packet out of the right port, through the switch on that segment, to the destination device.</li>
+    </ol>
+    <p>Notice what the router does <em>not</em> do: packets between two devices on the same segment (like your packet A) never reach it.</p>
+  </div>
+
+  <h2>Debrief Questions</h2>
+  <p class="hint">Finish these in class if you have time. Otherwise they are due at the start of our next class.</p>
+  <p><strong>1.</strong> In your own words, what does a router do with a packet when it arrives? Use the words <em>destination address</em> and <em>routing table</em>.</p>
+  <textarea aria-label="Question 1"></textarea>
+  <p><strong>2.</strong> In Part 3, packet A and packet D never needed the router. Why not?</p>
+  <textarea aria-label="Question 2"></textarea>
+  <p><strong>3.</strong> The Invitational adds a Staff Office segment, <code>192.168.3.0/24</code>, on a new router port. What would have to be added to the routing table, and why?</p>
+  <textarea aria-label="Question 3"></textarea>
+
+  <h2>Vocabulary</h2>
+  <dl class="vocab">
+    <dt>Routing table</dt><dd>A list kept by a router showing the possible routes packets can travel.</dd>
+    <dt>Route (entry)</dt><dd>One row in a routing table: a network, and where to send packets headed for it.</dd>
+    <dt>Destination address</dt><dd>The address in a packet's header showing where the packet is going.</dd>
+    <dt>Port (interface)</dt><dd>A connection on the router that leads to one segment.</dd>
+    <dt>Forward</dt><dd>To pass a packet along toward its destination.</dd>
+  </dl>
+
+  <div class="actions noprint">
+    <button class="pdf" type="button" onclick="window.print()">📄 Download as PDF</button>
+    <span class="hint">In the print dialog, set <strong>Destination</strong> to <strong>Save as PDF</strong>, then save.</span>
+  </div>
+</main>
+</body>
+</html>
