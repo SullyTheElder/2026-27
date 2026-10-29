@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DDoS Simulator · AP Cybersecurity Unit 3</title>
+<style>
+:root{
+  --green:#1B4332; --dark:#122B21; --gold:#D4A017; --cream:#FBF8F1; --olive:#6B7F3A;
+  --red:#B23A2E; --ink:#2A2A2A; --mute:#5A5A5A; --line:#C9C3B0; --ok:#2E7D4F;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--cream);color:var(--ink);font-family:"Calibri","Carlito",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;font-size:17px;line-height:1.45}
+h1,h2,h3{font-family:"Cambria","Georgia",serif;color:var(--green);margin:0 0 .4em}
+header{background:var(--dark);color:#fff;padding:14px 22px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+header h1{color:#fff;font-size:1.35rem;margin:0}
+header .tag{color:var(--gold);font-weight:700;font-size:.9rem}
+header a{color:var(--gold);font-size:.9rem}
+main{max-width:980px;margin:0 auto;padding:18px 18px 60px}
+.card{background:#fff;border:1.5px solid var(--line);border-radius:10px;padding:18px 20px;margin-bottom:16px}
+.card.dark{background:var(--green);color:#fff;border-color:var(--green)}
+.card.dark h2,.card.dark h3{color:var(--gold)}
+button{font:inherit;cursor:pointer;border-radius:8px;border:2px solid var(--green);background:var(--green);color:#fff;padding:9px 16px;font-weight:700}
+button:hover:not(:disabled){background:var(--dark)}
+button:disabled{opacity:.45;cursor:not-allowed}
+button.alt{background:#fff;color:var(--green)}
+button.danger{background:var(--red);border-color:var(--red)}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+label{display:block;font-weight:700;margin:10px 0 4px}
+input,select{font:inherit;padding:9px 10px;border:2px solid var(--line);border-radius:8px;width:100%;max-width:340px}
+.progress{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+.progress div{flex:1;min-width:110px;padding:6px 8px;border-radius:6px;background:#E8E2CF;font-size:.82rem;font-weight:700;color:var(--mute);text-align:center}
+.progress div.on{background:var(--gold);color:var(--dark)}
+.progress div.done{background:var(--green);color:#fff}
+.stage{display:none}.stage.show{display:block}
+.grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:16px}
+@media(max-width:760px){.grid{grid-template-columns:1fr}}
+svg{width:100%;height:auto;background:#F4F0E4;border-radius:8px;border:1.5px solid var(--line)}
+.nodeRect{fill:var(--green);stroke:none}
+.nodeRect.bad{fill:var(--red)}
+.nodeText{fill:#fff;font:700 14px "Calibri","Carlito",Arial,sans-serif;text-anchor:middle}
+.nodeSub{fill:#F3EFE2;font:12px "Calibri","Carlito",Arial,sans-serif;text-anchor:middle}
+.link{stroke:#9A9580;stroke-width:3}
+table.arp{border-collapse:collapse;width:100%;font-size:.92rem}
+table.arp th{background:var(--green);color:#fff;text-align:left;padding:7px 8px}
+table.arp td{border:1px solid var(--line);padding:7px 8px;font-family:Consolas,"Courier New",monospace;font-size:.85rem}
+table.arp td.who{font-family:inherit;font-size:.9rem;color:var(--mute)}
+table.arp tr.poisoned td{background:var(--red);color:#fff;font-weight:700}
+table.arp tr.poisoned td.who{color:#fff}
+.note{font-size:.88rem;color:var(--mute)}
+.q{margin-top:14px;padding-top:14px;border-top:2px dashed var(--line)}
+.q p{font-weight:700;margin:0 0 8px}
+.opts{display:flex;flex-direction:column;gap:8px}
+.opts button{background:#fff;color:var(--ink);border:2px solid var(--line);text-align:left;font-weight:600}
+.opts button:hover:not(:disabled){background:#F4F0E4}
+.opts button.right{background:#E3F2E8;border-color:var(--ok);color:#14532d}
+.opts button.wrong{background:#FBE4E1;border-color:var(--red);color:#7f1d1d}
+.fb{margin-top:10px;padding:10px 12px;border-radius:8px;display:none;font-size:.95rem}
+.fb.show{display:block}
+.fb.good{background:#E3F2E8;border:1.5px solid var(--ok)}
+.fb.bad{background:#FBE4E1;border:1.5px solid var(--red)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:10px 0}
+.toggle{display:inline-flex;align-items:center;gap:8px;font-weight:700}
+.status{font-weight:700;margin:6px 0;min-height:1.4em}
+.safety{font-size:.85rem;background:#FFF6DA;border:1.5px solid var(--gold);border-radius:8px;padding:8px 12px;margin-bottom:14px}
+#results{display:none}
+.resRow{display:flex;justify-content:space-between;gap:10px;border-bottom:1px solid var(--line);padding:6px 0;font-size:.95rem}
+.badge{font-weight:700;padding:2px 10px;border-radius:99px;font-size:.82rem;white-space:nowrap}
+.badge.y{background:#E3F2E8;color:#14532d}.badge.n{background:#FBE4E1;color:#7f1d1d}
+.resItem{border-bottom:1px solid var(--line);padding:9px 0}
+.resQ{font-weight:700}
+.resHead{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.big{font-family:"Cambria","Georgia",serif;font-size:2.2rem;color:var(--green);font-weight:700}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+@media print{
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .card.dark{background:#fff!important;color:#000!important;border:2px solid #1B4332!important}
+  .card.dark h2{color:#1B4332!important}
+  .card.dark p{color:#000!important}
+  #results .card{break-inside:auto!important}
+  .resItem{break-inside:avoid;border-bottom:1px solid #bbb;padding:6px 0}
+
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .card.dark{background:#fff!important;color:#000!important;border:2px solid #1B4332!important}
+  .card.dark h2{color:#1B4332!important}
+  .card.dark p{color:#000!important}
+  #results .card{break-inside:auto!important}
+  .resItem{break-inside:avoid;border-bottom:1px solid #bbb;padding:6px 0}
+
+  body{background:#fff;font-size:12pt}
+  header,#gate,#sim,.noprint{display:none!important}
+  #results{display:block!important}
+  .card{border:1px solid #999;break-inside:avoid}
+}
+</style>
+<style>
+.srv{position:relative;height:160px;border:2px solid var(--line);border-radius:10px;background:#F4F0E4;margin:10px 0;overflow:hidden}
+.srvFill{position:absolute;left:0;bottom:0;width:100%;background:linear-gradient(180deg,#6B7F3A,#1B4332);transition:height .6s ease}
+.srvLabel{position:absolute;top:8px;left:10px;font-weight:700;color:var(--green)}
+.srvPct{position:absolute;bottom:8px;left:10px;font-weight:700;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.4)}
+.devRow{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+.dev{width:64px;height:48px;border-radius:8px;background:var(--red);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.78rem;opacity:.25;transition:opacity .3s}
+.dev.on{opacity:1}
+.stageTag{display:inline-block;background:var(--gold);color:var(--dark);font-weight:700;padding:3px 10px;border-radius:99px;font-size:.85rem;margin-bottom:8px}
+</style>
+</head>
+<body>
+<header>
+  <div><div class="tag">AP CYBERSECURITY · UNIT 3 · U3L06 · LO 3.1.A.4</div><h1>DDoS Simulator</h1></div>
+  <a href="../../">&larr; Back to class site</a>
+</header>
+<main>
+
+<section id="gate" class="card">
+  <h2>Before you start</h2>
+  <div class="warn"><strong>This is a simulation.</strong> No real server or network is involved.</div>
+  <p>You run a small fictional store's website, <strong>Meridian Outfitters</strong>. You'll compare what happens when one device sends traffic to your server versus many devices at once, then explain why that matters.</p>
+  <label for="nm">First and last name</label>
+  <input id="nm" autocomplete="off" placeholder="e.g., Jordan Rivera">
+  <label for="per">Period</label>
+  <select id="per"><option value="">Choose…</option><option>1</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option></select>
+  <div class="row"><button id="startBtn">Begin</button><span id="gateErr" style="color:var(--red);font-weight:700"></span></div>
+</section>
+
+<section id="act" style="display:none">
+  <!-- Stage 1 -->
+  <div class="card stage show" id="st1">
+    <span class="stageTag">Stage 1 of 3</span>
+    <h2>One device sends traffic</h2>
+    <p>Your server can handle a lot of normal visitors. Click the button to send traffic from a single device and watch the server's load.</p>
+    <div class="srv"><div class="srvLabel">Meridian Outfitters server</div><div class="srvFill" id="fill1" style="height:8%"></div><div class="srvPct" id="pct1">8% busy</div></div>
+    <div class="devRow"><div class="dev on">Device</div></div>
+    <div class="row"><button id="s1run">Send traffic</button></div>
+    <div class="status" id="s1status"></div>
+    <div class="q" id="q1box" style="display:none"></div>
+  </div>
+
+  <!-- Stage 2 -->
+  <div class="card stage" id="st2">
+    <span class="stageTag">Stage 2 of 3</span>
+    <h2>Many devices send traffic — at the same target, at the same time</h2>
+    <p>Now watch what happens when many devices attack the same server simultaneously.</p>
+    <div class="srv"><div class="srvLabel">Meridian Outfitters server</div><div class="srvFill" id="fill2" style="height:8%"></div><div class="srvPct" id="pct2">8% busy</div></div>
+    <div class="devRow" id="devRow2"></div>
+    <div class="row"><button id="s2run">Launch the DDoS</button></div>
+    <div class="status" id="s2status"></div>
+    <div class="q" id="q2box" style="display:none"></div>
+    <div class="q" id="q3box" style="display:none"></div>
+  </div>
+
+  <!-- Stage 3 -->
+  <div class="card stage" id="st3">
+    <span class="stageTag">Stage 3 of 3</span>
+    <h2>Where did the devices come from?</h2>
+    <p>None of these devices belong to the adversary. Click each one to see whose it really is.</p>
+    <div class="devRow" id="devRow3"></div>
+    <div class="status" id="s3status"></div>
+    <div class="q" id="q4box" style="display:none"></div>
+    <div class="q" id="q5box" style="display:none"></div>
+    <div class="q" id="q6box" style="display:none"></div>
+    <div class="row hide" id="finishRow"><button id="resBtn">See my results</button></div>
+  </div>
+</section>
+
+<section id="results" style="display:none">
+  <div class="card dark">
+    <h2>Simulation complete</h2>
+    <p><strong id="rName"></strong> · Period <strong id="rPer"></strong> · <span id="rDate"></span></p>
+    <p>Mr. Sullivan's AP Cybersecurity · U3L06 · DDoS Simulator (completion-graded)</p>
+  </div>
+  <div class="card">
+    <div class="big" id="rScore"></div>
+    <p class="note">First-try accuracy. This is practice; read the explanations for any you missed.</p>
+    <div id="rList"></div>
+  </div>
+  <div class="card">
+    <h3>Takeaways</h3>
+    <p>A DoS attack comes from one source. A <strong>DDoS attack</strong> is multiple devices attacking the same target at the same time. The devices are often hijacked, everyday devices whose owners don't know they're part of an attack.</p>
+  </div>
+  <div class="row noprint">
+    <button id="printBtn">Download as PDF</button>
+    <button class="alt" id="againBtn">Run it again</button>
+    <span class="note">In the print window, change the destination to "Save as PDF", then upload the file to Canvas.</span>
+  </div>
+</section>
+</main>
+<script>
+(function(){
+"use strict";
+const $=id=>document.getElementById(id);
+const results=[];
+function ask(boxId,id,text,options,correctIdx,explainRight,explainWrong,onCorrect){
+  const box=$(boxId);box.style.display="block";
+  const rec={id,text,firstTry:null,attempts:0};results.push(rec);
+  box.innerHTML=`<div class="q" style="margin-top:0;padding-top:0;border:none"><p>${text}</p><div class="opts"></div><div class="fb"></div></div>`;
+  const wrap=box.querySelector(".opts"),fb=box.querySelector(".fb");
+  const idxs=options.map((_,i)=>i);for(let k=idxs.length-1;k>0;k--){const j=Math.floor(Math.random()*(k+1));[idxs[k],idxs[j]]=[idxs[j],idxs[k]];}
+  idxs.forEach(i=>{const o=options[i];
+    const b=document.createElement("button");b.textContent=o;
+    b.addEventListener("click",()=>{
+      rec.attempts++;
+      if(i===correctIdx){
+        if(rec.firstTry===null)rec.firstTry=true;
+        b.classList.add("right");wrap.querySelectorAll("button").forEach(x=>x.disabled=true);
+        fb.className="fb show good";fb.innerHTML="<strong>Correct.</strong> "+explainRight;
+        onCorrect&&onCorrect();
+      }else{
+        if(rec.firstTry===null)rec.firstTry=false;
+        b.classList.add("wrong");b.disabled=true;
+        fb.className="fb show bad";fb.innerHTML="<strong>Not quite.</strong> "+(explainWrong[i]||"Think about it again.");
+      }
+    });
+    wrap.appendChild(b);
+  });
+}
+function showStage(n){document.querySelectorAll(".stage").forEach(s=>s.classList.remove("show"));$("st"+n).classList.add("show");window.scrollTo({top:0,behavior:"smooth"});}
+
+// stage 1
+$("s1run").addEventListener("click",()=>{
+  $("s1run").disabled=true;
+  $("fill1").style.height="14%";$("pct1").textContent="14% busy";
+  $("s1status").textContent="One device sends traffic. The server barely notices.";
+  ask("q1box","q1","Why did one device barely affect the server?",
+    ["A busy server has plenty of capacity, so one sender barely registers","The device sent no traffic at all","The server was offline","One device always crashes a server"],0,
+    "Servers are built to handle a lot of normal traffic. A single ordinary sender is nowhere near its limit.",
+    {1:"Traffic was sent; look at the load bar.",2:"The server was online and responded.",3:"That isn't what you saw happen."},
+    ()=>{const r=document.createElement("div");r.className="row";const b=document.createElement("button");b.textContent="Continue to Stage 2";b.addEventListener("click",()=>showStage(2));r.appendChild(b);$("st1").appendChild(r);});
+});
+
+// stage 2
+const N=10;
+for(let i=0;i<N;i++){const d=document.createElement("div");d.className="dev";d.textContent="Device "+(i+1);$("devRow2").appendChild(d);}
+$("s2run").addEventListener("click",()=>{
+  $("s2run").disabled=true;
+  const devs=$("devRow2").querySelectorAll(".dev");
+  let i=0;
+  const timer=setInterval(()=>{
+    if(i<devs.length){devs[i].classList.add("on");i++;
+      const pct=Math.min(14+i*9,100);
+      $("fill2").style.height=pct+"%";$("pct2").textContent=pct+"% busy"+(pct>=100?" — DOWN":"");
+    } else { clearInterval(timer);
+      $("s2status").textContent="All "+N+" devices are now sending traffic to the same server at the same time. It's overloaded.";
+      ask("q2box","q2","What makes this attack a DDoS and not a DoS?",
+        ["Multiple devices are attacking the same target at the same time","The server has more RAM","Only one device is attacking","The attack used a password"],0,
+        "DDoS = distributed denial of service: many devices, one target, at the same time.",
+        {1:"Hardware isn't what defines the attack type.",2:"You just watched 10 devices send traffic together.",3:"No password was involved here."},
+        ()=>{ask("q3box","q3","Why is a DDoS harder to stop than a DoS from one device?",
+          ["Traffic comes from many different sources at once, so blocking one barely helps","It isn't harder to stop","DDoS attacks always use more bandwidth per device","The server automatically shuts down"],0,
+          "Blocking a single IP address does little when traffic is arriving from many different sources simultaneously.",
+          {1:"You saw the server go to 100% busy. It is harder, not easier.",2:"Each device sends only a little; the power is in the combined total.",3:"Nothing here shows an automatic shutdown."},
+          ()=>{const r=document.createElement("div");r.className="row";const b=document.createElement("button");b.textContent="Continue to Stage 3";b.addEventListener("click",()=>showStage(3));r.appendChild(b);$("st2").appendChild(r);});
+        });
+    }
+  },280);
+});
+
+// stage 3
+const owners=["Home security camera","Smart thermostat","Office router","Streaming device","Baby monitor","Smart TV","Home router","Printer","Doorbell camera","Game console"];
+let revealed=0;
+owners.forEach((o,i)=>{const d=document.createElement("div");d.className="dev";d.style.opacity="1";d.textContent="Device "+(i+1);d.style.cursor="pointer";
+  d.addEventListener("click",()=>{ if(d.dataset.done)return; d.dataset.done="1"; d.textContent=o; d.style.background="var(--olive)"; revealed++;
+    if(revealed===owners.length){ $("s3status").textContent="None of these devices belong to the adversary. Each one has a real owner who has no idea it's being used in an attack.";
+      ask("q4box","q4","How did the adversary most likely get control of these devices?",
+        ["Weak or default passwords that were never changed","The owners agreed to join the attack","The devices were brand new and unconfigured","The adversary physically stole each device"],0,
+        "Many everyday devices ship with weak or default passwords that owners never change, which is exactly what you studied with password attacks in Unit 1.",
+        {1:"The owners don't know their devices are involved.",2:"New devices aren't the reason; weak credentials are.",3:"Nothing here involved physical theft."},
+        ()=>{ask("q5box","q5","The devices keep working normally for their owners. Why doesn't anyone notice?",
+          ["The device still does its normal job, so there's no obvious sign anything is wrong","The devices stop working completely","The owners are told by the adversary","It's impossible to use a device for two things at once"],0,
+          "A hijacked camera or router still does its job. The extra traffic it sends in an attack often goes unnoticed by its owner.",
+          {1:"If devices stopped working, owners would notice right away — that isn't typically how this goes unnoticed.",2:"Adversaries don't announce themselves to device owners.",3:"That's exactly what's happening here: one device, two jobs."},
+          ()=>{ask("q6box","q6","Triage first. In this attack, who are the victims?",
+            ["Meridian Outfitters, whose customers can't reach the site, and the owners of the hijacked devices","Only the adversary","Only Meridian Outfitters","Nobody — no real harm was done"],0,
+            "Availability was taken from Meridian Outfitters' customers, and the device owners are victims too, since their property was used without their knowledge.",
+            {1:"The adversary isn't a victim here.",2:"The device owners are affected too, even if less visibly.",3:"Customers couldn't reach the site; that's real harm."},
+            ()=>{$("finishRow").classList.remove("hide");});
+          });
+        });
+    }
+  });
+  $("devRow3").appendChild(d);
+});
+
+$("startBtn").addEventListener("click",()=>{
+  if(!$("nm").value.trim()||!$("per").value){$("gateErr").textContent="Enter your name and choose a period.";return;}
+  $("gate").style.display="none";$("act").style.display="block";
+});
+$("resBtn").addEventListener("click",()=>{
+  $("act").style.display="none";$("results").style.display="block";
+  $("rName").textContent=$("nm").value.trim();$("rPer").textContent=$("per").value;
+  $("rDate").textContent=new Date().toLocaleDateString(undefined,{year:"numeric",month:"long",day:"numeric"});
+  const first=results.filter(r=>r.firstTry).length;
+  $("rScore").textContent=first+" / "+results.length+" correct on first try";
+  $("rList").innerHTML=results.map((r,i)=>`<div class="resItem"><div class="resHead"><div class="resQ">${i+1}. ${r.text.replace(/<[^>]+>/g,"")}</div><span class="badge ${r.firstTry?"y":"n"}">${r.firstTry?"First try":"Needed retry"}</span></div></div>`).join("");
+  window.scrollTo(0,0);
+});
+$("printBtn").addEventListener("click",()=>window.print());
+$("againBtn").addEventListener("click",()=>location.reload());
+})();
+</script>
+</body>
+</html>
