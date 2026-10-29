@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>U3L05: AI Said So - Critiquing a Network Design</title>
+<style>
+  :root{
+    --navy:#0B1F3A; --green:#8FC53E; --cream:#F4F1E9; --gold:#D9A441;
+    --ink:#1b2430; --muted:#55606e; --line:#d9d3c3; --card:#ffffff;
+    --head: Cambria, "Iowa Old Style", Georgia, serif;
+    --body: Calibri, Inter, "Segoe UI", Arial, sans-serif;
+    --mono: "IBM Plex Mono", Consolas, "Courier New", monospace;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--cream);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.55}
+  a{color:var(--navy)}
+  :focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+  .topbar{background:var(--navy);color:#fff;padding:10px 20px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+  .topbar .brand{font-family:var(--head);font-weight:700;letter-spacing:.02em}
+  .topbar a{color:var(--green);text-decoration:none;font-weight:600}
+  .topbar a:hover{text-decoration:underline}
+  main{max-width:900px;margin:0 auto;padding:24px 20px 60px}
+  .eyebrow{color:var(--muted);font-size:.85rem;text-transform:uppercase;letter-spacing:.08em;margin:0}
+  h1{font-family:var(--head);color:var(--navy);font-size:2.1rem;line-height:1.2;margin:.2em 0 .1em}
+  .sub{color:var(--muted);margin:0 0 18px}
+  h2{font-family:var(--head);color:var(--navy);font-size:1.5rem;margin:36px 0 8px;padding-bottom:6px;border-bottom:3px solid var(--green)}
+  h3{font-family:var(--head);color:var(--navy);margin:20px 0 6px;font-size:1.15rem}
+  .idbar{display:flex;gap:14px;flex-wrap:wrap;background:#fff;border:1px solid var(--line);border-radius:8px;padding:12px 14px;margin:14px 0 8px}
+  .idbar label{display:flex;gap:8px;align-items:center;font-weight:600}
+  input[type=text],textarea{font:inherit;border:1px solid #b8b09b;border-radius:6px;padding:7px 9px;background:#fff;color:var(--ink);width:100%}
+  .idbar input[type=text]{width:220px}
+  .idbar .period{width:90px}
+  textarea{min-height:74px;resize:vertical}
+  table{width:100%;border-collapse:collapse;background:#fff;margin:10px 0 16px;font-size:.98rem}
+  th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+  th{background:var(--navy);color:#fff;font-weight:600}
+  td input[type=text]{padding:5px 7px}
+  .scroll{overflow-x:auto}
+  code,.mono{font-family:var(--mono);background:#eef0e4;border-radius:4px;padding:1px 6px;font-size:.92em}
+  .callout{background:#fff;border-left:6px solid var(--green);border-radius:6px;padding:12px 16px;margin:14px 0}
+  .callout.note{border-left-color:var(--gold)}
+  .mission{background:var(--card);border:1px solid var(--line);border-left:8px solid var(--green);border-radius:10px;padding:16px 20px;margin:18px 0;break-inside:avoid}
+  .mission h3{margin-top:0;display:flex;align-items:center;gap:12px}
+  .badge{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;background:var(--navy);color:var(--green);font-family:var(--head);font-weight:700;flex:none}
+  .time{margin-left:auto;font-size:.82rem;font-weight:600;color:var(--muted);background:var(--cream);border-radius:999px;padding:2px 10px;white-space:nowrap}
+  .goal{font-weight:600;color:var(--navy);margin:.2em 0 .6em}
+  ol.steps{padding-left:22px;margin:.4em 0}
+  ol.steps li{margin:.35em 0}
+  .check{display:flex;gap:10px;align-items:flex-start;background:var(--cream);border-radius:8px;padding:10px 12px;margin:12px 0 6px}
+  .check input{width:20px;height:20px;margin-top:3px;accent-color:var(--navy);flex:none}
+  details{background:#fbfaf5;border:1px dashed #b8b09b;border-radius:8px;padding:8px 12px;margin:8px 0}
+  summary{cursor:pointer;font-weight:600;color:var(--navy)}
+  .lights{display:flex;gap:14px;flex-wrap:wrap;margin:8px 0}
+  .lights span{display:inline-flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--line);border-radius:999px;padding:3px 12px 3px 6px;font-size:.95rem}
+  .dot{width:16px;height:16px;border-radius:50%;display:inline-block;border:2px solid rgba(0,0,0,.25)}
+  .dot.g{background:#2fb344}.dot.a{background:#f59f00}.dot.r{background:#e03131}
+  .stretch{border-left-color:var(--gold)}
+  .stretch .badge{color:var(--gold)}
+  dl.vocab dt{font-weight:700;color:var(--navy);margin-top:10px}
+  dl.vocab dd{margin:0 0 0 0}
+  .actions{margin:26px 0 6px;display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+  button.pdf{font:inherit;font-weight:700;background:var(--navy);color:#fff;border:0;border-radius:8px;padding:12px 20px;cursor:pointer}
+  button.pdf:hover{background:#163459}
+  .hint{color:var(--muted);font-size:.92rem}
+  .diagram{background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px;margin:14px 0}
+  .diagram svg{width:100%;height:auto;display:block}
+  .ai{background:#fff;border:1px solid var(--line);border-left:8px solid var(--navy);border-radius:10px;padding:14px 18px;margin:14px 0}
+  .ai .label{font-size:.8rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0 0 6px}
+  .prompt{background:#eef0e4;border-radius:8px;padding:10px 14px;font-family:var(--mono);font-size:.95rem}
+  @media (max-width:640px){ h1{font-size:1.65rem} .time{display:none} }
+  @media print{
+    body{background:#fff;font-size:11.5pt}
+    .topbar,.actions,.noprint{display:none !important}
+    main{max-width:none;padding:0}
+    .mission,.callout,table,tr{break-inside:avoid}
+    .mission{border:1px solid #999;border-left:6px solid #555}
+    h2{break-after:avoid}
+    textarea{border:1px solid #888}
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <span class="brand">🐾 Bulldog Networking — AP Networking</span>
+  <a href="https://whatwasithinking.us/ap-networking/index.html">← Back to AP Networking</a>
+</div>
+
+<main>
+  <p class="eyebrow">AP Networking · Local Unit 3 · U3L05</p>
+  <h1>AI Said So: Critiquing a Network Design</h1>
+  <p class="sub">Wired topologies (CB 3.2.C) and evaluating AI-generated designs (CB 3.2.D)</p>
+
+  <div class="idbar">
+    <label>Name: <input type="text" id="name" autocomplete="name"></label>
+    <label>Period: <input type="text" id="period" class="period"></label>
+  </div>
+  <p class="hint noprint">No Packet Tracer needed today. Work through the parts in order, then use the "Download as PDF" button to save a copy to turn in.</p>
+
+  <h2>The Situation</h2>
+  <p>The Bulldog Esports Invitational committee asked an AI tool to design the event's network. Before any of it gets near real equipment, <strong>your job is to check it.</strong> AI tools are good at producing ideas fast. They are not good at knowing what <em>your</em> event needs.</p>
+  <p>To judge a design, you first need a way to judge how devices get connected. So we start with some math.</p>
+
+  <h2>Mission Board</h2>
+
+  <section class="mission" aria-labelledby="p1">
+    <h3 id="p1"><span class="badge">1</span> The Cost of Connecting Everyone <span class="time">about 15 min</span></h3>
+    <p class="goal">Goal: count the cables for two different ways of connecting devices, then see what happens when something breaks.</p>
+    <p>On scratch paper, draw dots for devices. Try it two ways each time:</p>
+    <ul>
+      <li><strong>Through one switch:</strong> draw a switch in the middle and connect every device to it.</li>
+      <li><strong>Directly to each other:</strong> connect every device straight to every other device.</li>
+    </ul>
+    <p>Count the cables (lines) each way and fill in the table.</p>
+    <div class="scroll"><table>
+      <thead><tr><th>Number of devices</th><th>Cables: all through one switch</th><th>Cables: every device to every other</th></tr></thead>
+      <tbody>
+        <tr><td>4</td><td><input type="text" aria-label="Star cables 4" style="width:90px"></td><td><input type="text" aria-label="Mesh cables 4" style="width:90px"></td></tr>
+        <tr><td>6</td><td><input type="text" aria-label="Star cables 6" style="width:90px"></td><td><input type="text" aria-label="Mesh cables 6" style="width:90px"></td></tr>
+        <tr><td>8</td><td><input type="text" aria-label="Star cables 8" style="width:90px"></td><td><input type="text" aria-label="Mesh cables 8" style="width:90px"></td></tr>
+        <tr><td>12 (predict, don't draw)</td><td><input type="text" aria-label="Star cables 12 prediction" style="width:90px"></td><td><input type="text" aria-label="Mesh cables 12 prediction" style="width:90px"></td></tr>
+      </tbody>
+    </table></div>
+    <p><strong>Pull the plug.</strong> Use your 6-device drawings.</p>
+    <ol class="steps">
+      <li>In the switch drawing, cross out the switch. How many devices can still talk to each other? <input type="text" aria-label="Devices still talking after switch removed" style="width:90px"></li>
+      <li>In the switch drawing, cross out just one device's cable. What happens? <input type="text" aria-label="Result of one cable removed in switch drawing" style="width:55%"></li>
+      <li>In the direct drawing, cross out any one cable. Can every device still reach every other device? How? <input type="text" aria-label="Result of one cable removed in direct drawing" style="width:55%"></li>
+    </ol>
+    <div class="check"><input type="checkbox" id="c1"><label for="c1">Checkpoint: my table is filled in and I tested all three "pull the plug" cases.</label></div>
+    <details><summary>Stuck on the 12-device prediction?</summary>Look at how each column grew from 4 to 6 to 8. One column grows by the same amount each time. The other grows faster and faster.</details>
+  </section>
+
+  <h2>Concept: Choosing a Topology</h2>
+  <div class="callout">
+    <p>A <strong>topology</strong> is the way a network's devices are connected. Networks pick one based on <strong>reliability</strong>, <strong>cost</strong>, and <strong>ease of setup and maintenance</strong>.</p>
+    <ul>
+      <li><strong>Star:</strong> every device connects to a central switch. Cheap, easy to set up and troubleshoot, and a good fit when there are limited resources. The weakness: the switch is a <strong>single point of failure</strong>.</li>
+      <li><strong>Mesh:</strong> every device connects directly to every other device. There are many paths, so it has high <strong>fault tolerance</strong>, but it needs far more cabling, devices, and management. It suits networks with dedicated support.</li>
+      <li><strong>Hybrid:</strong> larger networks often mix star and mesh to balance performance, reliability, and cost.</li>
+      <li>Bus and ring topologies are generally avoided today because they handle failures and growth poorly.</li>
+    </ul>
+  </div>
+
+  <section class="mission" aria-labelledby="p2">
+    <h3 id="p2"><span class="badge">2</span> Critique the AI's Design <span class="time">about 20 min</span></h3>
+    <p class="goal">Goal: decide what the AI got right, what it got wrong, and what it left out.</p>
+    <div class="ai">
+      <p class="label">What the committee typed</p>
+      <div class="prompt">Design a network for the Bulldog Esports Invitational.</div>
+    </div>
+    <div class="ai">
+      <p class="label">What the AI answered (written for this class)</p>
+      <p><strong>Bulldog Esports Invitational: Network Design</strong></p>
+      <ol>
+        <li><strong>Topology:</strong> Full mesh. Every device connects directly to every other device, so the network keeps working no matter what fails.</li>
+        <li><strong>Segments:</strong> One network, <code>192.168.1.0/24</code>, shared by everyone: players, casters, admins, coaches, referees, staff, and spectators.</li>
+        <li><strong>Devices:</strong> One 24-port switch and one wireless access point.</li>
+        <li><strong>Security:</strong> Protect the Wi-Fi with a strong password.</li>
+        <li><strong>Players:</strong> Players connect by cable for low lag.</li>
+      </ol>
+    </div>
+    <div class="callout note">
+      <p><strong>What the committee actually needs (from U3L01):</strong></p>
+      <ul>
+        <li>10 players, 3 casters, and 2 admins wired. Players can't drop out mid-match.</li>
+        <li>A local tournament server.</li>
+        <li>4 coaches, 3 referees, and 10 staff on laptops and tablets.</li>
+        <li>120 spectators on their phones.</li>
+        <li>Spectators must <strong>not</strong> be able to reach tournament systems.</li>
+        <li>Volunteers set it up, with limited tech support and a tight budget.</li>
+      </ul>
+    </div>
+    <p>Check each part of the AI's answer against the committee's needs and what you did in Mission 1.</p>
+    <div class="scroll"><table>
+      <thead><tr><th>Part of the design</th><th>Verdict (OK / flawed / missing)</th><th>Your evidence</th><th>Your fix</th></tr></thead>
+      <tbody>
+        <tr><td>1. Topology</td><td><input type="text" aria-label="Topology verdict"></td><td><input type="text" aria-label="Topology evidence"></td><td><input type="text" aria-label="Topology fix"></td></tr>
+        <tr><td>2. Segments</td><td><input type="text" aria-label="Segments verdict"></td><td><input type="text" aria-label="Segments evidence"></td><td><input type="text" aria-label="Segments fix"></td></tr>
+        <tr><td>3. Devices</td><td><input type="text" aria-label="Devices verdict"></td><td><input type="text" aria-label="Devices evidence"></td><td><input type="text" aria-label="Devices fix"></td></tr>
+        <tr><td>4. Security</td><td><input type="text" aria-label="Security verdict"></td><td><input type="text" aria-label="Security evidence"></td><td><input type="text" aria-label="Security fix"></td></tr>
+        <tr><td>5. Players</td><td><input type="text" aria-label="Players verdict"></td><td><input type="text" aria-label="Players evidence"></td><td><input type="text" aria-label="Players fix"></td></tr>
+      </tbody>
+    </table></div>
+    <p><strong>Something important is missing from this design entirely.</strong> What is it? <input type="text" aria-label="Missing piece" style="width:55%"></p>
+    <div class="check"><input type="checkbox" id="c2"><label for="c2">Checkpoint: I checked all five parts and found at least one thing that is missing.</label></div>
+    <details><summary>Hint 1</summary>Count how many devices need a wired connection. Could a full mesh be built with one switch? What would it cost in cables?</details>
+    <details><summary>Hint 2</summary>Look at who is on the one big network. Should spectators and the tournament server share it?</details>
+    <details><summary>Hint 3</summary>How many wireless devices will there be, and what did U3L01 say one access point can handle? Also, how would any of this reach the internet?</details>
+  </section>
+
+  <section class="mission" aria-labelledby="p3">
+    <h3 id="p3"><span class="badge">3</span> Fix the Prompt <span class="time">about 5 min</span></h3>
+    <p class="goal">Goal: write a better prompt so the AI has what it needs to do well.</p>
+    <p>The committee's one-line prompt left out almost everything. A good prompt spells out the technical requirements. Fill in each one for the Invitational:</p>
+    <p><strong>Traffic flow</strong> (who talks to what?): <input type="text" aria-label="Traffic flow" style="width:55%"></p>
+    <p><strong>Security rules</strong> (who must be kept apart?): <input type="text" aria-label="Security rules" style="width:55%"></p>
+    <p><strong>Redundancy needs</strong> (what can't go down?): <input type="text" aria-label="Redundancy needs" style="width:55%"></p>
+    <p><strong>Physical layout</strong> (where is everything?): <input type="text" aria-label="Physical layout" style="width:55%"></p>
+    <div class="check"><input type="checkbox" id="c3"><label for="c3">Checkpoint: all four parts of my prompt are filled in.</label></div>
+  </section>
+
+  <h2>Debrief Questions</h2>
+  <p class="hint">Finish these in class if you have time. Otherwise they are due at the start of our next class.</p>
+  <p><strong>1.</strong> Which flaw in the AI's design was the most serious? Explain why, using the committee's needs.</p>
+  <textarea aria-label="Question 1"></textarea>
+  <p><strong>2.</strong> The AI's mesh idea is not "wrong" in the sense that mesh is a real topology. Why was it still a poor choice here?</p>
+  <textarea aria-label="Question 2"></textarea>
+  <p><strong>3.</strong> The AI got one thing right. What was it, and why does it still matter to check <em>that</em> before using it?</p>
+  <textarea aria-label="Question 3"></textarea>
+
+  <h2>Vocabulary</h2>
+  <dl class="vocab">
+    <dt>Topology</dt><dd>The way a network's devices are connected.</dd>
+    <dt>Star topology</dt><dd>Every device connects to a central switch.</dd>
+    <dt>Mesh topology</dt><dd>Every device connects directly to every other device.</dd>
+    <dt>Hybrid topology</dt><dd>A mix of star and mesh used to balance cost, performance, and reliability.</dd>
+    <dt>Single point of failure</dt><dd>One part that, if it fails, takes the whole network down.</dd>
+    <dt>Fault tolerance</dt><dd>The ability to keep working when something fails.</dd>
+  </dl>
+
+  <div class="actions noprint">
+    <button class="pdf" type="button" onclick="window.print()">📄 Download as PDF</button>
+    <span class="hint">In the print dialog, set <strong>Destination</strong> to <strong>Save as PDF</strong>, then save.</span>
+  </div>
+</main>
+</body>
+</html>
