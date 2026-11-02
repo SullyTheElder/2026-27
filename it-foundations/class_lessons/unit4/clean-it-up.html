@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Clean It Up — Unit 4, Lesson 7</title>
+<style>
+:root{--navy:#0F2238;--navy2:#1B3553;--teal:#14907F;--teal-d:#0C6B5E;--mint:#CDEFE4;--amber:#F2B134;--amber-d:#A86F08;--coral:#E8604C;--coral-l:#FCE4DF;--bg:#EEF3F7;--line:#C9D5E0;--sub:#475C72;--ok:#0C6B5E}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:Calibri,Carlito,"Segoe UI",system-ui,sans-serif;background:var(--bg);color:var(--navy);font-size:17px;line-height:1.45;-webkit-text-size-adjust:100%}
+h1,h2,h3{font-family:Cambria,Caladea,Georgia,serif;margin:0;line-height:1.15}
+button,select,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* both languages always visible; toggle swaps which is primary */
+.bi{display:flex;flex-direction:column}
+.bi.inline{display:inline-flex;vertical-align:top}
+body[data-lang="en"] .bi .en{order:1;font-weight:700}
+body[data-lang="en"] .bi .es{order:2;font-style:italic;font-weight:400;font-size:.86em;color:var(--sub)}
+body[data-lang="es"] .bi .es{order:1;font-weight:700}
+body[data-lang="es"] .bi .en{order:2;font-style:italic;font-weight:400;font-size:.86em;color:var(--sub)}
+.on-dark .bi .en,.on-dark .bi .es{color:#fff}
+body[data-lang="en"] .on-dark .bi .es,body[data-lang="es"] .on-dark .bi .en{color:#BCD0E2}
+.btn .bi{align-items:center;text-align:center}
+.btn .bi .en,.btn .bi .es{color:inherit !important}
+
+header{background:var(--navy);color:#fff;padding:12px 18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+header .back{color:#BCD0E2;text-decoration:none;font-size:15px;border:1px solid #3B5675;padding:6px 10px;border-radius:6px}
+header .ttl{flex:1;min-width:180px}
+header h1{font-size:26px}
+header .sub{font-size:14px;color:#BCD0E2}
+.langtog{display:flex;border:1px solid #3B5675;border-radius:8px;overflow:hidden}
+.langtog button{background:transparent;color:#BCD0E2;border:0;padding:7px 14px;font-weight:700}
+.langtog button[aria-pressed="true"]{background:var(--teal);color:#fff}
+main{max-width:1000px;margin:0 auto;padding:16px 16px 60px}
+.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:18px;margin-top:16px}
+.card h2{font-size:23px;margin-bottom:8px}
+.lead{font-size:18px;margin:0}
+.muted{color:var(--sub)}
+.stepper{display:flex;gap:6px;flex-wrap:wrap;list-style:none;padding:0;margin:14px 0 0}
+.stepper li{flex:1 1 90px;min-width:84px;border-top:5px solid var(--line);padding-top:5px;font-size:13px;color:var(--sub)}
+.stepper li.done{border-color:var(--teal);color:var(--teal-d)}
+.stepper li.now{border-color:var(--amber);color:var(--navy)}
+.stepper .bi .en,.stepper .bi .es{font-size:13px !important}
+.btn{border:0;border-radius:10px;padding:11px 20px;background:var(--teal);color:#fff;min-height:48px}
+.btn:hover:not(:disabled){background:var(--teal-d)}
+.btn:disabled{background:#B8C6D2;color:#fff;cursor:not-allowed}
+.btn.alt{background:var(--navy)}
+.btn.alt:hover:not(:disabled){background:var(--navy2)}
+.btn.ghost{background:#fff;color:var(--navy);border:2px solid var(--navy)}
+.btn.amber{background:var(--amber);color:var(--navy)}
+.btn.amber:hover:not(:disabled){background:#E09E1C}
+.btn.amber:disabled{background:#B8C6D2;color:#fff}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.hero{background:var(--navy);color:#fff;border-radius:12px;padding:26px 22px;margin-top:16px}
+.hero h2{font-size:34px;margin-bottom:10px;color:#fff}
+.how{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;margin-top:16px}
+.how>div{background:var(--navy2);border-radius:10px;padding:12px 14px}
+.how .n{font-family:Cambria,Caladea,Georgia,serif;font-size:26px;color:var(--amber);display:block}
+label.f{display:block;margin-top:14px}
+label.f .bi{margin-bottom:4px}
+input[type=text],textarea{width:100%;border:2px solid var(--line);border-radius:8px;padding:10px 12px;background:#fff;min-height:46px}
+input[type=text]:focus,textarea:focus{border-color:var(--teal)}
+textarea{min-height:120px;resize:vertical}
+.fields{display:grid;grid-template-columns:2fr 1fr;gap:12px;max-width:520px}
+@media (max-width:620px){.fields{grid-template-columns:1fr}}
+.msg.good{color:var(--ok)}
+.msg.warn{color:#8A3A00}
+
+/* Part 1: number game */
+.guessrow{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap}
+.guessrow .gin{width:170px}
+.guessrow input{font-size:28px;text-align:center;font-weight:700}
+.fb{min-height:64px;margin:12px 0;font-size:20px}
+.fb .big{font-family:Cambria,Caladea,Georgia,serif;font-size:30px;font-weight:700}
+.fb.up .big{color:var(--teal-d)}
+.fb.down .big{color:#9A3412}
+.fb.win .big{color:var(--ok)}
+.log{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:8px}
+.log li{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:5px 10px;font-weight:700;font-size:18px;display:flex;align-items:center;gap:8px}
+.log li.dup{background:var(--coral-l);border-color:var(--coral)}
+.log .tag{font-size:12px;font-weight:700;color:#A12C1B}
+.rangebar{position:relative;height:30px;background:#fff;border:2px solid var(--navy);border-radius:8px;overflow:hidden;margin:6px 0}
+.rangebar .fill{position:absolute;top:0;bottom:0;background:var(--mint);border-left:3px solid var(--teal);border-right:3px solid var(--teal)}
+.rangelab{display:flex;justify-content:space-between;font-size:14px;color:var(--sub)}
+
+/* Part 2: card wall */
+.target{display:inline-flex;align-items:baseline;gap:10px;background:var(--navy);color:#fff;border-radius:10px;padding:8px 16px}
+.target .num{font-family:Cambria,Caladea,Georgia,serif;font-size:34px;font-weight:700;color:var(--amber)}
+.wall{display:grid;grid-template-columns:repeat(8,1fr);gap:8px;margin-top:12px}
+@media (max-width:620px){.wall{grid-template-columns:repeat(4,1fr)}}
+.tile{aspect-ratio:1/1.1;min-height:56px;border-radius:10px;border:3px solid var(--navy);font-family:Cambria,Caladea,Georgia,serif;font-weight:700;font-size:22px;display:flex;align-items:center;justify-content:center;padding:0}
+.tile.down{background:var(--amber);box-shadow:0 3px 0 var(--amber-d);color:var(--navy)}
+.tile.down:hover:not(:disabled){transform:translateY(-2px)}
+.tile.down .pos{font-size:16px;background:#fff;border:2px solid var(--navy);border-radius:6px;min-width:30px;padding:0 4px}
+.tile.up{background:#fff;color:var(--navy)}
+.tile.up.found{background:var(--mint);border-color:var(--teal);outline:4px solid var(--teal)}
+.tile.up.bad{border-color:var(--coral)}
+.tile.rev{background:#F6F9FB;color:var(--sub);border-style:dashed;border-color:var(--line)}
+.tile:disabled{cursor:default}
+.tilepos{display:block;font-size:11px;font-weight:400;color:var(--sub);font-family:Calibri,Carlito,sans-serif}
+
+/* results */
+.result{border:3px solid var(--teal)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin:10px 0}
+.stat{background:var(--bg);border-radius:10px;padding:10px 14px}
+.stat .big{font-family:Cambria,Caladea,Georgia,serif;font-size:34px;font-weight:700;display:block;line-height:1.1}
+.bars{margin-top:8px}
+.bar{display:grid;grid-template-columns:minmax(150px,240px) 1fr 40px;gap:10px;align-items:center;margin:6px 0}
+.bar .track{background:var(--bg);border-radius:6px;height:20px;overflow:hidden}
+.bar .fill{height:100%;border-radius:6px}
+.bar .num{font-weight:700;text-align:right}
+@media (max-width:560px){.bar{grid-template-columns:1fr 1fr 34px}}
+.strats{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-top:10px}
+.strat{text-align:left;background:#fff;border:3px solid var(--line);border-radius:12px;padding:12px 14px}
+.strat:hover{border-color:var(--teal)}
+.strat[aria-pressed="true"]{border-color:var(--teal);background:var(--mint)}
+.strat .h{font-family:Cambria,Caladea,Georgia,serif;font-size:19px;margin-bottom:4px}
+.strat .bi .en,.strat .bi .es{font-weight:400}
+body[data-lang="en"] .strat .bi .en{font-weight:600}
+body[data-lang="es"] .strat .bi .es{font-weight:600}
+body[data-lang="en"] .strat .h .bi .en,body[data-lang="es"] .strat .h .bi .es{font-weight:700}
+.sumbox{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:14px;min-height:240px;background:#F6F9FB}
+.copied{color:var(--ok);font-weight:700}
+.challenge{border:3px dashed var(--amber)}
+.reset{background:none;border:0;color:var(--sub);text-decoration:underline;font-size:14px;margin-top:22px}
+
+/* ---- Build a Feed ---- */
+.persona{background:var(--mint);border-radius:12px;padding:14px 16px;margin-top:12px}
+.sliders{display:flex;flex-direction:column;gap:14px}
+.sl{border-bottom:1px solid var(--line);padding-bottom:12px}
+.sl:last-child{border-bottom:0}
+.sl .top{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.sl output{font-family:Cambria,Caladea,Georgia,serif;font-size:26px;font-weight:700;color:var(--teal-d);min-width:28px;text-align:right}
+.sl input[type=range]{width:100%;accent-color:#14907F;height:34px}
+.sl .hint{font-size:14px;color:var(--sub)}
+.scale{display:flex;justify-content:space-between;font-size:12px;color:var(--sub)}
+.layout{display:grid;grid-template-columns:minmax(300px,380px) 1fr;gap:16px;align-items:start}
+@media (max-width:860px){.layout{grid-template-columns:1fr}}
+.meter{background:var(--navy);color:#fff;border-radius:12px;padding:12px 16px;margin-bottom:12px}
+.meter .big{font-family:Cambria,Caladea,Georgia,serif;font-size:38px;font-weight:700;color:var(--amber);line-height:1}
+.meter .goal{height:14px;background:#2B476A;border-radius:7px;position:relative;margin-top:8px;overflow:hidden}
+.meter .goal .bar{position:absolute;left:0;top:0;bottom:0;background:var(--amber);border-radius:7px}
+.meter .goal .line{position:absolute;top:-2px;bottom:-2px;width:3px;background:#fff}
+.meter.win .big{color:#7CE8C9}
+.meter.win .goal .bar{background:#7CE8C9}
+.feed{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.post{display:grid;grid-template-columns:38px 1fr 54px;gap:10px;align-items:start;background:#fff;border:2px solid var(--line);border-radius:12px;padding:10px 12px}
+.post.in{border-color:var(--teal);background:#F7FCFA}
+.post.out{opacity:.62}
+.post.wanted{box-shadow:inset 6px 0 0 var(--teal)}
+.post .rank{font-family:Cambria,Caladea,Georgia,serif;font-size:24px;font-weight:700;color:var(--navy2)}
+.post .who{font-size:14px;color:var(--sub);margin-bottom:2px}
+.post .txt{font-size:16px}
+.post .txt .bi .en,.post .txt .bi .es{font-weight:400}
+body[data-lang="en"] .post .txt .bi .en{font-weight:600}
+body[data-lang="es"] .post .txt .bi .es{font-weight:600}
+.badges{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.bdg{font-size:12px;border:1px solid var(--line);border-radius:6px;padding:1px 7px;background:var(--bg);color:var(--navy2);font-weight:600}
+.bdg.hot{background:var(--coral-l);border-color:var(--coral);color:#8A2A1A}
+.bdg.ad{background:#FFF3D6;border-color:var(--amber);color:#7A5200}
+.delta{font-weight:700;font-size:15px;text-align:right}
+.delta.up{color:var(--teal-d)} .delta.down{color:#9A3412}
+.cut{display:flex;align-items:center;gap:10px;color:var(--sub);font-size:14px;margin:4px 0}
+.cut:before,.cut:after{content:"";flex:1;border-top:3px dashed var(--coral)}
+.cols2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:860px){.cols2{grid-template-columns:1fr}}
+.wlist{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 10px}
+.wlist>span{display:inline-flex;gap:6px;align-items:baseline;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:2px 8px;font-size:14px;font-weight:700}
+.poll{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin-top:10px}
+.poll button{text-align:left;background:#fff;border:3px solid var(--line);border-radius:12px;padding:10px 14px}
+.poll button:hover{border-color:var(--teal)}
+.poll button[aria-pressed="true"]{border-color:var(--teal);background:var(--mint)}
+
+
+/* ---- Who Gets Flagged ---- */
+.grp{margin-top:10px}
+.grp h4{margin:0 0 6px;font-family:Cambria,Caladea,Georgia,serif;font-size:17px;color:var(--navy2)}
+.tiles{display:grid;grid-template-columns:repeat(10,1fr);gap:6px}
+@media (max-width:620px){.tiles{grid-template-columns:repeat(5,1fr)}}
+.tile2{position:relative;border:2px solid var(--line);background:#fff;border-radius:8px;padding:6px 0;font-size:13px;font-weight:700;color:var(--sub);min-height:44px}
+.tile2.flag{background:var(--amber);border-color:var(--navy);color:var(--navy);box-shadow:0 2px 0 var(--amber-d)}
+.tile2.sel{outline:4px solid var(--teal);outline-offset:1px}
+.tile2.need:after{content:"●";position:absolute;right:4px;top:0;color:#0C6B5E;font-size:14px}
+.tile2.fa{border-color:var(--coral);background:var(--coral-l);color:#8A2A1A}
+.tile2.miss{border-style:dashed;border-color:var(--teal)}
+.legend2{display:flex;flex-wrap:wrap;gap:10px 18px;font-size:14px;margin-top:10px;color:var(--sub)}
+.legend2 i{display:inline-block;width:14px;height:14px;border-radius:4px;border:2px solid var(--navy);vertical-align:-2px;margin-right:5px}
+.inspect{background:var(--bg);border:2px solid var(--line);border-radius:10px;padding:10px 14px;margin-top:10px;min-height:64px}
+.m3{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin-top:8px}
+.m3>div{background:#1B3553;border-radius:8px;padding:6px 10px}
+.m3 .v{font-family:Cambria,Caladea,Georgia,serif;font-size:26px;font-weight:700;color:var(--amber);line-height:1.1}
+.m3 .l{font-size:12px;color:#BCD0E2}
+.m3 .ok .v{color:#7CE8C9}
+.chk{font-size:15px;margin-top:8px}
+
+
+/* ---- Clean It Up ---- */
+.dtab{display:flex;flex-direction:column;gap:6px;margin-top:10px}
+.drow{display:grid;grid-template-columns:76px minmax(90px,1fr) 205px 84px 235px;gap:8px;align-items:center;background:#fff;border:2px solid var(--line);border-radius:10px;padding:6px 10px}
+.drow.head{background:transparent;border:0;font-weight:700;color:var(--sub);padding-top:0;padding-bottom:0;font-size:14px}
+.drow .id{font-weight:700;font-size:14px;color:var(--navy2)}
+.drow .id small{display:block;font-weight:400;color:var(--sub)}
+.drow .raw{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:16px;font-weight:700;background:var(--bg);border-radius:6px;padding:4px 8px;overflow-wrap:anywhere}
+.drow .raw.blank{color:var(--sub);font-style:italic;font-weight:400}
+.drow select,.drow input[type=text]{min-height:40px;padding:6px 8px;font-size:15px}
+.drow.right{border-color:var(--teal);background:#F7FCFA}
+.drow.wrong{border-color:var(--coral);background:var(--coral-l)}
+.drow:has(select[data-f="act"] option[value="keep"]:checked){border-color:#9DB4C8}
+@media (max-width:760px){.drow{grid-template-columns:1fr 1fr}.drow.head{display:none}.drow .raw,.drow .id{grid-column:1/-1}}
+.m2{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-top:8px}
+.m2>div{background:#1B3553;border-radius:8px;padding:8px 12px}
+.m2 .v{font-family:Cambria,Caladea,Georgia,serif;font-size:30px;font-weight:700;color:var(--amber);line-height:1.1}
+.m2 .l{font-size:13px;color:#BCD0E2}
+.m2 .good .v{color:#7CE8C9}
+.chartbox{background:#fff;border:2px solid var(--line);border-radius:12px;padding:10px;overflow-x:auto}
+.chartbox svg{width:100%;height:auto;min-width:420px}
+.opts{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end}
+.opts label{display:block}
+select.s1{width:auto;min-width:170px}
+
+@media (prefers-reduced-motion:reduce){*{transition:none !important;animation:none !important}}
+</style>
+</head>
+<body data-lang="en">
+<header class="on-dark">
+  <a class="back" href="../index.html"><span class="bi inline"><span class="en">← Lessons</span><span class="es">← Lecciones</span></span></a>
+  <div class="ttl"><h1>Clean It Up</h1>
+    <div class="sub"><span class="bi inline"><span class="en">Unit 4 · Lesson 7</span><span class="es">Unidad 4 · Lección 7</span></span></div></div>
+  <div class="langtog" role="group" aria-label="Main language / Idioma principal">
+    <button type="button" data-act="lang" data-l="en" aria-pressed="true">EN</button>
+    <button type="button" data-act="lang" data-l="es" aria-pressed="false">ES</button>
+  </div>
+</header>
+<main id="app"></main>
+<div id="live" class="sr" aria-live="polite"></div>
+<script>
+(function(){
+'use strict';
+/* ===== tiny dependency-free PDF writer (Helvetica, WinAnsi, vector shapes) ===== */
+const PDFLIB=(function(){
+  const R=[278,278,355,556,556,889,667,191,333,333,389,584,278,333,278,278,556,556,556,556,556,556,556,556,556,556,278,278,584,584,584,556,1015,
+    667,667,722,722,667,611,778,722,278,500,667,556,833,722,778,667,778,722,667,611,722,667,944,667,667,611,278,278,278,469,556,333,
+    556,556,500,556,556,278,556,556,222,222,500,222,833,556,556,556,556,333,500,278,556,500,722,500,500,500,334,260,334,584];
+  const BD=[278,333,474,556,556,889,722,238,333,333,389,584,278,333,278,278,556,556,556,556,556,556,556,556,556,556,333,333,584,584,584,611,975,
+    722,722,722,722,667,611,778,722,278,556,722,611,833,722,778,667,778,722,667,611,722,667,944,667,667,611,333,278,333,584,556,333,
+    556,611,556,611,556,333,611,611,278,278,556,278,889,611,611,611,611,389,556,333,611,556,778,556,556,500,389,280,389,584];
+  const MAP={'\u2018':0x91,'\u2019':0x92,'\u201C':0x93,'\u201D':0x94,'\u2013':0x96,'\u2014':0x97,'\u2026':0x85,'\u2022':0x95};
+  function cw(ch,font){
+    let c=ch.codePointAt(0);
+    if(c<32||c>126){ if(ch==='\u00BF') c=63; else if(ch==='\u00A1') c=33; else { const b=ch.normalize('NFD')[0].codePointAt(0); c=(b>=32&&b<=126)?b:110; } }
+    const tab=font==='F2'?BD:R; return (tab[c-32]||556)/1000;
+  }
+  function sw(s,font,size){let w=0; for(const ch of s) w+=cw(ch,font); return w*size;}
+  function enc(s){
+    let o=''; s=String(s).normalize('NFC');
+    for(const ch of s){
+      let c=ch.codePointAt(0);
+      if(MAP[ch]) c=MAP[ch]; else if(c>255) c=63;
+      if(c===40||c===41||c===92) o+='\\'+String.fromCharCode(c);
+      else if(c<32) o+=' ';
+      else if(c>126) o+='\\'+c.toString(8).padStart(3,'0');
+      else o+=String.fromCharCode(c);
+    } return o;
+  }
+  function wrap(s,font,size,maxW){
+    const out=[];
+    String(s).split(/\r?\n/).forEach(par=>{
+      let line='';
+      par.split(/\s+/).filter(Boolean).forEach(w0=>{
+        let w=w0;
+        while(sw(w,font,size)>maxW){            // break very long words
+          let k=1; while(k<w.length&&sw(w.slice(0,k+1),font,size)<=maxW) k++;
+          if(line){out.push(line); line='';}
+          out.push(w.slice(0,k)); w=w.slice(k);
+        }
+        const t=line?line+' '+w:w;
+        if(sw(t,font,size)<=maxW) line=t; else {out.push(line); line=w;}
+      });
+      out.push(line);
+    });
+    return out;
+  }
+  const NAVY=[0.059,0.133,0.22], TEAL=[0.047,0.42,0.369], GRAY=[0.28,0.36,0.45], MINT=[0.804,0.937,0.894], AMBER=[0.992,0.941,0.816], WHITE=[1,1,1];
+  function doc(){
+    const W=612,H=792,M=54; const pages=[]; let cur=null; let y=M;
+    const f=n=>(Math.round(n*100)/100).toString();
+    const col=(c,s)=>`${f(c[0])} ${f(c[1])} ${f(c[2])} ${s?'RG':'rg'}\n`;
+    const d={W,H,M};
+    d.newPage=()=>{ if(cur!==null) pages.push(cur); cur=''; y=M; };
+    d.y=()=>y; d.setY=v=>{y=v;};
+    d.ensure=h=>{ if(cur===null||y+h>H-M) d.newPage(); };
+    d.text=(s,x,base,font,size,c)=>{ cur+=col(c||NAVY,false)+`BT /${font} ${size} Tf ${f(x)} ${f(H-base)} Td (${enc(s)}) Tj ET\n`; };
+    d.textC=(s,cx,base,font,size,c)=>{ d.text(s,cx-sw(s,font,size)/2,base,font,size,c); };
+    d.title=(en,sub)=>{ d.ensure(60); d.text(en,M,y+20,'F2',22,NAVY); d.text(sub,M,y+38,'F3',11,GRAY); y+=54; };
+    d.kv=(k,v)=>{ d.ensure(18); d.text(k+':',M,y+11,'F2',11,NAVY); const lines=wrap(v,'F1',11,W-2*M-150);
+      lines.forEach((l,i)=>{ if(i>0) d.ensure(15); d.text(l,M+150,y+11,'F1',11,NAVY); y+=15; }); if(!lines.length) y+=15; };
+    d.gap=n=>{y+=n;};
+    d.heading=(en,es)=>{ d.ensure(52); y+=10; d.text(en,M,y+12,'F2',13,TEAL); d.text(es,M,y+26,'F3',10.5,GRAY);
+      cur+=col(TEAL,true)+`0.8 w ${M} ${f(H-(y+31))} m ${W-M} ${f(H-(y+31))} l S\n`; y+=40; };
+    d.para=(s,o)=>{ o=o||{}; const size=o.size||11, font=o.font||'F1', lead=size*1.35, w=W-2*M-(o.indent||0);
+      wrap(s,font,size,w).forEach(l=>{ d.ensure(lead+2); d.text(l,M+(o.indent||0),y+size,font,size,o.color||NAVY); y+=lead; }); y+=4; };
+    d.line=(s,o)=>d.para(s,o);
+    /* ---- shapes (top-left coordinates) ---- */
+    function rr(x,top,w,h,r){const k=0.5523*r,X=x,Y=H-top;
+      return `${f(X+r)} ${f(Y)} m ${f(X+w-r)} ${f(Y)} l ${f(X+w-r+k)} ${f(Y)} ${f(X+w)} ${f(Y-r+k)} ${f(X+w)} ${f(Y-r)} c ${f(X+w)} ${f(Y-h+r)} l `+
+        `${f(X+w)} ${f(Y-h+r-k)} ${f(X+w-r+k)} ${f(Y-h)} ${f(X+w-r)} ${f(Y-h)} c ${f(X+r)} ${f(Y-h)} l ${f(X+r-k)} ${f(Y-h)} ${f(X)} ${f(Y-h+r-k)} ${f(X)} ${f(Y-h+r)} c `+
+        `${f(X)} ${f(Y-r)} l ${f(X)} ${f(Y-r+k)} ${f(X+r-k)} ${f(Y)} ${f(X+r)} ${f(Y)} c h\n`;}
+    d.box=(x,top,w,h,r,fill)=>{ cur+='q\n'+col(fill,false)+col(NAVY,true)+'1.2 w\n'+rr(x,top,w,h,Math.min(r,h/2,w/2))+'B\nQ\n'; };
+    d.diamond=(cx,top,w,h,fill)=>{ const Y=H-top; cur+='q\n'+col(fill,false)+col(NAVY,true)+`1.2 w\n${f(cx)} ${f(Y)} m ${f(cx+w/2)} ${f(Y-h/2)} l ${f(cx)} ${f(Y-h)} l ${f(cx-w/2)} ${f(Y-h/2)} l h B\nQ\n`; };
+    d.seg=(x1,y1,x2,y2)=>{ cur+='q\n'+col(NAVY,true)+`1.2 w ${f(x1)} ${f(H-y1)} m ${f(x2)} ${f(H-y2)} l S\nQ\n`; };
+    d.arrow=(x,y1,y2)=>{ d.seg(x,y1,x,y2-4); cur+='q\n'+col(NAVY,false)+`${f(x-4)} ${f(H-(y2-6))} m ${f(x+4)} ${f(H-(y2-6))} l ${f(x)} ${f(H-y2)} l f\nQ\n`; };
+    d.centerLines=(lines,cx,top,h,size,font,c)=>{ const lead=size*1.2, tot=lines.length*lead; let b=top+(h-tot)/2+lead*0.78;
+      lines.forEach(l=>{ d.textC(l,cx,b,font||'F1',size,c); b+=lead; }); };
+    d.wrap=(s,font,size,w)=>wrap(s,font,size,w);
+    d.build=title=>{
+      if(cur!==null) pages.push(cur); if(!pages.length) pages.push('');
+      const n=pages.length, objs=[]; const kids=[];
+      objs[1]='<< /Type /Catalog /Pages 2 0 R >>';
+      for(let i=0;i<n;i++) kids.push((6+2*i)+' 0 R');
+      objs[2]=`<< /Type /Pages /Kids [${kids.join(' ')}] /Count ${n} >>`;
+      objs[3]='<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>';
+      objs[4]='<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>';
+      objs[5]='<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Oblique /Encoding /WinAnsiEncoding >>';
+      pages.forEach((p,i)=>{
+        objs[6+2*i]=`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${W} ${H}] /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R >> >> /Contents ${7+2*i} 0 R >>`;
+        objs[7+2*i]=`<< /Length ${p.length} >>\nstream\n${p}endstream`;
+      });
+      const info=6+2*n; objs[info]=`<< /Title (${enc(title||'')}) /Producer (Class Resources Site) >>`;
+      let out='%PDF-1.4\n%\u00E2\u00E3\u00CF\u00D3\n'; const off=[];
+      for(let i=1;i<=info;i++){ off[i]=out.length; out+=`${i} 0 obj\n${objs[i]}\nendobj\n`; }
+      const xr=out.length; out+=`xref\n0 ${info+1}\n0000000000 65535 f \n`;
+      for(let i=1;i<=info;i++) out+=String(off[i]).padStart(10,'0')+' 00000 n \n';
+      out+=`trailer\n<< /Size ${info+1} /Root 1 0 R /Info ${info} 0 R >>\nstartxref\n${xr}\n%%EOF`;
+      const u=new Uint8Array(out.length); for(let i=0;i<out.length;i++) u[i]=out.charCodeAt(i)&255; return u;
+    };
+    d.newPage();
+    return d;
+  }
+  function fold(s){return String(s).normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^A-Za-z0-9]+/g,'_').replace(/^_+|_+$/g,'')||'student';}
+  function download(bytes,name){
+    const blob=new Blob([bytes],{type:'application/pdf'}), url=URL.createObjectURL(blob);
+    const a=document.createElement('a'); a.href=url; a.download=name; document.body.appendChild(a); a.click();
+    setTimeout(()=>{URL.revokeObjectURL(url); a.remove();},2000);
+  }
+  return {doc,fold,download,width:sw,NAVY,TEAL,GRAY,MINT,AMBER,WHITE};
+})();
+
+const KEY='u4l07-cleanitup-v1';
+const B=(en,es,c)=>`<span class="bi${c?' '+c:''}"><span class="en">${en}</span><span class="es">${es}</span></span>`;
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const $=s=>document.querySelector(s);
+function mulberry(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+
+/* ================= data: a messy survey, different for every student ================= */
+const CLEAN_POOL=[5.5,6,6,6.5,7,7,7,7.5,7.5,8,8,8,8.5,9,9,9.5,10];
+const FIXABLE=[['8 hrs',8],['seven',7],['6 hours',6],['about 7',7],['7h',7],['eight',8],['6.5 hrs',6.5],['nine',9]];
+const IMPOSSIBLE=['70','25','-5','99','48','0.1'];
+const NOTNUM=['idk','lol','???','asleep','none of your business','a lot'];
+const NUMRE=/^-?\d+(\.\d+)?$/;
+function shuffle(r,a){a=a.slice(); for(let i=a.length-1;i>0;i--){const j=Math.floor(r()*(i+1)); const t=a[i]; a[i]=a[j]; a[j]=t;} return a;}
+function makeRows(seed){
+  const r=mulberry(seed);
+  const letters='ABCDEFGHJKLMNPRSTVW'.split(''); const used=new Set(); const ini=()=>{let x; do{x=letters[Math.floor(r()*letters.length)]+letters[Math.floor(r()*letters.length)];}while(used.has(x)); used.add(x); return x;};
+  const people=[];
+  shuffle(r,CLEAN_POOL).slice(0,17).forEach(v=>people.push({ini:ini(),raw:String(v),exp:{act:'keep',val:v}}));
+  shuffle(r,FIXABLE).slice(0,4).forEach(f=>people.push({ini:ini(),raw:f[0],exp:{act:'fix',val:f[1],why:'format'}}));
+  (function(){ const big=shuffle(r,['70','25','99','48']), rest=shuffle(r,['-5','0.1','70','25','99','48'].filter(x=>x!==big[0]&&x!==big[1]));
+    [big[0],big[1],rest[0]].forEach(f=>people.push({ini:ini(),raw:f,exp:{act:'remove',why:'impossible'}})); })();
+  shuffle(r,NOTNUM).slice(0,2).forEach(f=>people.push({ini:ini(),raw:f,exp:{act:'remove',why:'notnum'}}));
+  for(let i=0;i<2;i++) people.push({ini:ini(),raw:'',exp:{act:'remove',why:'missing'}});
+  const order=shuffle(r,people);
+  // two duplicates: a second submission from someone who already answered with a clean number
+  const cleanIdx=order.map((p,i)=>p.exp.act==='keep'?i:-1).filter(i=>i>=0); const picks=shuffle(r,cleanIdx).slice(0,2);
+  const rows=order.slice();
+  picks.forEach(pi=>{ const src=order[pi]; const dup={ini:src.ini,raw:src.raw,exp:{act:'remove',why:'dup'}};
+    const at=rows.indexOf(src)+1+Math.floor(r()*(rows.length-rows.indexOf(src))); rows.splice(Math.min(at,rows.length),0,dup); });
+  return rows.map((p,i)=>({id:'R'+String(i+1).padStart(2,'0'),ini:p.ini,raw:p.raw,exp:p.exp}));
+}
+const isNum=raw=>NUMRE.test(String(raw).trim());
+const mean=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:0;
+const r1=x=>Math.round(x*10)/10;
+function rawAvg(rows){return mean(rows.filter(x=>isNum(x.raw)).map(x=>parseFloat(x.raw)));}
+function expClean(rows){return rows.filter(x=>x.exp.act==='keep'||x.exp.act==='fix').map(x=>x.exp.val);}
+function myKept(rows,dec){const v=[]; rows.forEach(x=>{const d=dec[x.id]||{}; if(d.act==='keep'&&isNum(x.raw)) v.push(parseFloat(x.raw)); else if(d.act==='fix'&&NUMRE.test(String(d.val||'').trim())) v.push(parseFloat(d.val));}); return v;}
+
+/* ================= content ================= */
+const WHY=[['format','Wrong format','Formato incorrecto'],['impossible','Impossible number','Número imposible'],['notnum','Not a number','No es un número'],['missing','Missing answer','Sin respuesta'],['dup','Duplicate','Duplicado']];
+const WHYN={}; WHY.forEach(w=>WHYN[w[0]]=w);
+const ACTS=[['keep','Keep as is','Dejar igual'],['fix','Fix it','Corregir'],['remove','Remove it','Quitar']];
+const ACTN={}; ACTS.forEach(a=>ACTN[a[0]]=a);
+
+/* ================= state ================= */
+function fresh(){return {v:1,name:'',period:'',lang:'en',stage:'welcome',seed:Math.floor(Math.random()*1e9)+1,dec:{},checks:0,status:'open',c1:null,c2:null,item:{},msg:null,bin:1,showAvg:true,headline:'',limits:'',refl:''};}
+let S, ROWS;
+function load(){try{const o=JSON.parse(localStorage.getItem(KEY)); if(o&&o.v===1&&o.dec) return o;}catch(e){} return fresh();}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+
+/* ================= checker (2 checks, then reveal) ================= */
+function rowOK(x){
+  const d=S.dec[x.id]||{}, e=x.exp;
+  if(e.act==='keep') return d.act==='keep';
+  if(e.act==='fix') return d.act==='fix'&&NUMRE.test(String(d.val||'').trim())&&Math.abs(parseFloat(d.val)-e.val)<0.01&&d.why==='format';
+  return d.act==='remove'&&d.why===e.why;
+}
+function incomplete(){
+  return ROWS.filter(x=>{const d=S.dec[x.id]||{}; if(!d.act) return true; if(d.act==='keep') return false; if(d.act==='fix'&&!NUMRE.test(String(d.val||'').trim())) return true; return !d.why;});
+}
+function runCheck(){
+  if(S.status==='done'||incomplete().length) return;
+  S.checks++; const res={}; let k=0; ROWS.forEach(x=>{res[x.id]=rowOK(x); if(res[x.id]) k++;});
+  S['c'+S.checks]=res;
+  if(k===ROWS.length||S.checks>=2){
+    ROWS.forEach(x=>{const c1=S.c1[x.id],c2=S.c2?S.c2[x.id]:null; S.item[x.id]=S.checks===1?'first':((c1&&c2)?'first':(!c1&&c2)?'second':'revealed');});
+    const all=k===ROWS.length;
+    ROWS.forEach(x=>{const e=x.exp; S.dec[x.id]=e.act==='keep'?{act:'keep',val:'',why:''}:e.act==='fix'?{act:'fix',val:String(e.val),why:'format'}:{act:'remove',val:'',why:e.why};});
+    S.status='done'; S.msg={t:all?(S.checks===1?'first':'second'):'revealed'};
+  } else {
+    const miss={}; ROWS.forEach(x=>{if(!res[x.id]){const key=x.exp.act==='keep'?'keep':(x.exp.act==='fix'?'format':x.exp.why); miss[key]=(miss[key]||0)+1;}});
+    S.msg={t:'wrong',k:k,n:ROWS.length,miss:miss};
+  }
+}
+const outcome=()=>{const v=Object.values(S.item); return {first:v.filter(x=>x==='first').length,second:v.filter(x=>x==='second').length,revealed:v.filter(x=>x==='revealed').length};};
+
+/* ================= views ================= */
+const STEPS=[['clean',B('Clean','Limpiar')],['chart',B('Chart','Gráfica')],['refl',B('Reflect','Reflexión')],['turnin',B('Turn in','Entregar')]];
+function stepper(stage){const idx=STEPS.findIndex(s=>s[0]===stage);
+  return `<ol class="stepper">${STEPS.map((s,i)=>`<li class="${i<idx?'done':i===idx?'now':''}" ${i===idx?'aria-current="step"':''}>${s[1]}</li>`).join('')}</ol>`;}
+const needLetters=(len,min)=>len>=min?'':B(`Keep writing: ${min-len} more letters.`,`Sigue escribiendo: faltan ${min-len} letras.`);
+
+function viewWelcome(){return `
+  <section class="hero on-dark">
+    <h2>${B('Clean It Up','Límpialo')}</h2>
+    <p class="lead">${B('A survey asked 30 freshmen, "How many hours did you sleep last night?" The answers are in. Before anyone can use them, someone has to clean them. Today that someone is you.','Una encuesta les preguntó a 30 estudiantes de primer año: "¿Cuántas horas dormiste anoche?" Ya están las respuestas. Antes de usarlas, alguien tiene que limpiarlas. Hoy ese alguien eres tú.')}</p>
+    <div class="how">
+      <div><span class="n">1</span>${B('Look at every answer. Keep it, fix it, or remove it, and say why.','Mira cada respuesta. Déjala, corrígela o quítala, y di por qué.')}</div>
+      <div><span class="n">2</span>${B('Build a chart of your clean data and give it a headline.','Arma una gráfica con tus datos limpios y ponle un titular.')}</div>
+      <div><span class="n">3</span>${B('Reflect and download your PDF.','Reflexiona y descarga tu PDF.')}</div>
+    </div>
+    <p style="margin-top:14px">${B('The survey is made up. Your data is different from your classmates\'.','La encuesta es inventada. Tus datos son distintos a los de tus compañeros.')}</p>
+  </section>
+  <section class="card">
+    <h2>${B('Before you start','Antes de empezar')}</h2>
+    <div class="fields">
+      <label class="f">${B('Your name','Tu nombre')}<input type="text" id="inName" autocomplete="off" maxlength="60" value="${esc(S.name)}"></label>
+      <label class="f">${B('Period','Periodo')}<input type="text" id="inPeriod" autocomplete="off" maxlength="10" value="${esc(S.period)}"></label>
+    </div>
+    <div class="row" style="margin-top:18px"><button class="btn" id="btnStart" data-act="start" ${S.name.trim().length<2?'disabled':''}>${B('Start cleaning','Empezar a limpiar')}</button></div>
+  </section>`;}
+
+function opt(list,val,lab){return list.map(o=>`<option value="${o[0]}" ${o[0]===val?'selected':''}>${esc(o[1])} / ${esc(o[2])}</option>`).join('');}
+function rowHTML(x){
+  const d=S.dec[x.id]||{}, done=S.status==='done';
+  const cls=done?'':'';
+  let st=''; if(S.c1&&!done&&S.checks>=1) st='';
+  return `<div class="drow" data-row="${x.id}">
+    <div class="id">${x.id}<small>${esc(x.ini)}</small></div>
+    <div class="raw${x.raw===''?' blank':''}">${x.raw===''?esc('(blank)'):esc(x.raw)}</div>
+    <select data-f="act" data-i="${x.id}" aria-label="Decision for ${x.id}" ${done?'disabled':''}><option value="">${esc('Choose… / Elige…')}</option>${opt(ACTS,d.act)}</select>
+    <input type="text" data-f="val" data-i="${x.id}" inputmode="decimal" maxlength="6" placeholder="${esc('number')}" aria-label="Fixed value for ${x.id}" value="${esc(d.val||'')}" ${(done||d.act!=='fix')?'disabled':''}>
+    <select data-f="why" data-i="${x.id}" aria-label="Reason for ${x.id}" ${(done||!d.act||d.act==='keep')?'disabled':''}><option value="">${esc('Why? / ¿Por qué?')}</option>${opt(WHY,d.why)}</select>
+  </div>`;
+}
+function metersHTML(){
+  const kept=myKept(ROWS,S.dec), ra=rawAvg(ROWS), ma=kept.length?r1(mean(kept)):null, done=S.status==='done', cl=r1(mean(expClean(ROWS)));
+  return `<div class="meter on-dark" id="meter"><div style="font-size:15px">${B('Average hours of sleep','Promedio de horas de sueño','')}</div>
+    <div class="m2"><div><div class="v">${r1(ra)}</div><div class="l">${B('every number in the table (raw)','todos los números de la tabla (sin limpiar)','')}</div></div>
+      <div class="${done?'good':''}"><div class="v">${ma===null?'—':ma}</div><div class="l">${B(`the ${kept.length} answers you are keeping`,`las ${kept.length} respuestas que estás dejando`,'')}</div></div>
+      ${done?`<div class="good"><div class="v">${cl}</div><div class="l">${B('correct clean average','promedio limpio correcto','')}</div></div>`:''}</div></div>`;
+}
+function msgHTML(){
+  const m=S.msg; if(!m) return '';
+  if(m.t==='first') return `<div class="msg good">${B('Perfect! Every row is cleaned the right way.','¡Perfecto! Todas las filas están bien limpiadas.')}</div>`;
+  if(m.t==='second') return `<div class="msg good">${B('Got it on the second check. Every row is cleaned the right way.','Lo lograste en la segunda revisión. Todas las filas están bien limpiadas.')}</div>`;
+  if(m.t==='revealed') return `<div class="msg warn">${B('Out of checks. The correct decisions are now showing. Look at the ones you missed.','Ya no tienes revisiones. Se muestran las decisiones correctas. Mira las que fallaste.')} <span class="tagrev">${B('revealed','mostrado','inline')}</span></div>`;
+  const lab={keep:['rows that should be kept','filas que debían dejarse'],format:['rows with a wrong format that can be fixed','filas con formato incorrecto que se pueden corregir'],impossible:['impossible numbers','números imposibles'],notnum:['answers that are not numbers','respuestas que no son números'],missing:['missing answers','respuestas sin responder'],dup:['duplicates','duplicados']};
+  const en=Object.keys(m.miss).map(k=>`${m.miss[k]} ${lab[k][0]}`).join('; '), es=Object.keys(m.miss).map(k=>`${m.miss[k]} ${lab[k][1]}`).join('; ');
+  return `<div class="msg warn">${B(`Not yet. ${m.k} of ${m.n} rows are right. Still wrong: ${en}. You have 1 check left.`,`Todavía no. ${m.k} de ${m.n} filas están bien. Siguen mal: ${es}. Te queda 1 revisión.`)}</div>`;
+}
+function checkNeed(){
+  const n=incomplete().length;
+  return n?B(`${n} ${n===1?'row still needs':'rows still need'} a decision (and a number or a reason where one is asked for).`,`${n} ${n===1?'fila todavía necesita':'filas todavía necesitan'} una decisión (y un número o un motivo donde se pida).`):B('Every row has a decision. You can check.','Todas las filas tienen una decisión. Ya puedes revisar.');
+}
+function viewClean(){
+  const done=S.status==='done', o=outcome();
+  return `${stepper('clean')}
+  <section class="card" style="margin-top:12px"><h2>${B('Part 1: Clean the data','Parte 1: Limpia los datos')}</h2>
+    <p class="lead">${B('The table below is the raw survey, exactly as it came in. For each row choose Keep, Fix, or Remove. If you fix a row, type the number. If you fix or remove, say why. Watch the average change as you go.','La tabla de abajo es la encuesta tal como llegó. Para cada fila elige Dejar, Corregir o Quitar. Si corriges una fila, escribe el número. Si corriges o quitas, di por qué. Mira cómo cambia el promedio.')}</p>
+    <p class="muted" style="margin:8px 0 0">${B('Two rows from the same person with the same answer count once. Keep the first and remove the second.','Dos filas de la misma persona con la misma respuesta cuentan una vez. Deja la primera y quita la segunda.')}</p></section>
+  <div id="meterbox" style="margin-top:16px">${metersHTML()}</div>
+  <section class="card" style="margin-top:0">
+    <div class="dtab" id="dtab"><div class="drow head"><div>${B('Row','Fila','inline')}</div><div>${B('Answer','Respuesta','inline')}</div><div>${B('Decision','Decisión','inline')}</div><div>${B('Fixed value','Valor corregido','inline')}</div><div>${B('Why','Motivo','inline')}</div></div>${ROWS.map(rowHTML).join('')}</div>
+    <div class="msg warn" id="checkneed" style="margin-top:12px">${done?'':checkNeed()}</div>
+    <div class="checkbar"><button class="btn alt" id="btnCheck" data-act="check" ${(done||incomplete().length)?'disabled':''}>${B(`Check my cleaning (${2-S.checks} left)`,`Revisar mi limpieza (${2-S.checks} restantes)`)}</button><div style="flex:1;min-width:220px" id="msgbox">${msgHTML()}</div></div>
+  </section>
+  ${done?`<section class="card result" id="result-clean"><h2>${B('Your results','Tus resultados')}</h2>
+    <div class="stats"><div class="stat"><span class="big">${o.first}</span>${B('rows right on the 1st check','filas bien en la 1.ª revisión')}</div><div class="stat"><span class="big">${o.second}</span>${B('fixed on the 2nd check','corregidas en la 2.ª revisión')}</div><div class="stat"><span class="big">${o.revealed}</span>${B('revealed','mostradas')}</div></div>
+    <p>${B(`The raw average was ${r1(rawAvg(ROWS))} hours. The clean average is ${r1(mean(expClean(ROWS)))} hours. Bad data pulled the answer off by ${r1(Math.abs(rawAvg(ROWS)-mean(expClean(ROWS))))} hours, and nobody had to lie to make that happen.`,`El promedio sin limpiar fue ${r1(rawAvg(ROWS))} horas. El promedio limpio es ${r1(mean(expClean(ROWS)))} horas. Los datos malos movieron la respuesta ${r1(Math.abs(rawAvg(ROWS)-mean(expClean(ROWS))))} horas, y nadie tuvo que mentir para que pasara.`)}</p>
+    <div class="row"><button class="btn" data-act="next" data-to="chart">${B('Go to the chart','Ir a la gráfica')}</button></div></section>`:''}`;
+}
+
+/* ---- chart ---- */
+const LO=4,HI=12;
+function histo(vals,w){const nb=Math.round((HI-LO)/w), c=new Array(nb).fill(0); vals.forEach(v=>{let i=Math.floor((v-LO)/w); if(i<0)i=0; if(i>=nb)i=nb-1; c[i]++;}); return c;}
+function chartSVG(){
+  const vals=expClean(ROWS), w=+S.bin, c=histo(vals,w), mx=Math.max(...c), yTop=Math.max(4,Math.ceil(mx/2)*2);
+  const W=640,H=300,L=46,R=14,T=22,Bm=52, pw=W-L-R, ph=H-T-Bm, bw=pw/c.length;
+  let g=''; [0,yTop/2,yTop].forEach(y=>{ const yy=T+ph-(y/yTop)*ph; g+=`<line x1="${L}" y1="${yy}" x2="${W-R}" y2="${yy}" stroke="#E3EAF0"/><text x="${L-8}" y="${yy+4}" text-anchor="end" font-size="12" fill="#475C72">${y}</text>`; });
+  const bars=c.map((n,i)=>{const h=(n/yTop)*ph, x=L+i*bw+3, y=T+ph-h; const lo=LO+i*w, hi=lo+w;
+    return `<rect x="${x}" y="${y}" width="${bw-6}" height="${h}" rx="3" fill="#14907F" stroke="#0F2238" stroke-width="2"/>${n?`<text x="${x+(bw-6)/2}" y="${y-5}" text-anchor="middle" font-size="12" font-weight="700" fill="#0F2238">${n}</text>`:''}<text x="${x+(bw-6)/2}" y="${T+ph+16}" text-anchor="middle" font-size="11" fill="#475C72">${w<1?lo:(w===1?lo:lo+'–'+hi)}</text>`;}).join('');
+  const avg=mean(vals), ax=L+((avg-LO)/(HI-LO))*pw;
+  const al=S.showAvg?`<line x1="${ax}" y1="${T}" x2="${ax}" y2="${T+ph}" stroke="#E8604C" stroke-width="3" stroke-dasharray="7 5"/><text x="${ax+6}" y="${T+12}" font-size="12" font-weight="700" fill="#A12C1B">avg ${r1(avg)}</text>`:'';
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Histogram of hours of sleep">${g}<line x1="${L}" y1="${T+ph}" x2="${W-R}" y2="${T+ph}" stroke="#0F2238" stroke-width="2"/><line x1="${L}" y1="${T}" x2="${L}" y2="${T+ph}" stroke="#0F2238" stroke-width="2"/>${bars}${al}<text x="${L+pw/2}" y="${H-8}" text-anchor="middle" font-size="13" font-weight="700" fill="#0F2238">Hours of sleep / Horas de sueño</text><text x="14" y="${T+ph/2}" transform="rotate(-90 14 ${T+ph/2})" text-anchor="middle" font-size="13" font-weight="700" fill="#0F2238">Students / Estudiantes</text></svg>`;
+}
+function chartNeed(){
+  const a=needLetters(S.headline.trim().length,10), b=needLetters(S.limits.trim().length,15);
+  return `${S.headline.trim().length<10?`<div>${B('Headline: ','Titular: ','inline')}${a}</div>`:''}${S.limits.trim().length<15?`<div style="margin-top:6px">${B('What the chart cannot tell us: ','Lo que la gráfica no nos dice: ','inline')}${b}</div>`:''}`;
+}
+function viewChart(){
+  const ok=S.headline.trim().length>=10&&S.limits.trim().length>=15;
+  return `${stepper('chart')}
+  <section class="card" style="margin-top:12px"><h2>${B('Part 2: Chart your clean data','Parte 2: Haz una gráfica de tus datos limpios')}</h2>
+    <p class="lead">${B('This chart uses the correctly cleaned data. Change how it is drawn, then write a headline that tells the story and say what the chart cannot tell us.','Esta gráfica usa los datos bien limpiados. Cambia cómo se dibuja y luego escribe un titular que cuente la historia y di lo que la gráfica no nos dice.')}</p></section>
+  <section class="card">
+    <div class="opts"><label>${B('Bar width (hours)','Ancho de barra (horas)')}<select id="selBin" class="s1"><option value="0.5" ${+S.bin===0.5?'selected':''}>0.5</option><option value="1" ${+S.bin===1?'selected':''}>1</option><option value="2" ${+S.bin===2?'selected':''}>2</option></select></label>
+      <label style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><input type="checkbox" id="ckAvg" ${S.showAvg?'checked':''} style="width:22px;height:22px"> ${B('Show the average','Mostrar el promedio','inline')}</label></div>
+    <div class="chartbox" id="chartbox" style="margin-top:10px">${chartSVG()}</div>
+    <label class="f">${B('Headline for your chart','Titular de tu gráfica')}<input type="text" id="inHead" maxlength="90" autocomplete="off" value="${esc(S.headline)}" placeholder="Most freshmen sleep about…  /  La mayoría de los estudiantes duerme como…"></label>
+    <label class="f">${B('What this chart cannot tell us (for example, who answered, who did not, and how true the answers are)','Lo que esta gráfica no nos dice (por ejemplo, quién respondió, quién no y qué tan verdaderas son las respuestas)')}<textarea id="inLimits" style="min-height:90px">${esc(S.limits)}</textarea></label>
+    <div class="msg warn" id="chartneed" style="margin-top:8px">${chartNeed()}</div>
+    <div class="row" style="margin-top:10px"><button class="btn" id="btnChart" data-act="next" data-to="refl" ${ok?'':'disabled'}>${B('Go to reflection','Ir a la reflexión')}</button></div></section>`;
+}
+function reflNeed(){return needLetters(S.refl.trim().length,20);}
+function viewRefl(){
+  const ok=S.refl.trim().length>=20;
+  return `${stepper('refl')}
+  <section class="card"><h2>${B('Reflect','Reflexiona')}</h2>
+    <p class="lead">${B('1. How much did cleaning change the average, and which kind of bad answer changed it most? 2. Pick one row you were not sure about. What did you decide, and why? 3. Can we say "freshmen sleep this many hours"? Why or why not?','1. ¿Cuánto cambió el promedio al limpiar y qué tipo de respuesta mala lo cambió más? 2. Elige una fila de la que no estabas seguro. ¿Qué decidiste y por qué? 3. ¿Podemos decir "los estudiantes de primer año duermen esta cantidad de horas"? ¿Por qué sí o por qué no?')}</p>
+    <textarea id="inRefl" aria-label="Reflection" style="min-height:170px" placeholder="1… 2… 3…">${esc(S.refl)}</textarea>
+    <p class="muted" style="margin:6px 0 0">${B('You can write in English or Spanish.','Puedes escribir en inglés o en español.')}</p>
+    <div class="msg warn" id="reflneed" style="margin-top:8px">${reflNeed()}</div>
+    <div class="row" style="margin-top:10px"><button class="btn" id="btnRefl" data-act="next" data-to="turnin" ${ok?'':'disabled'}>${B('Go to turn in','Ir a entregar')}</button></div></section>`;
+}
+
+/* ---- turn-in ---- */
+function decTxt(x){const d=S.dec[x.id]||{}; if(d.act==='keep') return 'kept'; if(d.act==='fix') return 'fixed to '+d.val+' ('+WHYN[d.why][1].toLowerCase()+')'; if(d.act==='remove') return 'removed ('+WHYN[d.why][1].toLowerCase()+')'; return '—';}
+function summary(){
+  const o=outcome(), L=['CLEAN IT UP — Unit 4, Lesson 7','Name: '+S.name.trim()+'   Period: '+(S.period.trim()||'—'),'Date: '+new Date().toLocaleString(),'',
+   'PART 1: rows right on 1st check '+o.first+', fixed on 2nd '+o.second+', revealed '+o.revealed+' (of '+ROWS.length+')',
+   'Raw average: '+r1(rawAvg(ROWS))+' hours; clean average: '+r1(mean(expClean(ROWS)))+' hours',''];
+  ROWS.forEach(x=>L.push(x.id+' '+(x.raw===''?'(blank)':x.raw)+' -> '+decTxt(x)));
+  L.push('','PART 2: bar width '+S.bin+' hour(s); average line '+(S.showAvg?'shown':'hidden'),'Headline: '+S.headline.trim(),'Chart cannot tell us: '+S.limits.trim(),'','REFLECTION:',S.refl.trim()); return L.join('\n');
+}
+function PDFNAME(){return 'U4L07_CleanItUp_'+PDFLIB.fold(S.name)+'.pdf';}
+function drawHisto(d,x0,top,w,h){
+  const vals=expClean(ROWS), bw=+S.bin, c=histo(vals,bw), mx=Math.max(...c), yTop=Math.max(4,Math.ceil(mx/2)*2), n=c.length, pw=w-40, ph=h-34;
+  const X=x0+34, Y=top+10;
+  d.seg(X,Y,X,Y+ph); d.seg(X,Y+ph,X+pw,Y+ph);
+  for(let y=0;y<=yTop;y+=2){ const yy=Y+ph-(y/yTop)*ph; d.text(String(y),X-16,yy+3,'F1',8,PDFLIB.GRAY); }
+  c.forEach((k,i)=>{ const bh=(k/yTop)*ph, bx=X+i*(pw/n)+2, bwid=pw/n-4; if(k>0) d.box(bx,Y+ph-bh,bwid,bh,2,PDFLIB.MINT); const lo=LO+i*bw; d.textC(bw>=2?(lo+'-'+(lo+bw)):String(lo),bx+bwid/2,Y+ph+11,'F1',8,PDFLIB.GRAY); if(k>0) d.textC(String(k),bx+bwid/2,Y+ph-bh-3,'F2',8,PDFLIB.NAVY); });
+  if(S.showAvg){ const ax=X+((mean(vals)-LO)/(HI-LO))*pw; d.seg(ax,Y,ax,Y+ph); d.text('avg '+r1(mean(vals)),ax+3,Y+8,'F2',8,PDFLIB.TEAL); }
+  d.textC('Hours of sleep / Horas de sueño',X+pw/2,Y+ph+26,'F2',8.5,PDFLIB.NAVY);
+}
+function buildPDF(){
+  const d=PDFLIB.doc(), o=outcome(); d.title('Clean It Up','Unit 4 · Lesson 7   /   Unidad 4 · Lección 7');
+  d.kv('Name / Nombre',S.name.trim()); d.kv('Period / Periodo',S.period.trim()||'—'); d.kv('Date / Fecha',new Date().toLocaleString());
+  d.heading('Part 1: Clean the data','Parte 1: Limpia los datos');
+  d.line('Rows right on 1st check / Filas bien en la 1.ª revisión: '+o.first+'     Fixed on 2nd / Corregidas en la 2.ª: '+o.second+'     Revealed / Mostradas: '+o.revealed);
+  d.line('Raw average / Promedio sin limpiar: '+r1(rawAvg(ROWS))+' hours     Clean average / Promedio limpio: '+r1(mean(expClean(ROWS)))+' hours');
+  d.para('My decisions / Mis decisiones:',{font:'F2',size:10.5});
+  ROWS.forEach(x=>d.para(x.id+'   '+(x.raw===''?'(blank)':x.raw)+'   ->   '+decTxt(x),{size:9.5,indent:12}));
+  d.heading('Part 2: My chart','Parte 2: Mi gráfica');
+  d.para('Headline / Titular: '+S.headline.trim(),{font:'F2',size:11});
+  d.ensure(190); const top=d.y(); drawHisto(d,d.M,top,d.W-2*d.M,170); d.setY(top+180);
+  d.para('Bar width / Ancho de barra: '+S.bin+' hour(s)     Average line / Línea de promedio: '+(S.showAvg?'shown / visible':'hidden / oculta'),{size:9.5,color:PDFLIB.GRAY});
+  d.para('What this chart cannot tell us / Lo que esta gráfica no nos dice:',{font:'F2',size:10.5}); d.para(S.limits.trim()||'—');
+  d.heading('Reflection','Reflexión'); d.para(S.refl.trim()||'—');
+  return d.build('Clean It Up - '+S.name.trim());
+}
+function doPDF(){
+  const m=$('#pdfmsg');
+  try{ PDFLIB.download(buildPDF(),PDFNAME()); m.innerHTML=B('Saved! Now upload the PDF to Canvas.','¡Guardado! Ahora sube el PDF a Canvas.','inline'); }
+  catch(err){ m.innerHTML=B('The PDF did not work. Use "Copy as text" below.','El PDF no funcionó. Usa "Copiar como texto" abajo.','inline'); const dt=document.querySelector('details'); if(dt) dt.open=true; }
+}
+function viewTurnin(){return `${stepper('turnin')}
+  <section class="card"><h2>${B('Turn it in','Entrégalo')}</h2>
+    <ol style="padding-left:22px;margin:8px 0 0">
+      <li style="margin-bottom:8px">${B('Press Download my PDF.','Presiona Descargar mi PDF.')}</li>
+      <li style="margin-bottom:8px">${B('Open the Canvas assignment and choose File Upload.','Abre la tarea en Canvas y elige Subir archivo.')}</li>
+      <li>${B('Upload the PDF, then press Submit.','Sube el PDF y presiona Enviar.')}</li></ol>
+    <div class="row" style="margin-top:14px"><button class="btn" id="btnPdf" data-act="pdf">${B('Download my PDF','Descargar mi PDF')}</button><span id="pdfmsg" class="copied" role="status"></span></div>
+    <details style="margin-top:16px"><summary style="cursor:pointer">${B('Trouble downloading? Copy as text instead','¿Problemas para descargar? Copia como texto')}</summary>
+      <textarea id="sumbox" class="sumbox" readonly aria-label="Summary" style="margin-top:10px">${esc(summary())}</textarea>
+      <div class="row" style="margin-top:10px"><button class="btn ghost" data-act="copy">${B('Copy as text','Copiar como texto')}</button><span id="copymsg" class="copied" role="status"></span></div></details>
+  </section>
+  <section class="card"><h2 style="font-size:20px">${B('Your chart','Tu gráfica')}</h2><div class="chartbox">${chartSVG()}</div></section>
+  <button class="reset" data-act="reset">${B('Start over (clears this device)','Empezar de nuevo (borra este dispositivo)','inline')}</button>`;}
+
+/* ================= render + actions ================= */
+function render(refocus){
+  document.body.setAttribute('data-lang',S.lang); document.documentElement.lang=S.lang;
+  document.querySelectorAll('.langtog button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.l===S.lang));
+  const v={welcome:viewWelcome,clean:viewClean,chart:viewChart,refl:viewRefl,turnin:viewTurnin}[S.stage];
+  $('#app').innerHTML=v(); save();
+  if(refocus){const el=document.querySelector(`[data-f="${refocus.f}"][data-i="${refocus.i}"]`); if(el&&!el.disabled) el.focus();}
+}
+function go(st){S.stage=st; render(); window.scrollTo(0,0);}
+function refreshClean(){
+  $('#meterbox').innerHTML=metersHTML(); const inc=incomplete().length; const cn=$('#checkneed'); if(cn) cn.innerHTML=checkNeed(); const bc=$('#btnCheck'); if(bc) bc.disabled=inc>0||S.status==='done'; save();
+}
+document.addEventListener('change',e=>{
+  const t=e.target;
+  if(t.dataset&&t.dataset.f&&t.dataset.i&&S.stage==='clean'){
+    const d=S.dec[t.dataset.i]=S.dec[t.dataset.i]||{act:'',val:'',why:''};
+    if(t.dataset.f==='act'){ d.act=t.value; if(d.act==='keep'){d.val='';d.why='';} if(d.act==='remove') d.val=''; if(d.act==='fix'&&!d.why) d.why='format'; render({f:'act',i:t.dataset.i}); return; }
+    if(t.dataset.f==='why'){ d.why=t.value; refreshClean(); return; }
+  }
+  if(t.id==='selBin'){S.bin=+t.value; $('#chartbox').innerHTML=chartSVG(); save();}
+  else if(t.id==='ckAvg'){S.showAvg=t.checked; $('#chartbox').innerHTML=chartSVG(); save();}
+});
+document.addEventListener('input',e=>{
+  const t=e.target, id=t.id;
+  if(t.dataset&&t.dataset.f==='val'&&S.stage==='clean'){ const d=S.dec[t.dataset.i]=S.dec[t.dataset.i]||{act:'fix',val:'',why:''}; d.val=t.value.replace(/[^0-9.\-]/g,''); if(t.value!==d.val) t.value=d.val; refreshClean(); return; }
+  if(id==='inName'){S.name=t.value; save(); const b=$('#btnStart'); if(b) b.disabled=S.name.trim().length<2;}
+  else if(id==='inPeriod'){S.period=t.value; save();}
+  else if(id==='inHead'||id==='inLimits'){ if(id==='inHead') S.headline=t.value; else S.limits=t.value; save(); const b=$('#btnChart'),n=$('#chartneed'); if(b) b.disabled=!(S.headline.trim().length>=10&&S.limits.trim().length>=15); if(n) n.innerHTML=chartNeed(); }
+  else if(id==='inRefl'){S.refl=t.value; save(); const b=$('#btnRefl'),n=$('#reflneed'); if(b) b.disabled=S.refl.trim().length<20; if(n) n.innerHTML=reflNeed();}
+});
+function doCopy(){
+  const ta=$('#sumbox'); ta.value=summary(); const m=$('#copymsg');
+  const ok=()=>{m.innerHTML=B('Copied! Now paste it into Canvas.','¡Copiado! Ahora pégalo en Canvas.','inline');};
+  const fb=()=>{ta.focus();ta.select();try{document.execCommand('copy');ok();}catch(x){m.innerHTML=B('Select the text and press Ctrl+C.','Selecciona el texto y presiona Ctrl+C.','inline');}};
+  if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(ta.value).then(ok,fb); else fb();
+}
+document.addEventListener('click',e=>{
+  const t=e.target.closest('[data-act]'); if(!t||t.disabled) return; const a=t.dataset.act;
+  if(a==='lang'){S.lang=t.dataset.l; render();}
+  else if(a==='start'){ if(S.name.trim().length>=2) go('clean'); }
+  else if(a==='check'){ runCheck(); render(); const el=$('#result-clean'); if(el) el.scrollIntoView({block:'start'}); else {const m=$('#msgbox'); if(m) m.scrollIntoView({block:'center'});} }
+  else if(a==='next') go(t.dataset.to);
+  else if(a==='pdf') doPDF();
+  else if(a==='copy') doCopy();
+  else if(a==='reset'){ if(confirm('Start over? This clears your work on this device. / ¿Empezar de nuevo? Esto borra tu trabajo en este dispositivo.')){try{localStorage.removeItem(KEY);}catch(x){} S=fresh(); ROWS=makeRows(S.seed); render();} }
+});
+
+S=load(); ROWS=makeRows(S.seed);
+if(!['welcome','clean','chart','refl','turnin'].includes(S.stage)) S.stage='welcome';
+if(['chart','refl','turnin'].includes(S.stage)&&S.status!=='done') S.stage='welcome';
+render();
+window.__S=()=>S; window.__H={rows:()=>ROWS,rawAvg:()=>rawAvg(ROWS),clean:()=>expClean(ROWS),makeRows:makeRows,histo:histo};
+})();
+
+</script>
+</body>
+</html>
