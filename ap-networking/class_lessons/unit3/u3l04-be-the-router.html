@@ -66,6 +66,9 @@
   .hint{color:var(--muted);font-size:.92rem}
   .diagram{background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px;margin:14px 0}
   .diagram svg{width:100%;height:auto;display:block}
+  textarea.auto{min-height:36px;height:36px;resize:none;overflow:hidden;line-height:1.35;vertical-align:top}
+  td textarea.auto{padding:5px 7px}
+  .pc{display:none}
   @media (max-width:640px){ h1{font-size:1.65rem} .time{display:none} }
   @media print{
     body{background:#fff;font-size:11.5pt}
@@ -74,7 +77,8 @@
     .mission,.callout,table,tr{break-inside:avoid}
     .mission{border:1px solid #999;border-left:6px solid #555}
     h2{break-after:avoid}
-    textarea{border:1px solid #888}
+    textarea{display:none !important}
+    .pc{display:block;white-space:pre-wrap;overflow-wrap:anywhere;border:1px solid #888;border-radius:6px;padding:5px 7px;min-height:1.9em;line-height:1.35;background:#fff}
   }
 </style>
 </head>
@@ -222,5 +226,30 @@
     <span class="hint">In the print dialog, set <strong>Destination</strong> to <strong>Save as PDF</strong>, then save.</span>
   </div>
 </main>
+<script>
+(function(){
+  "use strict";
+  function grow(t){t.style.height="auto";t.style.height=(t.scrollHeight+2)+"px";}
+  document.querySelectorAll("input[type=text]").forEach(function(i){
+    if(i.id==="name"||i.id==="period") return;
+    var t=document.createElement("textarea");
+    t.rows=1; t.className="auto";
+    ["aria-label","style"].forEach(function(a){ if(i.hasAttribute(a)) t.setAttribute(a,i.getAttribute(a)); });
+    i.parentNode.replaceChild(t,i);
+  });
+  var areas=Array.prototype.slice.call(document.querySelectorAll("textarea"));
+  areas.forEach(function(t){
+    var d=document.createElement("div");
+    d.className="pc"; d.setAttribute("aria-hidden","true");
+    if(t.hasAttribute("style")) d.setAttribute("style",t.getAttribute("style"));
+    t.parentNode.insertBefore(d,t.nextSibling);
+    function sync(){d.textContent=t.value;}
+    t.addEventListener("input",function(){sync();if(t.className==="auto")grow(t);});
+    t._sync=sync; sync(); if(t.className==="auto") grow(t);
+  });
+  window.addEventListener("beforeprint",function(){areas.forEach(function(t){t._sync();});});
+  window.addEventListener("resize",function(){areas.forEach(function(t){if(t.className==="auto")grow(t);});});
+})();
+</script>
 </body>
 </html>
