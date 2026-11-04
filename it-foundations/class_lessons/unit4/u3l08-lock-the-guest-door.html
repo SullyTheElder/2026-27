@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>U3L08: Lock the Guest Door - Configure a Wireless Access Point</title>
+<style>
+  :root{
+    --navy:#0B1F3A; --green:#8FC53E; --cream:#F4F1E9; --gold:#D9A441;
+    --ink:#1b2430; --muted:#55606e; --line:#d9d3c3; --card:#ffffff;
+    --head: Cambria, "Iowa Old Style", Georgia, serif;
+    --body: Calibri, Inter, "Segoe UI", Arial, sans-serif;
+    --mono: "IBM Plex Mono", Consolas, "Courier New", monospace;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--cream);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.55}
+  a{color:var(--navy)}
+  :focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+  .topbar{background:var(--navy);color:#fff;padding:10px 20px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+  .topbar .brand{font-family:var(--head);font-weight:700;letter-spacing:.02em}
+  .topbar a{color:var(--green);text-decoration:none;font-weight:600}
+  .topbar a:hover{text-decoration:underline}
+  main{max-width:900px;margin:0 auto;padding:24px 20px 60px}
+  .eyebrow{color:var(--muted);font-size:.85rem;text-transform:uppercase;letter-spacing:.08em;margin:0}
+  h1{font-family:var(--head);color:var(--navy);font-size:2.1rem;line-height:1.2;margin:.2em 0 .1em}
+  .sub{color:var(--muted);margin:0 0 18px}
+  h2{font-family:var(--head);color:var(--navy);font-size:1.5rem;margin:36px 0 8px;padding-bottom:6px;border-bottom:3px solid var(--green)}
+  h3{font-family:var(--head);color:var(--navy);margin:20px 0 6px;font-size:1.15rem}
+  .idbar{display:flex;gap:14px;flex-wrap:wrap;background:#fff;border:1px solid var(--line);border-radius:8px;padding:12px 14px;margin:14px 0 8px}
+  .idbar label{display:flex;gap:8px;align-items:center;font-weight:600}
+  input[type=text],textarea{font:inherit;border:1px solid #b8b09b;border-radius:6px;padding:7px 9px;background:#fff;color:var(--ink);width:100%}
+  .idbar input[type=text]{width:220px}
+  .idbar .period{width:90px}
+  textarea{min-height:74px;resize:vertical}
+  table{width:100%;border-collapse:collapse;background:#fff;margin:10px 0 16px;font-size:.98rem}
+  th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+  th{background:var(--navy);color:#fff;font-weight:600}
+  td input[type=text]{padding:5px 7px}
+  .scroll{overflow-x:auto}
+  code,.mono{font-family:var(--mono);background:#eef0e4;border-radius:4px;padding:1px 6px;font-size:.92em}
+  .callout{background:#fff;border-left:6px solid var(--green);border-radius:6px;padding:12px 16px;margin:14px 0}
+  .callout.note{border-left-color:var(--gold)}
+  .mission{background:var(--card);border:1px solid var(--line);border-left:8px solid var(--green);border-radius:10px;padding:16px 20px;margin:18px 0;break-inside:avoid}
+  .mission h3{margin-top:0;display:flex;align-items:center;gap:12px}
+  .badge{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;background:var(--navy);color:var(--green);font-family:var(--head);font-weight:700;flex:none}
+  .time{margin-left:auto;font-size:.82rem;font-weight:600;color:var(--muted);background:var(--cream);border-radius:999px;padding:2px 10px;white-space:nowrap}
+  .goal{font-weight:600;color:var(--navy);margin:.2em 0 .6em}
+  ol.steps{padding-left:22px;margin:.4em 0}
+  ol.steps li{margin:.35em 0}
+  .check{display:flex;gap:10px;align-items:flex-start;background:var(--cream);border-radius:8px;padding:10px 12px;margin:12px 0 6px}
+  .check input{width:20px;height:20px;margin-top:3px;accent-color:var(--navy);flex:none}
+  details{background:#fbfaf5;border:1px dashed #b8b09b;border-radius:8px;padding:8px 12px;margin:8px 0}
+  summary{cursor:pointer;font-weight:600;color:var(--navy)}
+  .lights{display:flex;gap:14px;flex-wrap:wrap;margin:8px 0}
+  .lights span{display:inline-flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--line);border-radius:999px;padding:3px 12px 3px 6px;font-size:.95rem}
+  .dot{width:16px;height:16px;border-radius:50%;display:inline-block;border:2px solid rgba(0,0,0,.25)}
+  .dot.g{background:#2fb344}.dot.a{background:#f59f00}.dot.r{background:#e03131}
+  .stretch{border-left-color:var(--gold)}
+  .stretch .badge{color:var(--gold)}
+  dl.vocab dt{font-weight:700;color:var(--navy);margin-top:10px}
+  dl.vocab dd{margin:0 0 0 0}
+  .actions{margin:26px 0 6px;display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+  button.pdf{font:inherit;font-weight:700;background:var(--navy);color:#fff;border:0;border-radius:8px;padding:12px 20px;cursor:pointer}
+  button.pdf:hover{background:#163459}
+  .hint{color:var(--muted);font-size:.92rem}
+  .diagram{background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px;margin:14px 0}
+  .diagram svg{width:100%;height:auto;display:block}
+  .ai{background:#fff;border:1px solid var(--line);border-left:8px solid var(--navy);border-radius:10px;padding:14px 18px;margin:14px 0}
+  .ai .label{font-size:.8rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0 0 6px}
+  .prompt{background:#eef0e4;border-radius:8px;padding:10px 14px;font-family:var(--mono);font-size:.95rem}
+  .designs{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}
+  .designs figure{margin:0;background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px}
+  .designs svg{width:100%;height:auto;display:block}
+  .designs figcaption{font-weight:700;color:var(--navy);text-align:center;margin-top:4px}
+  select{font:inherit;border:1px solid #b8b09b;border-radius:6px;padding:5px 7px;background:#fff;color:var(--ink);max-width:100%}
+  @media (max-width:760px){ .designs{grid-template-columns:1fr} }
+  main.wide{max-width:1240px}
+  .layout{display:grid;grid-template-columns:1fr;gap:24px}
+  @media (min-width:1050px){ .layout{grid-template-columns:minmax(0,1fr) 470px;align-items:start} .col-router{position:sticky;top:10px} }
+  .sr{position:absolute;left:-9999px}
+  .router{background:#e9edf2;border:2px solid #7b8794;border-radius:10px;overflow:hidden;font-family:Arial,Helvetica,sans-serif;font-size:15px;color:#1f2933}
+  .router .bar{display:flex;gap:8px;align-items:center;background:#cbd2d9;padding:8px 10px}
+  .router .lights{display:flex;gap:5px}.router .lights i{width:10px;height:10px;border-radius:50%;background:#7b8794;display:inline-block}
+  .router .urlbox{flex:1;margin:0}.router .urlbox input{width:100%;padding:6px 8px;border:1px solid #9aa5b1;border-radius:14px;background:#fff;font:inherit}
+  .router button{font:inherit;font-weight:700;background:#2c5282;color:#fff;border:0;border-radius:6px;padding:7px 14px;cursor:pointer}
+  .router button.alt{background:#fff;color:#2c5282;border:1px solid #2c5282}
+  .router button:hover{filter:brightness(1.1)}
+  .router .pane{padding:12px 14px}
+  .router h4{margin:0 0 4px;font-size:1.05rem}
+  .router label{display:block;margin:8px 0;font-weight:600}
+  .router label.inline{font-weight:400;display:flex;gap:8px;align-items:flex-start}
+  .router input[type=text],.router input[type=password],.router input[type=number],.router select{display:block;width:100%;margin-top:3px;padding:6px 8px;border:1px solid #9aa5b1;border-radius:5px;font:inherit;background:#fff}
+  .router input[type=checkbox]{width:auto;margin-top:3px}
+  .router fieldset{border:1px solid #9aa5b1;border-radius:6px;margin:10px 0;padding:6px 10px 10px}
+  .router .tabs{display:flex;background:#cbd2d9;border-top:1px solid #9aa5b1}
+  .router .tabs button{flex:1;border-radius:0;background:#cbd2d9;color:#1f2933;font-weight:600;border-right:1px solid #9aa5b1;padding:9px 6px}
+  .router .tabs button[aria-selected=true]{background:#e9edf2;color:#2c5282;box-shadow:inset 0 -3px 0 #2c5282}
+  .router .row{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+  .router .foot{display:flex;gap:8px;flex-wrap:wrap;padding:10px 14px;border-top:1px solid #9aa5b1;background:#dfe4ea}
+  .router .msg{min-height:1.2em;margin:8px 0 0;color:#2c5282;font-weight:600}
+  .router .muted{color:#52606d}
+  .router ul.checks{list-style:none;margin:8px 0 0;padding:0}
+  .router ul.checks li{padding:5px 8px;margin:4px 0;border-radius:5px;background:#fff;border-left:5px solid}
+  .router ul.checks li.ok{border-color:#2f855a}.router ul.checks li.bad{border-color:#c53030}
+  .router .out p{margin:5px 0;padding:5px 8px;border-radius:5px;background:#fff;border-left:5px solid #7b8794}
+  .router .out p.ok{border-color:#2f855a}.router .out p.bad{border-color:#c53030;font-weight:600}.router .out p.muted{color:#52606d}
+  @media print{ .col-router{display:none} .layout{display:block} }
+  textarea.auto{min-height:36px;height:36px;resize:none;overflow:hidden;line-height:1.35;vertical-align:top}
+  td textarea.auto{padding:5px 7px}
+  .pc{display:none}
+  @media (max-width:640px){ h1{font-size:1.65rem} .time{display:none} }
+  @media print{
+    body{background:#fff;font-size:11.5pt}
+    .topbar,.actions,.noprint{display:none !important}
+    main{max-width:none;padding:0}
+    .mission,.callout,table,tr{break-inside:avoid}
+    .mission{border:1px solid #999;border-left:6px solid #555}
+    h2{break-after:avoid}
+    textarea{display:none !important}
+    .pc{display:block;white-space:pre-wrap;overflow-wrap:anywhere;border:1px solid #888;border-radius:6px;padding:5px 7px;min-height:1.9em;line-height:1.35;background:#fff}
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <span class="brand">🐾 Bulldog Networking — AP Networking</span>
+  <a href="https://whatwasithinking.us/ap-networking/index.html">← Back to AP Networking</a>
+</div>
+
+<main class="wide">
+  <p class="eyebrow">AP Networking · Local Unit 3 · U3L08</p>
+  <h1>Lock the Guest Door: Configure a Wireless Access Point</h1>
+  <p class="sub">Guest and internal Wi-Fi networks — CB 3.3.D (activity first, concept after)</p>
+
+  <div class="idbar">
+    <label>Name: <input type="text" id="name" autocomplete="name"></label>
+    <label>Period: <input type="text" id="period" class="period"></label>
+  </div>
+  <p class="hint noprint">Use the practice router on this page. Nothing you type into it is saved or sent anywhere, so make up a practice password. Don't reuse a real one. Finish the questions, then use "Download as PDF" to save a copy to turn in.</p>
+
+  <h2>The Situation</h2>
+  <p>The wireless router for the <strong>Bulldog Esports Invitational</strong> just arrived, still on <strong>factory settings</strong>. Staff need Wi-Fi that reaches the tournament systems. Spectators need Wi-Fi that reaches the internet and <strong>nothing else</strong>. You have the admin login and about 30 minutes. Yesterday you decided <em>who</em> belongs on which network. Today you make the router do it.</p>
+
+  <div class="layout">
+    <div class="col-missions">
+      <h2>Mission Board</h2>
+
+      <section class="mission" aria-labelledby="m1">
+        <h3 id="m1"><span class="badge">1</span> Reach the Router <span class="time">about 4 min</span></h3>
+        <p class="goal">Goal: open the router's settings page and log in.</p>
+        <ol class="steps">
+          <li>A router's settings page lives at the router's own address. In U3L06 you set that address as the LAN's <strong>default gateway</strong>. Type it into the practice browser's address bar and press <strong>Go</strong>.</li>
+          <li>Log in with the factory login printed on the router's sticker: user <code>admin</code>, password <code>admin</code>.</li>
+        </ol>
+        <div class="check"><input type="checkbox" id="c1"><label for="c1">Checkpoint: I'm logged in and can see the settings tabs.</label></div>
+        <details><summary>Stuck?</summary>The address is four numbers separated by dots. Which one is the gateway for <code>192.168.1.0/24</code>?</details>
+      </section>
+
+      <section class="mission" aria-labelledby="m2">
+        <h3 id="m2"><span class="badge">2</span> Internal Wi-Fi First <span class="time">about 8 min</span></h3>
+        <p class="goal">Goal: set up and secure the staff network, and make sure it works before adding anything else.</p>
+        <ol class="steps">
+          <li>Open the <strong>Internal Wi-Fi</strong> tab.</li>
+          <li>Give the network a new <strong>SSID</strong> (not the factory name).</li>
+          <li>Choose a modern <strong>security</strong> type and a <strong>strong password</strong> (make one up).</li>
+          <li>Turn off <strong>WPS</strong>. Then press <strong>Save</strong>.</li>
+          <li>Press <strong>Check my settings</strong> and fix anything marked with an ✘.</li>
+        </ol>
+        <p>My SSID: <input type="text" aria-label="My internal SSID" style="width:40%"> &nbsp;Security type I chose: <input type="text" aria-label="Internal security type" style="width:30%"></p>
+        <p>Why did I turn WPS off? <input type="text" aria-label="Why turn WPS off" style="width:70%"></p>
+        <div class="check"><input type="checkbox" id="c2"><label for="c2">Checkpoint: all four internal checks show ✔.</label></div>
+      </section>
+
+      <section class="mission" aria-labelledby="m3">
+        <h3 id="m3"><span class="badge">3</span> Add the Guest Network <span class="time">about 10 min</span></h3>
+        <p class="goal">Goal: give spectators internet and nothing else.</p>
+        <ol class="steps">
+          <li>Open the <strong>Guest Network</strong> tab and turn the guest network <strong>on</strong>.</li>
+          <li>Give it its <strong>own SSID</strong> and its <strong>own strong password</strong>, different from the staff network's. Use WPA2 or WPA3.</li>
+          <li>Make sure guests <strong>cannot reach the internal network</strong>.</li>
+          <li>Add <strong>at least two</strong> extra protections from the list on the tab.</li>
+          <li>Press <strong>Save</strong>, then <strong>Check my settings</strong>.</li>
+        </ol>
+        <p>The two extra protections I added: <input type="text" aria-label="Two extra protections" style="width:55%"></p>
+        <div class="check"><input type="checkbox" id="c3"><label for="c3">Checkpoint: all guest checks show ✔.</label></div>
+      </section>
+
+      <section class="mission" aria-labelledby="m4">
+        <h3 id="m4"><span class="badge">4</span> Prove It Works <span class="time">about 6 min</span></h3>
+        <p class="goal">Goal: verify both networks by connecting real test devices.</p>
+        <p>Open the <strong>Test Devices</strong> tab. Connect the <strong>staff laptop</strong> to the internal network and the <strong>guest phone</strong> to the guest network. Fill in what you see.</p>
+        <div class="scroll"><table>
+          <thead><tr><th>Device</th><th>Internet?</th><th>Tournament Server?</th></tr></thead>
+          <tbody>
+            <tr><td>Staff laptop</td><td><input type="text" aria-label="Staff laptop internet" style="width:90px"></td><td><input type="text" aria-label="Staff laptop server" style="width:90px"></td></tr>
+            <tr><td>Guest phone</td><td><input type="text" aria-label="Guest phone internet" style="width:90px"></td><td><input type="text" aria-label="Guest phone server" style="width:90px"></td></tr>
+          </tbody>
+        </table></div>
+        <div class="check"><input type="checkbox" id="c4"><label for="c4">Checkpoint: the guest phone reaches the internet but not the Tournament Server.</label></div>
+      </section>
+
+      <section class="mission stretch" aria-labelledby="m5">
+        <h3 id="m5"><span class="badge">★</span> Challenge: Fix Someone Else's Router <span class="time">optional</span></h3>
+        <p>Press <strong>Load a misconfigured router</strong> on the practice router. Someone set this one up badly. Find the problems, fix them, and list what you found.</p>
+        <textarea aria-label="Problems found on the misconfigured router"></textarea>
+      </section>
+    </div>
+
+    <div class="col-router noprint-sticky">
+      <h2>Practice Router</h2>
+      <div class="router" id="router">
+        <div class="bar">
+          <span class="lights" aria-hidden="true"><i></i><i></i><i></i></span>
+          <label class="urlbox"><span class="sr">Browser address</span><input type="text" id="addr" placeholder="Type the router's address…" autocomplete="off" spellcheck="false"></label>
+          <button type="button" id="go">Go</button>
+        </div>
+        <div id="viewBlank" class="pane"><p class="muted">Type the router's address in the bar above and press Go.</p></div>
+        <div id="viewError" class="pane" hidden><p><strong>This site can't be reached.</strong></p><p class="muted">Check the address and try again.</p></div>
+        <div id="viewLogin" class="pane" hidden>
+          <h4>Wireless Router Setup</h4>
+          <p class="muted">Log in to continue.</p>
+          <label>User name <input type="text" id="user" autocomplete="off"></label>
+          <label>Password <input type="password" id="pw" autocomplete="off"></label>
+          <button type="button" id="login">Log in</button>
+          <p id="loginMsg" class="msg" role="status"></p>
+        </div>
+        <div id="viewMain" hidden>
+          <div class="tabs" role="tablist">
+            <button type="button" role="tab" id="tabI" aria-selected="true" data-pane="paneI">Internal Wi-Fi</button>
+            <button type="button" role="tab" id="tabG" aria-selected="false" data-pane="paneG">Guest Network</button>
+            <button type="button" role="tab" id="tabT" aria-selected="false" data-pane="paneT">Test Devices</button>
+          </div>
+
+          <div id="paneI" class="pane" role="tabpanel">
+            <label>SSID (network name) <input type="text" id="iSsid" autocomplete="off"></label>
+            <label>Security <select id="iSec"></select></label>
+            <label>Password <input type="text" id="iPass" autocomplete="off"></label>
+            <label class="inline"><input type="checkbox" id="iWps"> Enable WPS (quick setup by button or PIN)</label>
+            <div class="row"><button type="button" id="iSave">Save</button><button type="button" id="iCheck" class="alt">Check my settings</button></div>
+            <p id="iMsg" class="msg" role="status"></p>
+            <ul id="iList" class="checks"></ul>
+          </div>
+
+          <div id="paneG" class="pane" role="tabpanel" hidden>
+            <label class="inline"><input type="checkbox" id="gOn"> Enable guest network</label>
+            <label>Guest SSID <input type="text" id="gSsid" autocomplete="off"></label>
+            <label>Security <select id="gSec"></select></label>
+            <label>Guest password <input type="text" id="gPass" autocomplete="off"></label>
+            <label class="inline"><input type="checkbox" id="gInt"> Allow guests to reach the internal network</label>
+            <fieldset><legend>Extra protections</legend>
+              <label>Limit number of guest devices <input type="number" id="gMax" min="0" max="500" placeholder="0 = no limit"></label>
+              <label>Session time limit (minutes) <input type="number" id="gSess" min="0" max="1440" placeholder="0 = no limit"></label>
+              <label>Access hours <select id="gHours"><option>All day</option><option>Event hours only (8 AM to 6 PM)</option></select></label>
+              <label class="inline"><input type="checkbox" id="gPortal"> Captive portal (guests must accept terms of use)</label>
+            </fieldset>
+            <div class="row"><button type="button" id="gSave">Save</button><button type="button" id="gCheck" class="alt">Check my settings</button></div>
+            <p id="gMsg" class="msg" role="status"></p>
+            <ul id="gList" class="checks"></ul>
+          </div>
+
+          <div id="paneT" class="pane" role="tabpanel" hidden>
+            <p class="muted">Connect a test device to one of the saved networks. Settings only count once they've been saved.</p>
+            <label>Device <select id="tDev"><option value="laptop">Staff laptop</option><option value="phone">Guest phone</option></select></label>
+            <label>Network <select id="tNet"></select></label>
+            <label>Password <input type="text" id="tPass" autocomplete="off"></label>
+            <div class="row"><button type="button" id="tGo">Connect</button></div>
+            <div id="tOut" class="out" role="status"></div>
+          </div>
+
+          <div class="foot">
+            <button type="button" id="rLoad" class="alt">Load a misconfigured router</button>
+            <button type="button" id="rReset" class="alt">Reset to factory settings</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <section class="mission" aria-labelledby="ev" id="evidenceBox">
+    <h3 id="ev"><span class="badge">✔</span> Your Router Evidence <span class="time">fills in by itself</span></h3>
+    <p class="hint">This table reads the settings you saved and the tests you ran on the practice router, so it prints with your page as proof of your work. It never shows your passwords.</p>
+    <div id="evidence"></div>
+  </section>
+
+  <h2>Concept: Guest and Internal Wi-Fi</h2>
+  <div class="callout">
+    <ul>
+      <li>Most access points let you create a <strong>guest network</strong> that gives <strong>internet access without access to the internal network</strong>. That adds a layer of protection for the main network.</li>
+      <li><strong>Configure the internal network first</strong> and check that it works. That means a strong password, <strong>WPA2 or WPA3</strong> encryption, and <strong>WPS disabled</strong>.</li>
+      <li>You reach these settings by typing the router or access point's <strong>address</strong> into a web browser and logging in with the <strong>administrator credentials</strong>.</li>
+      <li>The guest network is set up like any other wireless network: its own SSID, a strong password, and WPA2 or WPA3.</li>
+      <li>Extra guest protections include limiting the number of devices, blocking access to the internal network, setting access hours or session time limits, and a captive portal where users log in and agree to terms.</li>
+      <li>To <strong>verify</strong> a guest network, connect a device to it. It should reach the internet but <strong>not</strong> the internal resources.</li>
+    </ul>
+  </div>
+
+  <h2>Debrief Questions</h2>
+  <p class="hint">Finish these in class if you have time. Otherwise they are due at the start of our next class.</p>
+  <p><strong>1.</strong> Why do you configure and test the internal network <em>before</em> adding the guest network?</p>
+  <textarea aria-label="Question 1"></textarea>
+  <p><strong>2.</strong> Name two settings that make a wireless network more secure, and say what each one protects against.</p>
+  <textarea aria-label="Question 2"></textarea>
+  <p><strong>3.</strong> A guest phone can reach the Tournament Server. Which setting do you change, and how would you verify the fix?</p>
+  <textarea aria-label="Question 3"></textarea>
+
+  <h2>Vocabulary</h2>
+  <dl class="vocab">
+    <dt>WPA2 / WPA3</dt><dd>Modern encryption standards that protect what travels over a Wi-Fi network.</dd>
+    <dt>WPS</dt><dd>A quick-connect feature for Wi-Fi. It is usually disabled because it can be abused to get in.</dd>
+    <dt>Guest network</dt><dd>A separate Wi-Fi network for visitors, with internet access and no access to internal resources.</dd>
+    <dt>Administrator credentials</dt><dd>The user name and password that let someone change a device's settings.</dd>
+    <dt>Captive portal</dt><dd>A page guests must log in to or accept before they can use the network.</dd>
+    <dt>Session limit</dt><dd>A cap on how long a guest can stay connected.</dd>
+  </dl>
+
+  <div class="actions noprint">
+    <button class="pdf" type="button" onclick="window.print()">📄 Download as PDF</button>
+    <span class="hint">In the print dialog, set <strong>Destination</strong> to <strong>Save as PDF</strong>, then save.</span>
+  </div>
+</main>
+<script>
+(function(){
+  "use strict";
+  var SECS=["Open (no password)","WEP","WPA","WPA2-Personal","WPA3-Personal","WPA2/WPA3 Mixed"];
+  var GOOD=["WPA2-Personal","WPA3-Personal","WPA2/WPA3 Mixed"];
+  function clone(o){return JSON.parse(JSON.stringify(o));}
+  var FACT={internal:{ssid:"Router-2G",security:SECS[0],pass:"",wps:true},
+            guest:{enabled:false,ssid:"Router-2G-Guest",security:"WPA2-Personal",pass:"",allowInternal:true,maxDevices:0,sessionMins:0,hours:"All day",portal:false}};
+  var BAD={internal:{ssid:"BulldogEvent",security:"WEP",pass:"bulldogs",wps:true},
+           guest:{enabled:true,ssid:"BulldogEvent",security:SECS[0],pass:"",allowInternal:true,maxDevices:0,sessionMins:0,hours:"All day",portal:false}};
+  var saved=clone(FACT);
+  function $(id){return document.getElementById(id);}
+  function isOpen(s){return s===SECS[0];}
+  function strong(p,ssid){
+    if(!p||p.length<12) return false;
+    var c=0; if(/[a-z]/.test(p)) c++; if(/[A-Z]/.test(p)) c++; if(/[0-9]/.test(p)) c++; if(/[^A-Za-z0-9]/.test(p)) c++;
+    if(c<3) return false;
+    if(/password/i.test(p)||/12345/.test(p)) return false;
+    if(ssid && ssid.length>=4 && p.toLowerCase().indexOf(ssid.toLowerCase())>-1) return false;
+    return true;
+  }
+  function fillSelect(el){el.innerHTML="";SECS.forEach(function(s){var o=document.createElement("option");o.textContent=s;el.appendChild(o);});}
+  fillSelect($("iSec")); fillSelect($("gSec"));
+  function load(){
+    var i=saved.internal,g=saved.guest;
+    $("iSsid").value=i.ssid;$("iSec").value=i.security;$("iPass").value=i.pass;$("iWps").checked=i.wps;
+    $("gOn").checked=g.enabled;$("gSsid").value=g.ssid;$("gSec").value=g.security;$("gPass").value=g.pass;$("gInt").checked=g.allowInternal;
+    $("gMax").value=g.maxDevices||"";$("gSess").value=g.sessionMins||"";$("gHours").value=g.hours;$("gPortal").checked=g.portal;
+    $("iMsg").textContent="";$("gMsg").textContent="";$("iList").innerHTML="";$("gList").innerHTML="";$("tOut").innerHTML="";
+    refreshNets();
+  }
+  function refreshNets(){
+    var sel=$("tNet"); sel.innerHTML="";
+    var names=[]; names.push(saved.internal.ssid);
+    if(saved.guest.enabled && names.indexOf(saved.guest.ssid)<0) names.push(saved.guest.ssid);
+    names.forEach(function(n){var o=document.createElement("option");o.textContent=n;sel.appendChild(o);});
+  }
+  function show(id){["viewBlank","viewError","viewLogin","viewMain"].forEach(function(v){$(v).hidden=(v!==id);});}
+  $("go").addEventListener("click",function(){
+    var a=$("addr").value.trim().replace(/^https?:\/\//i,"").replace(/\/$/,"");
+    if(a==="192.168.1.1"){show("viewLogin");$("loginMsg").textContent="";} else {show("viewError");}
+  });
+  $("addr").addEventListener("keydown",function(e){if(e.key==="Enter"){e.preventDefault();$("go").click();}});
+  $("login").addEventListener("click",function(){
+    if($("user").value.trim()==="admin" && $("pw").value==="admin"){show("viewMain");load();}
+    else {$("loginMsg").textContent="Login failed. Check the sticker on the router: user admin, password admin.";}
+  });
+  document.querySelectorAll(".tabs button").forEach(function(b){
+    b.addEventListener("click",function(){
+      document.querySelectorAll(".tabs button").forEach(function(x){x.setAttribute("aria-selected",x===b?"true":"false");});
+      ["paneI","paneG","paneT"].forEach(function(p){$(p).hidden=(p!==b.getAttribute("data-pane"));});
+      if(b.getAttribute("data-pane")==="paneT") refreshNets();
+    });
+  });
+  $("iSave").addEventListener("click",function(){
+    saved.internal={ssid:$("iSsid").value.trim(),security:$("iSec").value,pass:$("iPass").value,wps:$("iWps").checked};
+    $("iMsg").textContent="Saved. Press Check my settings to see how you're doing."; refreshNets();
+  });
+  $("gSave").addEventListener("click",function(){
+    saved.guest={enabled:$("gOn").checked,ssid:$("gSsid").value.trim(),security:$("gSec").value,pass:$("gPass").value,allowInternal:$("gInt").checked,
+      maxDevices:parseInt($("gMax").value,10)||0,sessionMins:parseInt($("gSess").value,10)||0,hours:$("gHours").value,portal:$("gPortal").checked};
+    $("gMsg").textContent="Saved. Press Check my settings to see how you're doing."; refreshNets();
+  });
+  function render(listId,items){
+    var ul=$(listId); ul.innerHTML="";
+    items.forEach(function(it){
+      var li=document.createElement("li"); li.className=it.ok?"ok":"bad";
+      li.textContent=(it.ok?"✔ ":"✘ ")+it.text+(it.ok?"":" — "+it.hint);
+      ul.appendChild(li);
+    });
+  }
+  function checkInternal(s){
+    var i=s.internal;
+    return [
+      {ok:i.ssid!==""&&i.ssid!==FACT.internal.ssid,text:"SSID changed from the factory name",hint:"Pick your own network name."},
+      {ok:GOOD.indexOf(i.security)>-1,text:"Uses WPA2 or WPA3 security",hint:"Open, WEP, and plain WPA are weak or outdated."},
+      {ok:strong(i.pass,i.ssid),text:"Strong password",hint:"At least 12 characters, a mix of upper, lower, numbers, or symbols, and not a common word or your SSID."},
+      {ok:!i.wps,text:"WPS is disabled",hint:"WPS can be abused to get into the network."}
+    ];
+  }
+  function checkGuest(s){
+    var g=s.guest,i=s.internal;
+    var extras=(g.maxDevices>0?1:0)+(g.sessionMins>0?1:0)+(g.hours!=="All day"?1:0)+(g.portal?1:0);
+    return [
+      {ok:g.enabled,text:"Guest network is turned on",hint:"Tick Enable guest network, then Save."},
+      {ok:g.ssid!==""&&g.ssid.toLowerCase()!==i.ssid.toLowerCase(),text:"Guest SSID is different from the internal SSID",hint:"Two networks can't share one name."},
+      {ok:GOOD.indexOf(g.security)>-1,text:"Guest network uses WPA2 or WPA3",hint:"Open, WEP, and plain WPA are weak or outdated."},
+      {ok:strong(g.pass,g.ssid)&&g.pass!==i.pass,text:"Strong guest password that differs from the internal one",hint:"Use a different, strong password for guests."},
+      {ok:!g.allowInternal,text:"Guests cannot reach the internal network",hint:"Untick Allow guests to reach the internal network."},
+      {ok:extras>=2,text:"At least two extra protections (you have "+extras+")",hint:"Limit devices, set a session limit, restrict access hours, or turn on a captive portal."}
+    ];
+  }
+  $("iCheck").addEventListener("click",function(){render("iList",checkInternal(saved));});
+  $("gCheck").addEventListener("click",function(){render("gList",checkGuest(saved));});
+  $("tGo").addEventListener("click",function(){
+    var dev=$("tDev").value,ssid=$("tNet").value,pass=$("tPass").value,I=saved.internal,G=saved.guest,net=null,why="";
+    var mI=(ssid===I.ssid), mG=(G.enabled&&ssid===G.ssid);
+    function pwOK(s,p){return isOpen(s)||p===pass;}
+    if(mI&&mG){ if(pwOK(I.security,I.pass)) net="internal"; else if(pwOK(G.security,G.pass)) net="guest"; else why="Wrong password."; }
+    else if(mI){ if(pwOK(I.security,I.pass)) net="internal"; else why="Wrong password."; }
+    else if(mG){ if(pwOK(G.security,G.pass)) net="guest"; else why="Wrong password."; }
+    else why="That network isn't available.";
+    var out=$("tOut"); out.innerHTML="";
+    function line(cls,t){var p=document.createElement("p");p.className=cls;p.textContent=t;out.appendChild(p);}
+    var devName=dev==="laptop"?"Staff laptop":"Guest phone";
+    if(!net){line("bad","✘ "+devName+" could not join. "+why);return;}
+    line("ok","✔ "+devName+" joined the "+(net==="internal"?"internal":"guest")+" network ("+ssid+").");
+    line("ok","✔ Internet: reachable.");
+    var internalOK=(net==="internal")||G.allowInternal;
+    line(internalOK?(net==="guest"?"bad":"ok"):"ok",(internalOK?(net==="guest"?"✘ ":"✔ "):"✔ ")+"Tournament Server: "+(internalOK?"reachable":"blocked"));
+    line(internalOK?(net==="guest"?"bad":"ok"):"ok",(internalOK?(net==="guest"?"✘ ":"✔ "):"✔ ")+"Admin PC: "+(internalOK?"reachable":"blocked"));
+    if(net==="guest"){
+      if(G.allowInternal) line("bad","Problem: a guest device can reach internal systems. Guests should get the internet and nothing else.");
+      else line("ok","This is the goal: guests get the internet and cannot reach internal systems.");
+      var notes=[]; if(G.maxDevices>0) notes.push("limited to "+G.maxDevices+" devices"); if(G.sessionMins>0) notes.push("sessions end after "+G.sessionMins+" minutes");
+      if(G.hours!=="All day") notes.push("available "+G.hours.toLowerCase()); if(G.portal) notes.push("terms page shown first");
+      if(notes.length) line("muted","Guest rules in effect: "+notes.join("; ")+".");
+    } else if(dev==="phone"){
+      line("bad","Problem: the guest phone is on the internal network. Guests should join the guest network.");
+    }
+    if(mI&&mG) line("bad","Warning: both networks share one name, so devices can't tell them apart.");
+  });
+  $("rLoad").addEventListener("click",function(){saved=clone(BAD);load();});
+  $("rReset").addEventListener("click",function(){saved=clone(FACT);load();});
+
+  var loggedIn=false, testLog=[];
+  function yn(v){return v?"Yes":"No";}
+  function renderEvidence(){
+    var host=$("evidence"); host.innerHTML="";
+    if(!loggedIn){var p=document.createElement("p");p.className="muted";p.textContent="No router activity yet. Log in to the practice router and start with Mission 2.";host.appendChild(p);return;}
+    var I=saved.internal,G=saved.guest;
+    var ic=checkInternal(saved), gc=checkGuest(saved);
+    var iPass=ic.filter(function(x){return x.ok;}).length, gPass=gc.filter(function(x){return x.ok;}).length;
+    var extras=[]; if(G.maxDevices>0) extras.push("limit "+G.maxDevices+" devices"); if(G.sessionMins>0) extras.push("session limit "+G.sessionMins+" min");
+    if(G.hours!=="All day") extras.push("restricted hours"); if(G.portal) extras.push("captive portal");
+    var rows=[
+      ["Internal network","SSID",I.ssid||"(blank)"],
+      ["","Security",I.security],
+      ["","Password strong?",yn(strong(I.pass,I.ssid))],
+      ["","WPS enabled?",yn(I.wps)],
+      ["","Checks passed",iPass+" of "+ic.length],
+      ["Guest network","Enabled?",yn(G.enabled)],
+      ["","SSID",G.ssid||"(blank)"],
+      ["","Security",G.security],
+      ["","Password strong and different?",yn(strong(G.pass,G.ssid)&&G.pass!==I.pass)],
+      ["","Guests can reach internal network?",yn(G.allowInternal)],
+      ["","Extra protections",extras.length?extras.join("; "):"none"],
+      ["","Checks passed",gPass+" of "+gc.length]
+    ];
+    var t=document.createElement("table"); var tb=document.createElement("tbody");
+    rows.forEach(function(r){var tr=document.createElement("tr");r.forEach(function(c,i){var td=document.createElement(i===0?"th":"td");td.textContent=c;if(i===0){td.style.background="#eef0e4";td.style.color="#0B1F3A";}tr.appendChild(td);});tb.appendChild(tr);});
+    t.appendChild(tb); host.appendChild(t);
+    var h=document.createElement("p"); h.innerHTML="<strong>Device tests I ran:</strong>"; host.appendChild(h);
+    if(!testLog.length){var n=document.createElement("p");n.className="muted";n.textContent="No device tests yet. Use the Test Devices tab.";host.appendChild(n);}
+    else{var ul=document.createElement("ul");testLog.slice(-6).forEach(function(x){var li=document.createElement("li");li.textContent=x;ul.appendChild(li);});host.appendChild(ul);}
+  }
+  ["iSave","gSave","iCheck","gCheck","rLoad","rReset"].forEach(function(id){$(id).addEventListener("click",renderEvidence);});
+  $("login").addEventListener("click",function(){ if(!$("viewMain").hidden){loggedIn=true;} renderEvidence(); });
+  $("tGo").addEventListener("click",function(){
+    var lines=[].map.call($("tOut").querySelectorAll("p"),function(p){return p.textContent;});
+    var dev=$("tDev").options[$("tDev").selectedIndex].textContent;
+    if(lines.length) testLog.push(dev+": "+lines.join(" "));
+    renderEvidence();
+  });
+  renderEvidence();
+  window.__router={get:function(){return saved;},checkInternal:checkInternal,checkGuest:checkGuest};
+})();
+</script>
+<script>
+(function(){
+  "use strict";
+  function grow(t){t.style.height="auto";t.style.height=(t.scrollHeight+2)+"px";}
+  document.querySelectorAll("input[type=text]").forEach(function(i){
+    if(i.id==="name"||i.id==="period"||i.closest(".router")) return;
+    var t=document.createElement("textarea");
+    t.rows=1; t.className="auto";
+    ["aria-label","style"].forEach(function(a){ if(i.hasAttribute(a)) t.setAttribute(a,i.getAttribute(a)); });
+    i.parentNode.replaceChild(t,i);
+  });
+  var areas=Array.prototype.slice.call(document.querySelectorAll("textarea"));
+  areas.forEach(function(t){
+    var d=document.createElement("div");
+    d.className="pc"; d.setAttribute("aria-hidden","true");
+    if(t.hasAttribute("style")) d.setAttribute("style",t.getAttribute("style"));
+    t.parentNode.insertBefore(d,t.nextSibling);
+    function sync(){d.textContent=t.value;}
+    t.addEventListener("input",function(){sync();if(t.className==="auto")grow(t);});
+    t._sync=sync; sync(); if(t.className==="auto") grow(t);
+  });
+  window.addEventListener("beforeprint",function(){areas.forEach(function(t){t._sync();});});
+  window.addEventListener("resize",function(){areas.forEach(function(t){if(t.className==="auto")grow(t);});});
+})();
+</script>
+</body>
+</html>
