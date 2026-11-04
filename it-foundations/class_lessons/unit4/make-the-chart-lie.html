@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Make the Chart Lie — Unit 4, Lesson 8</title>
+<style>
+:root{--navy:#0F2238;--navy2:#1B3553;--teal:#14907F;--teal-d:#0C6B5E;--mint:#CDEFE4;--amber:#F2B134;--amber-d:#A86F08;--coral:#E8604C;--coral-l:#FCE4DF;--bg:#EEF3F7;--line:#C9D5E0;--sub:#475C72;--ok:#0C6B5E}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:Calibri,Carlito,"Segoe UI",system-ui,sans-serif;background:var(--bg);color:var(--navy);font-size:17px;line-height:1.45;-webkit-text-size-adjust:100%}
+h1,h2,h3{font-family:Cambria,Caladea,Georgia,serif;margin:0;line-height:1.15}
+button,select,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* both languages always visible; toggle swaps which is primary */
+.bi{display:flex;flex-direction:column}
+.bi.inline{display:inline-flex;vertical-align:top}
+body[data-lang="en"] .bi .en{order:1;font-weight:700}
+body[data-lang="en"] .bi .es{order:2;font-style:italic;font-weight:400;font-size:.86em;color:var(--sub)}
+body[data-lang="es"] .bi .es{order:1;font-weight:700}
+body[data-lang="es"] .bi .en{order:2;font-style:italic;font-weight:400;font-size:.86em;color:var(--sub)}
+.on-dark .bi .en,.on-dark .bi .es{color:#fff}
+body[data-lang="en"] .on-dark .bi .es,body[data-lang="es"] .on-dark .bi .en{color:#BCD0E2}
+.btn .bi{align-items:center;text-align:center}
+.btn .bi .en,.btn .bi .es{color:inherit !important}
+
+header{background:var(--navy);color:#fff;padding:12px 18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+header .back{color:#BCD0E2;text-decoration:none;font-size:15px;border:1px solid #3B5675;padding:6px 10px;border-radius:6px}
+header .ttl{flex:1;min-width:180px}
+header h1{font-size:26px}
+header .sub{font-size:14px;color:#BCD0E2}
+.langtog{display:flex;border:1px solid #3B5675;border-radius:8px;overflow:hidden}
+.langtog button{background:transparent;color:#BCD0E2;border:0;padding:7px 14px;font-weight:700}
+.langtog button[aria-pressed="true"]{background:var(--teal);color:#fff}
+main{max-width:1000px;margin:0 auto;padding:16px 16px 60px}
+.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:18px;margin-top:16px}
+.card h2{font-size:23px;margin-bottom:8px}
+.lead{font-size:18px;margin:0}
+.muted{color:var(--sub)}
+.stepper{display:flex;gap:6px;flex-wrap:wrap;list-style:none;padding:0;margin:14px 0 0}
+.stepper li{flex:1 1 90px;min-width:84px;border-top:5px solid var(--line);padding-top:5px;font-size:13px;color:var(--sub)}
+.stepper li.done{border-color:var(--teal);color:var(--teal-d)}
+.stepper li.now{border-color:var(--amber);color:var(--navy)}
+.stepper .bi .en,.stepper .bi .es{font-size:13px !important}
+.btn{border:0;border-radius:10px;padding:11px 20px;background:var(--teal);color:#fff;min-height:48px}
+.btn:hover:not(:disabled){background:var(--teal-d)}
+.btn:disabled{background:#B8C6D2;color:#fff;cursor:not-allowed}
+.btn.alt{background:var(--navy)}
+.btn.alt:hover:not(:disabled){background:var(--navy2)}
+.btn.ghost{background:#fff;color:var(--navy);border:2px solid var(--navy)}
+.btn.amber{background:var(--amber);color:var(--navy)}
+.btn.amber:hover:not(:disabled){background:#E09E1C}
+.btn.amber:disabled{background:#B8C6D2;color:#fff}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.hero{background:var(--navy);color:#fff;border-radius:12px;padding:26px 22px;margin-top:16px}
+.hero h2{font-size:34px;margin-bottom:10px;color:#fff}
+.how{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;margin-top:16px}
+.how>div{background:var(--navy2);border-radius:10px;padding:12px 14px}
+.how .n{font-family:Cambria,Caladea,Georgia,serif;font-size:26px;color:var(--amber);display:block}
+label.f{display:block;margin-top:14px}
+label.f .bi{margin-bottom:4px}
+input[type=text],textarea{width:100%;border:2px solid var(--line);border-radius:8px;padding:10px 12px;background:#fff;min-height:46px}
+input[type=text]:focus,textarea:focus{border-color:var(--teal)}
+textarea{min-height:120px;resize:vertical}
+.fields{display:grid;grid-template-columns:2fr 1fr;gap:12px;max-width:520px}
+@media (max-width:620px){.fields{grid-template-columns:1fr}}
+.msg.good{color:var(--ok)}
+.msg.warn{color:#8A3A00}
+
+/* Part 1: number game */
+.guessrow{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap}
+.guessrow .gin{width:170px}
+.guessrow input{font-size:28px;text-align:center;font-weight:700}
+.fb{min-height:64px;margin:12px 0;font-size:20px}
+.fb .big{font-family:Cambria,Caladea,Georgia,serif;font-size:30px;font-weight:700}
+.fb.up .big{color:var(--teal-d)}
+.fb.down .big{color:#9A3412}
+.fb.win .big{color:var(--ok)}
+.log{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:8px}
+.log li{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:5px 10px;font-weight:700;font-size:18px;display:flex;align-items:center;gap:8px}
+.log li.dup{background:var(--coral-l);border-color:var(--coral)}
+.log .tag{font-size:12px;font-weight:700;color:#A12C1B}
+.rangebar{position:relative;height:30px;background:#fff;border:2px solid var(--navy);border-radius:8px;overflow:hidden;margin:6px 0}
+.rangebar .fill{position:absolute;top:0;bottom:0;background:var(--mint);border-left:3px solid var(--teal);border-right:3px solid var(--teal)}
+.rangelab{display:flex;justify-content:space-between;font-size:14px;color:var(--sub)}
+
+/* Part 2: card wall */
+.target{display:inline-flex;align-items:baseline;gap:10px;background:var(--navy);color:#fff;border-radius:10px;padding:8px 16px}
+.target .num{font-family:Cambria,Caladea,Georgia,serif;font-size:34px;font-weight:700;color:var(--amber)}
+.wall{display:grid;grid-template-columns:repeat(8,1fr);gap:8px;margin-top:12px}
+@media (max-width:620px){.wall{grid-template-columns:repeat(4,1fr)}}
+.tile{aspect-ratio:1/1.1;min-height:56px;border-radius:10px;border:3px solid var(--navy);font-family:Cambria,Caladea,Georgia,serif;font-weight:700;font-size:22px;display:flex;align-items:center;justify-content:center;padding:0}
+.tile.down{background:var(--amber);box-shadow:0 3px 0 var(--amber-d);color:var(--navy)}
+.tile.down:hover:not(:disabled){transform:translateY(-2px)}
+.tile.down .pos{font-size:16px;background:#fff;border:2px solid var(--navy);border-radius:6px;min-width:30px;padding:0 4px}
+.tile.up{background:#fff;color:var(--navy)}
+.tile.up.found{background:var(--mint);border-color:var(--teal);outline:4px solid var(--teal)}
+.tile.up.bad{border-color:var(--coral)}
+.tile.rev{background:#F6F9FB;color:var(--sub);border-style:dashed;border-color:var(--line)}
+.tile:disabled{cursor:default}
+.tilepos{display:block;font-size:11px;font-weight:400;color:var(--sub);font-family:Calibri,Carlito,sans-serif}
+
+/* results */
+.result{border:3px solid var(--teal)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin:10px 0}
+.stat{background:var(--bg);border-radius:10px;padding:10px 14px}
+.stat .big{font-family:Cambria,Caladea,Georgia,serif;font-size:34px;font-weight:700;display:block;line-height:1.1}
+.bars{margin-top:8px}
+.bar{display:grid;grid-template-columns:minmax(150px,240px) 1fr 40px;gap:10px;align-items:center;margin:6px 0}
+.bar .track{background:var(--bg);border-radius:6px;height:20px;overflow:hidden}
+.bar .fill{height:100%;border-radius:6px}
+.bar .num{font-weight:700;text-align:right}
+@media (max-width:560px){.bar{grid-template-columns:1fr 1fr 34px}}
+.strats{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-top:10px}
+.strat{text-align:left;background:#fff;border:3px solid var(--line);border-radius:12px;padding:12px 14px}
+.strat:hover{border-color:var(--teal)}
+.strat[aria-pressed="true"]{border-color:var(--teal);background:var(--mint)}
+.strat .h{font-family:Cambria,Caladea,Georgia,serif;font-size:19px;margin-bottom:4px}
+.strat .bi .en,.strat .bi .es{font-weight:400}
+body[data-lang="en"] .strat .bi .en{font-weight:600}
+body[data-lang="es"] .strat .bi .es{font-weight:600}
+body[data-lang="en"] .strat .h .bi .en,body[data-lang="es"] .strat .h .bi .es{font-weight:700}
+.sumbox{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:14px;min-height:240px;background:#F6F9FB}
+.copied{color:var(--ok);font-weight:700}
+.challenge{border:3px dashed var(--amber)}
+.reset{background:none;border:0;color:var(--sub);text-decoration:underline;font-size:14px;margin-top:22px}
+
+/* ---- Build a Feed ---- */
+.persona{background:var(--mint);border-radius:12px;padding:14px 16px;margin-top:12px}
+.sliders{display:flex;flex-direction:column;gap:14px}
+.sl{border-bottom:1px solid var(--line);padding-bottom:12px}
+.sl:last-child{border-bottom:0}
+.sl .top{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.sl output{font-family:Cambria,Caladea,Georgia,serif;font-size:26px;font-weight:700;color:var(--teal-d);min-width:28px;text-align:right}
+.sl input[type=range]{width:100%;accent-color:#14907F;height:34px}
+.sl .hint{font-size:14px;color:var(--sub)}
+.scale{display:flex;justify-content:space-between;font-size:12px;color:var(--sub)}
+.layout{display:grid;grid-template-columns:minmax(300px,380px) 1fr;gap:16px;align-items:start}
+@media (max-width:860px){.layout{grid-template-columns:1fr}}
+.meter{background:var(--navy);color:#fff;border-radius:12px;padding:12px 16px;margin-bottom:12px}
+.meter .big{font-family:Cambria,Caladea,Georgia,serif;font-size:38px;font-weight:700;color:var(--amber);line-height:1}
+.meter .goal{height:14px;background:#2B476A;border-radius:7px;position:relative;margin-top:8px;overflow:hidden}
+.meter .goal .bar{position:absolute;left:0;top:0;bottom:0;background:var(--amber);border-radius:7px}
+.meter .goal .line{position:absolute;top:-2px;bottom:-2px;width:3px;background:#fff}
+.meter.win .big{color:#7CE8C9}
+.meter.win .goal .bar{background:#7CE8C9}
+.feed{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.post{display:grid;grid-template-columns:38px 1fr 54px;gap:10px;align-items:start;background:#fff;border:2px solid var(--line);border-radius:12px;padding:10px 12px}
+.post.in{border-color:var(--teal);background:#F7FCFA}
+.post.out{opacity:.62}
+.post.wanted{box-shadow:inset 6px 0 0 var(--teal)}
+.post .rank{font-family:Cambria,Caladea,Georgia,serif;font-size:24px;font-weight:700;color:var(--navy2)}
+.post .who{font-size:14px;color:var(--sub);margin-bottom:2px}
+.post .txt{font-size:16px}
+.post .txt .bi .en,.post .txt .bi .es{font-weight:400}
+body[data-lang="en"] .post .txt .bi .en{font-weight:600}
+body[data-lang="es"] .post .txt .bi .es{font-weight:600}
+.badges{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.bdg{font-size:12px;border:1px solid var(--line);border-radius:6px;padding:1px 7px;background:var(--bg);color:var(--navy2);font-weight:600}
+.bdg.hot{background:var(--coral-l);border-color:var(--coral);color:#8A2A1A}
+.bdg.ad{background:#FFF3D6;border-color:var(--amber);color:#7A5200}
+.delta{font-weight:700;font-size:15px;text-align:right}
+.delta.up{color:var(--teal-d)} .delta.down{color:#9A3412}
+.cut{display:flex;align-items:center;gap:10px;color:var(--sub);font-size:14px;margin:4px 0}
+.cut:before,.cut:after{content:"";flex:1;border-top:3px dashed var(--coral)}
+.cols2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:860px){.cols2{grid-template-columns:1fr}}
+.wlist{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 10px}
+.wlist>span{display:inline-flex;gap:6px;align-items:baseline;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:2px 8px;font-size:14px;font-weight:700}
+.poll{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin-top:10px}
+.poll button{text-align:left;background:#fff;border:3px solid var(--line);border-radius:12px;padding:10px 14px}
+.poll button:hover{border-color:var(--teal)}
+.poll button[aria-pressed="true"]{border-color:var(--teal);background:var(--mint)}
+
+
+/* ---- Who Gets Flagged ---- */
+.grp{margin-top:10px}
+.grp h4{margin:0 0 6px;font-family:Cambria,Caladea,Georgia,serif;font-size:17px;color:var(--navy2)}
+.tiles{display:grid;grid-template-columns:repeat(10,1fr);gap:6px}
+@media (max-width:620px){.tiles{grid-template-columns:repeat(5,1fr)}}
+.tile2{position:relative;border:2px solid var(--line);background:#fff;border-radius:8px;padding:6px 0;font-size:13px;font-weight:700;color:var(--sub);min-height:44px}
+.tile2.flag{background:var(--amber);border-color:var(--navy);color:var(--navy);box-shadow:0 2px 0 var(--amber-d)}
+.tile2.sel{outline:4px solid var(--teal);outline-offset:1px}
+.tile2.need:after{content:"●";position:absolute;right:4px;top:0;color:#0C6B5E;font-size:14px}
+.tile2.fa{border-color:var(--coral);background:var(--coral-l);color:#8A2A1A}
+.tile2.miss{border-style:dashed;border-color:var(--teal)}
+.legend2{display:flex;flex-wrap:wrap;gap:10px 18px;font-size:14px;margin-top:10px;color:var(--sub)}
+.legend2 i{display:inline-block;width:14px;height:14px;border-radius:4px;border:2px solid var(--navy);vertical-align:-2px;margin-right:5px}
+.inspect{background:var(--bg);border:2px solid var(--line);border-radius:10px;padding:10px 14px;margin-top:10px;min-height:64px}
+.m3{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin-top:8px}
+.m3>div{background:#1B3553;border-radius:8px;padding:6px 10px}
+.m3 .v{font-family:Cambria,Caladea,Georgia,serif;font-size:26px;font-weight:700;color:var(--amber);line-height:1.1}
+.m3 .l{font-size:12px;color:#BCD0E2}
+.m3 .ok .v{color:#7CE8C9}
+.chk{font-size:15px;margin-top:8px}
+
+
+/* ---- Clean It Up ---- */
+.dtab{display:flex;flex-direction:column;gap:6px;margin-top:10px}
+.drow{display:grid;grid-template-columns:76px minmax(90px,1fr) 205px 84px 235px;gap:8px;align-items:center;background:#fff;border:2px solid var(--line);border-radius:10px;padding:6px 10px}
+.drow.head{background:transparent;border:0;font-weight:700;color:var(--sub);padding-top:0;padding-bottom:0;font-size:14px}
+.drow .id{font-weight:700;font-size:14px;color:var(--navy2)}
+.drow .id small{display:block;font-weight:400;color:var(--sub)}
+.drow .raw{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:16px;font-weight:700;background:var(--bg);border-radius:6px;padding:4px 8px;overflow-wrap:anywhere}
+.drow .raw.blank{color:var(--sub);font-style:italic;font-weight:400}
+.drow select,.drow input[type=text]{min-height:40px;padding:6px 8px;font-size:15px}
+.drow.right{border-color:var(--teal);background:#F7FCFA}
+.drow.wrong{border-color:var(--coral);background:var(--coral-l)}
+.drow:has(select[data-f="act"] option[value="keep"]:checked){border-color:#9DB4C8}
+@media (max-width:760px){.drow{grid-template-columns:1fr 1fr}.drow.head{display:none}.drow .raw,.drow .id{grid-column:1/-1}}
+.m2{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-top:8px}
+.m2>div{background:#1B3553;border-radius:8px;padding:8px 12px}
+.m2 .v{font-family:Cambria,Caladea,Georgia,serif;font-size:30px;font-weight:700;color:var(--amber);line-height:1.1}
+.m2 .l{font-size:13px;color:#BCD0E2}
+.m2 .good .v{color:#7CE8C9}
+.chartbox{background:#fff;border:2px solid var(--line);border-radius:12px;padding:10px;overflow-x:auto}
+.chartbox svg{width:100%;height:auto;min-width:420px}
+.opts{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end}
+.opts label{display:block}
+select.s1{width:auto;min-width:170px}
+
+
+/* ---- Make the Chart Lie ---- */
+.ctrls{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px 14px;margin-top:6px}
+.ctrls label{display:block}
+.ctrls select{min-height:42px}
+.two2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:860px){.two2{grid-template-columns:1fr}}
+.chip{display:inline-block;background:var(--coral-l);border:1px solid var(--coral);color:#8A2A1A;border-radius:999px;padding:2px 10px;font-size:14px;font-weight:700;margin:2px 4px 2px 0}
+.chip.none{background:var(--bg);border-color:var(--line);color:var(--sub);font-weight:400}
+.on-dark .chip .bi .en,.on-dark .chip .bi .es{color:#8A2A1A !important;font-size:14px !important}
+.on-dark .chip.none .bi .en,.on-dark .chip.none .bi .es{color:#475C72 !important}
+.itemgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:14px;margin-top:12px}
+.item{background:#fff;border:2px solid var(--line);border-radius:12px;padding:10px 12px}
+.item.right{border-color:var(--teal);background:#F7FCFA}
+.item .claimline{font-size:16px;margin:4px 0 6px}
+.item svg{width:100%;height:auto;display:block}
+.item .note{font-size:13px;color:var(--sub);margin-top:4px}
+.item select{margin-top:8px}
+.honest{border:2px dashed var(--teal);background:#F7FCFA}
+.two2>*,.itemgrid>*,.ctrls>*{min-width:0}
+.item select,.ctrls select{max-width:100%;text-overflow:ellipsis}
+
+@media (prefers-reduced-motion:reduce){*{transition:none !important;animation:none !important}}
+</style>
+</head>
+<body data-lang="en">
+<header class="on-dark">
+  <a class="back" href="../index.html"><span class="bi inline"><span class="en">← Lessons</span><span class="es">← Lecciones</span></span></a>
+  <div class="ttl"><h1>Make the Chart Lie</h1>
+    <div class="sub"><span class="bi inline"><span class="en">Unit 4 · Lesson 8</span><span class="es">Unidad 4 · Lección 8</span></span></div></div>
+  <div class="langtog" role="group" aria-label="Main language / Idioma principal">
+    <button type="button" data-act="lang" data-l="en" aria-pressed="true">EN</button>
+    <button type="button" data-act="lang" data-l="es" aria-pressed="false">ES</button>
+  </div>
+</header>
+<main id="app"></main>
+<div id="live" class="sr" aria-live="polite"></div>
+<script>
+(function(){
+'use strict';
+/* ===== tiny dependency-free PDF writer (Helvetica, WinAnsi, vector shapes) ===== */
+const PDFLIB=(function(){
+  const R=[278,278,355,556,556,889,667,191,333,333,389,584,278,333,278,278,556,556,556,556,556,556,556,556,556,556,278,278,584,584,584,556,1015,
+    667,667,722,722,667,611,778,722,278,500,667,556,833,722,778,667,778,722,667,611,722,667,944,667,667,611,278,278,278,469,556,333,
+    556,556,500,556,556,278,556,556,222,222,500,222,833,556,556,556,556,333,500,278,556,500,722,500,500,500,334,260,334,584];
+  const BD=[278,333,474,556,556,889,722,238,333,333,389,584,278,333,278,278,556,556,556,556,556,556,556,556,556,556,333,333,584,584,584,611,975,
+    722,722,722,722,667,611,778,722,278,556,722,611,833,722,778,667,778,722,667,611,722,667,944,667,667,611,333,278,333,584,556,333,
+    556,611,556,611,556,333,611,611,278,278,556,278,889,611,611,611,611,389,556,333,611,556,778,556,556,500,389,280,389,584];
+  const MAP={'\u2018':0x91,'\u2019':0x92,'\u201C':0x93,'\u201D':0x94,'\u2013':0x96,'\u2014':0x97,'\u2026':0x85,'\u2022':0x95};
+  function cw(ch,font){
+    let c=ch.codePointAt(0);
+    if(c<32||c>126){ if(ch==='\u00BF') c=63; else if(ch==='\u00A1') c=33; else { const b=ch.normalize('NFD')[0].codePointAt(0); c=(b>=32&&b<=126)?b:110; } }
+    const tab=font==='F2'?BD:R; return (tab[c-32]||556)/1000;
+  }
+  function sw(s,font,size){let w=0; for(const ch of s) w+=cw(ch,font); return w*size;}
+  function enc(s){
+    let o=''; s=String(s).normalize('NFC');
+    for(const ch of s){
+      let c=ch.codePointAt(0);
+      if(MAP[ch]) c=MAP[ch]; else if(c>255) c=63;
+      if(c===40||c===41||c===92) o+='\\'+String.fromCharCode(c);
+      else if(c<32) o+=' ';
+      else if(c>126) o+='\\'+c.toString(8).padStart(3,'0');
+      else o+=String.fromCharCode(c);
+    } return o;
+  }
+  function wrap(s,font,size,maxW){
+    const out=[];
+    String(s).split(/\r?\n/).forEach(par=>{
+      let line='';
+      par.split(/\s+/).filter(Boolean).forEach(w0=>{
+        let w=w0;
+        while(sw(w,font,size)>maxW){            // break very long words
+          let k=1; while(k<w.length&&sw(w.slice(0,k+1),font,size)<=maxW) k++;
+          if(line){out.push(line); line='';}
+          out.push(w.slice(0,k)); w=w.slice(k);
+        }
+        const t=line?line+' '+w:w;
+        if(sw(t,font,size)<=maxW) line=t; else {out.push(line); line=w;}
+      });
+      out.push(line);
+    });
+    return out;
+  }
+  const NAVY=[0.059,0.133,0.22], TEAL=[0.047,0.42,0.369], GRAY=[0.28,0.36,0.45], MINT=[0.804,0.937,0.894], AMBER=[0.992,0.941,0.816], WHITE=[1,1,1];
+  function doc(){
+    const W=612,H=792,M=54; const pages=[]; let cur=null; let y=M;
+    const f=n=>(Math.round(n*100)/100).toString();
+    const col=(c,s)=>`${f(c[0])} ${f(c[1])} ${f(c[2])} ${s?'RG':'rg'}\n`;
+    const d={W,H,M};
+    d.newPage=()=>{ if(cur!==null) pages.push(cur); cur=''; y=M; };
+    d.y=()=>y; d.setY=v=>{y=v;};
+    d.ensure=h=>{ if(cur===null||y+h>H-M) d.newPage(); };
+    d.text=(s,x,base,font,size,c)=>{ cur+=col(c||NAVY,false)+`BT /${font} ${size} Tf ${f(x)} ${f(H-base)} Td (${enc(s)}) Tj ET\n`; };
+    d.textC=(s,cx,base,font,size,c)=>{ d.text(s,cx-sw(s,font,size)/2,base,font,size,c); };
+    d.title=(en,sub)=>{ d.ensure(60); d.text(en,M,y+20,'F2',22,NAVY); d.text(sub,M,y+38,'F3',11,GRAY); y+=54; };
+    d.kv=(k,v)=>{ d.ensure(18); d.text(k+':',M,y+11,'F2',11,NAVY); const lines=wrap(v,'F1',11,W-2*M-150);
+      lines.forEach((l,i)=>{ if(i>0) d.ensure(15); d.text(l,M+150,y+11,'F1',11,NAVY); y+=15; }); if(!lines.length) y+=15; };
+    d.gap=n=>{y+=n;};
+    d.heading=(en,es)=>{ d.ensure(52); y+=10; d.text(en,M,y+12,'F2',13,TEAL); d.text(es,M,y+26,'F3',10.5,GRAY);
+      cur+=col(TEAL,true)+`0.8 w ${M} ${f(H-(y+31))} m ${W-M} ${f(H-(y+31))} l S\n`; y+=40; };
+    d.para=(s,o)=>{ o=o||{}; const size=o.size||11, font=o.font||'F1', lead=size*1.35, w=W-2*M-(o.indent||0);
+      wrap(s,font,size,w).forEach(l=>{ d.ensure(lead+2); d.text(l,M+(o.indent||0),y+size,font,size,o.color||NAVY); y+=lead; }); y+=4; };
+    d.line=(s,o)=>d.para(s,o);
+    /* ---- shapes (top-left coordinates) ---- */
+    function rr(x,top,w,h,r){const k=0.5523*r,X=x,Y=H-top;
+      return `${f(X+r)} ${f(Y)} m ${f(X+w-r)} ${f(Y)} l ${f(X+w-r+k)} ${f(Y)} ${f(X+w)} ${f(Y-r+k)} ${f(X+w)} ${f(Y-r)} c ${f(X+w)} ${f(Y-h+r)} l `+
+        `${f(X+w)} ${f(Y-h+r-k)} ${f(X+w-r+k)} ${f(Y-h)} ${f(X+w-r)} ${f(Y-h)} c ${f(X+r)} ${f(Y-h)} l ${f(X+r-k)} ${f(Y-h)} ${f(X)} ${f(Y-h+r-k)} ${f(X)} ${f(Y-h+r)} c `+
+        `${f(X)} ${f(Y-r)} l ${f(X)} ${f(Y-r+k)} ${f(X+r-k)} ${f(Y)} ${f(X+r)} ${f(Y)} c h\n`;}
+    d.box=(x,top,w,h,r,fill)=>{ cur+='q\n'+col(fill,false)+col(NAVY,true)+'1.2 w\n'+rr(x,top,w,h,Math.min(r,h/2,w/2))+'B\nQ\n'; };
+    d.diamond=(cx,top,w,h,fill)=>{ const Y=H-top; cur+='q\n'+col(fill,false)+col(NAVY,true)+`1.2 w\n${f(cx)} ${f(Y)} m ${f(cx+w/2)} ${f(Y-h/2)} l ${f(cx)} ${f(Y-h)} l ${f(cx-w/2)} ${f(Y-h/2)} l h B\nQ\n`; };
+    d.seg=(x1,y1,x2,y2)=>{ cur+='q\n'+col(NAVY,true)+`1.2 w ${f(x1)} ${f(H-y1)} m ${f(x2)} ${f(H-y2)} l S\nQ\n`; };
+    d.arrow=(x,y1,y2)=>{ d.seg(x,y1,x,y2-4); cur+='q\n'+col(NAVY,false)+`${f(x-4)} ${f(H-(y2-6))} m ${f(x+4)} ${f(H-(y2-6))} l ${f(x)} ${f(H-y2)} l f\nQ\n`; };
+    d.centerLines=(lines,cx,top,h,size,font,c)=>{ const lead=size*1.2, tot=lines.length*lead; let b=top+(h-tot)/2+lead*0.78;
+      lines.forEach(l=>{ d.textC(l,cx,b,font||'F1',size,c); b+=lead; }); };
+    d.wrap=(s,font,size,w)=>wrap(s,font,size,w);
+    d.build=title=>{
+      if(cur!==null) pages.push(cur); if(!pages.length) pages.push('');
+      const n=pages.length, objs=[]; const kids=[];
+      objs[1]='<< /Type /Catalog /Pages 2 0 R >>';
+      for(let i=0;i<n;i++) kids.push((6+2*i)+' 0 R');
+      objs[2]=`<< /Type /Pages /Kids [${kids.join(' ')}] /Count ${n} >>`;
+      objs[3]='<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>';
+      objs[4]='<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>';
+      objs[5]='<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Oblique /Encoding /WinAnsiEncoding >>';
+      pages.forEach((p,i)=>{
+        objs[6+2*i]=`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${W} ${H}] /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R >> >> /Contents ${7+2*i} 0 R >>`;
+        objs[7+2*i]=`<< /Length ${p.length} >>\nstream\n${p}endstream`;
+      });
+      const info=6+2*n; objs[info]=`<< /Title (${enc(title||'')}) /Producer (Class Resources Site) >>`;
+      let out='%PDF-1.4\n%\u00E2\u00E3\u00CF\u00D3\n'; const off=[];
+      for(let i=1;i<=info;i++){ off[i]=out.length; out+=`${i} 0 obj\n${objs[i]}\nendobj\n`; }
+      const xr=out.length; out+=`xref\n0 ${info+1}\n0000000000 65535 f \n`;
+      for(let i=1;i<=info;i++) out+=String(off[i]).padStart(10,'0')+' 00000 n \n';
+      out+=`trailer\n<< /Size ${info+1} /Root 1 0 R /Info ${info} 0 R >>\nstartxref\n${xr}\n%%EOF`;
+      const u=new Uint8Array(out.length); for(let i=0;i<out.length;i++) u[i]=out.charCodeAt(i)&255; return u;
+    };
+    d.newPage();
+    return d;
+  }
+  function fold(s){return String(s).normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^A-Za-z0-9]+/g,'_').replace(/^_+|_+$/g,'')||'student';}
+  function download(bytes,name){
+    const blob=new Blob([bytes],{type:'application/pdf'}), url=URL.createObjectURL(blob);
+    const a=document.createElement('a'); a.href=url; a.download=name; document.body.appendChild(a); a.click();
+    setTimeout(()=>{URL.revokeObjectURL(url); a.remove();},2000);
+  }
+  return {doc,fold,download,width:sw,NAVY,TEAL,GRAY,MINT,AMBER,WHITE};
+})();
+
+const KEY='u4l08-makethechartlie-v1';
+const B=(en,es,c)=>`<span class="bi${c?' '+c:''}"><span class="en">${en}</span><span class="es">${es}</span></span>`;
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const $=s=>document.querySelector(s);
+function mulberry(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+const r1=x=>Math.round(x*10)/10;
+function fmt(v){return Math.abs(v-Math.round(v))<1e-6?String(Math.round(v)):(Math.round(v*10)/10).toFixed(1);}
+
+/* ================= the honest data: lunches sold per week (different for every student) ================= */
+const WEEKS=8, SHAPE={short:0.6,medium:1,tall:1.4}, GOAL1=60, GOAL2=10, MINMOVES=3;
+function bestCrash(v){   // the most dramatic drop any legal setting can show (tight axis, best window, tall shape)
+  let best=-99; for(const sh of ['medium','tall']) for(let st=1;st<=5;st++) for(let en=st+3;en<=WEEKS;en++){
+    const w=v.slice(st-1,en), mn=Math.min(...w), mx=Math.max(...w), lo=Math.min(Math.floor((mn-1)/5)*5,mn-1), hi=Math.max(420,mx+1);
+    best=Math.max(best,Math.round((v[st-1]-v[en-1])/(hi-lo)*SHAPE[sh]*100)); }
+  return best;
+}
+function makeSeries(seed){
+  const r=mulberry(seed); let v;
+  for(let t=0;t<200;t++){
+    const base=400+Math.floor(r()*40), drop=18+Math.floor(r()*10); v=[base];
+    for(let i=1;i<WEEKS;i++){ v.push(Math.round(base-drop*i/(WEEKS-1)+(r()*6-3))); }
+    const mx=Math.max(...v), mn=Math.min(...v);
+    if(v[0]-v[WEEKS-1]>=14 && mx-mn<=36 && bestCrash(v)>=70) break;
+  }
+  return v;
+}
+/* ================= round calculations ================= */
+let S, VALS, ITEMS;
+function vis(R){const a=Math.min(R.start,R.end), b=Math.max(R.start,R.end); return {a:a,b:b,vals:VALS.slice(a-1,b)};}
+function calc(R){
+  const w=vis(R), mn=Math.min(...w.vals), mx=Math.max(...w.vals);
+  const lo=Math.min(R.ymin,mn-1), hi=Math.max(R.ymax,mx+1);
+  const first=VALS[w.a-1], last=VALS[w.b-1], v=(first-last)/(hi-lo)*SHAPE[R.shape];
+  const tricks=[];
+  if(lo>=0.2*mn) tricks.push(['cut','Cut-off axis','Eje cortado']);
+  if((hi-lo)>=4*(mx-mn)&&lo<0.2*mn) tricks.push(['zoom','Axis zoomed far out','Eje muy alejado']);
+  if(w.b-w.a+1<WEEKS) tricks.push(['cherry','Cherry-picked weeks','Semanas escogidas a conveniencia']);
+  if(R.shape!=='medium') tricks.push(['shape',R.shape==='tall'?'Stretched chart':'Squashed chart',R.shape==='tall'?'Gráfica alargada':'Gráfica aplastada']);
+  return {w:w,lo:lo,hi:hi,v:v,pct:Math.round(v*100),tricks:tricks};
+}
+function specFor(R){
+  const c=calc(R), w=c.w, xs=[]; for(let i=w.a;i<=w.b;i++) xs.push('W'+i);
+  return {type:R.type,xs:xs,series:[{vals:w.vals,color:'#14907F'}],lo:c.lo,hi:c.hi,h:{short:160,medium:240,tall:340}[R.shape],title:R.title.trim(),ytitle:'Lunches sold / Almuerzos vendidos'};
+}
+function honestSpec(){
+  const xs=[]; for(let i=1;i<=WEEKS;i++) xs.push('W'+i);
+  return {type:'line',xs:xs,series:[{vals:VALS,color:'#0F2238'}],lo:0,hi:Math.ceil(Math.max(...VALS)/100)*100,h:240,title:'',ytitle:'Lunches sold / Almuerzos vendidos'};
+}
+/* ================= SVG chart (also used for the "spot the trick" items) ================= */
+function svgChart(sp){
+  const W=sp.w||560, H=sp.h||240, L=56, Rm=16, T=sp.title?34:(sp.series.some(q=>q.name)?36:16), Bm=sp.xtitle?56:40, pw=W-L-Rm, ph=H-T-Bm, n=sp.xs.length, lo=sp.lo, hi=sp.hi, flip=!!sp.flip;
+  const Y=v=>flip?T+(v-lo)/(hi-lo)*ph:T+ph-(v-lo)/(hi-lo)*ph, X=i=>L+(i+0.5)*(pw/n);
+  let g=''; for(let k=0;k<=4;k++){ const v=lo+(hi-lo)*k/4, yy=Y(v); g+=`<line x1="${L}" y1="${yy}" x2="${W-Rm}" y2="${yy}" stroke="#E3EAF0"/><text x="${L-8}" y="${yy+4}" text-anchor="end" font-size="12" fill="#475C72">${fmt(v)}</text>`; }
+  let body='';
+  if(sp.type==='bar'){ const bw=Math.min(70,pw/n*0.6); sp.series[0].vals.forEach((v,i)=>{ const y0=Y(lo), y1=Y(v); body+=`<rect x="${X(i)-bw/2}" y="${Math.min(y0,y1)}" width="${bw}" height="${Math.abs(y0-y1)}" rx="3" fill="${sp.series[0].color}" stroke="#0F2238" stroke-width="2"/><text x="${X(i)}" y="${y1+(flip?16:-6)}" text-anchor="middle" font-size="12" font-weight="700" fill="#0F2238">${fmt(v)}</text>`; }); }
+  else sp.series.forEach(s=>{ const pts=s.vals.map((v,i)=>X(i)+','+Y(v)).join(' '); body+=`<polyline points="${pts}" fill="none" stroke="${s.color}" stroke-width="4" stroke-linejoin="round"/>`+s.vals.map((v,i)=>`<circle cx="${X(i)}" cy="${Y(v)}" r="4.5" fill="${s.color}"/>`).join(''); });
+  const xl=sp.xs.map((x,i)=>`<text x="${X(i)}" y="${T+ph+(flip?-6:18)}" text-anchor="middle" font-size="${n>9?10:12}" fill="#475C72">${esc(x)}</text>`).join('');
+  const leg=sp.series.filter(s=>s.name).map((s,i)=>`<text x="${W-Rm}" y="${T-4+i*14}" text-anchor="end" font-size="12" font-weight="700" fill="${s.color}">${esc(s.name)}</text>`).join('');
+  const ttl=sp.title?`<text x="${L}" y="20" font-size="15" font-weight="700" fill="#0F2238">${esc(sp.title)}</text>`:'';
+  const yt=sp.ytitle?`<text x="12" y="${T+ph/2}" transform="rotate(-90 12 ${T+ph/2})" text-anchor="middle" font-size="11" font-weight="700" fill="#0F2238">${esc(sp.ytitle)}</text>`:'';
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Chart">${g}<line x1="${L}" y1="${T}" x2="${L}" y2="${T+ph}" stroke="#0F2238" stroke-width="2"/><line x1="${L}" y1="${T+ph}" x2="${W-Rm}" y2="${T+ph}" stroke="#0F2238" stroke-width="2"/>${body}${xl}${leg}${ttl}${yt}</svg>`;
+}
+/* ================= "spot the trick" items: 6 charts, shuffled and re-numbered for each student ================= */
+const TRICKS=[['axis','Cut-off axis','Eje cortado'],['cherry','Cherry-picked dates','Fechas escogidas a conveniencia'],['flip','Flipped axis','Eje invertido'],['cause','Correlation shown as cause','Correlación presentada como causa'],['fine','No trick: it is honest','Sin truco: es honesta']];
+const TN={}; TRICKS.forEach(t=>TN[t[0]]=t);
+function makeItems(seed){
+  const r=mulberry(seed+7), j=(a,b)=>a+Math.floor(r()*(b-a+1)), it=[];
+  const A=(98+j(0,8))/10, Bv=Math.round((A+1+r()*0.4)*10)/10;
+  it.push({kind:'axis',spec:{type:'bar',xs:['Brand A / Marca A','Brand B / Marca B'],series:[{vals:[A,Bv],color:'#14907F'}],lo:Math.floor(A)-0.5,hi:Math.ceil(Bv),h:230,ytitle:'Battery hours / Horas'},
+    claim:["Brand B's battery lasts WAY longer!",'¡La batería de la Marca B dura MUCHÍSIMO más!'],note:['','']});
+  const c0=40+j(0,2), cv=[c0,c0+1,c0,c0+2,c0+1,c0+3]; 
+  it.push({kind:'axis',spec:{type:'line',xs:['W1','W2','W3','W4','W5','W6'],series:[{vals:cv,color:'#E8604C'}],lo:c0-1,hi:c0+4,h:230,ytitle:'Complaints / Quejas'},
+    claim:['Complaints are exploding!','¡Las quejas se están disparando!'],note:['','']});
+  const d0=300+j(0,40); const dv=[d0,d0+Math.round(r()*8+6),d0+Math.round(r()*8+22)];
+  it.push({kind:'cherry',spec:{type:'line',xs:['W18','W19','W20'],series:[{vals:dv,color:'#14907F'}],lo:d0-5,hi:dv[2]+10,h:230,ytitle:'Downloads / Descargas'},
+    claim:['Downloads are skyrocketing!','¡Las descargas se están disparando!'],note:['This chart shows weeks 18 to 20 only. Weeks 1 to 17 are not shown. Weeks 1 to 10 had more downloads than week 20.','Esta gráfica muestra solo las semanas 18 a 20. No se muestran las semanas 1 a 17. Las semanas 1 a 10 tuvieron más descargas que la semana 20.']});
+  const i0=20+j(0,6), iv=[i0,i0+5,i0+11,i0+16,i0+22,i0+28];
+  it.push({kind:'flip',spec:{type:'line',xs:['Jan','Feb','Mar','Apr','May','Jun'],series:[{vals:iv,color:'#0F2238'}],lo:0,hi:60,flip:true,h:230,ytitle:'Injuries / Lesiones'},
+    claim:['Injuries are falling fast!','¡Las lesiones bajan rápido!'],note:['','']});
+  const base=[10,12,25,45,70,90,100,95,70,40,20,10].map(v=>v+j(-4,4)), sh=[1,1,2,4,6,8,9,8,6,3,1,1].map(v=>Math.max(0,v*10+j(-4,4)));
+  it.push({kind:'cause',spec:{type:'line',xs:['J','F','M','A','M','J','J','A','S','O','N','D'],series:[{vals:base.map(v=>Math.max(0,v)),color:'#F2B134',name:'Ice cream sales / Ventas de helado'},{vals:sh.map(v=>Math.max(0,Math.min(100,v))),color:'#0F2238',name:'Shark sightings / Avistamientos de tiburones'}],lo:0,hi:100,h:240,ytitle:'Index (made up) / Índice (inventado)'},
+    claim:['Ice cream causes shark attacks!','¡El helado causa ataques de tiburón!'],note:['These numbers are made up.','Estos números son inventados.']});
+  const s9=Math.round((70+j(-3,3))/10*10)/10;
+  it.push({kind:'fine',spec:{type:'bar',xs:['9th / 9.º','10th / 10.º','11th / 11.º'],series:[{vals:[s9,Math.round((s9-0.1)*10)/10,Math.round((s9-0.2)*10)/10],color:'#14907F'}],lo:0,hi:10,h:230,ytitle:'Hours of sleep / Horas de sueño'},
+    claim:['Sleep is about the same in every grade.','El sueño es casi igual en todos los grados.'],note:['Survey of 30 students per grade. The axis starts at 0.','Encuesta de 30 estudiantes por grado. El eje empieza en 0.']});
+  // shuffle and give each chart a new letter
+  for(let i=it.length-1;i>0;i--){const k=Math.floor(r()*(i+1)); const t=it[i]; it[i]=it[k]; it[k]=t;}
+  return it.map((x,i)=>Object.assign(x,{id:'C'+(i+1)}));
+}
+
+/* ================= state ================= */
+function round(){return {ymin:0,ymax:500,start:1,end:8,type:'line',shape:'medium',title:'',moves:0,status:'open',locks:0};}
+function fresh(){return {v:1,name:'',period:'',lang:'en',stage:'welcome',seed:Math.floor(Math.random()*1e9)+1,r1:round(),r2:round(),started2:false,r3:{place:{},checks:0,status:'open',c1:null,c2:null,item:{},msg:null},refl:''};}
+function load(){try{const o=JSON.parse(localStorage.getItem(KEY)); if(o&&o.v===1&&o.r1&&o.r2&&o.r3) return o;}catch(e){} return fresh();}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+const truth=id=>ITEMS.find(x=>x.id===id).kind;
+function incomplete3(){return ITEMS.filter(x=>!S.r3.place[x.id]);}
+function runCheck3(){
+  const P=S.r3; if(P.status==='done'||incomplete3().length) return; P.checks++; const res={}; let k=0;
+  ITEMS.forEach(x=>{res[x.id]=P.place[x.id]===x.kind; if(res[x.id]) k++;}); P['c'+P.checks]=res;
+  if(k===ITEMS.length||P.checks>=2){
+    ITEMS.forEach(x=>{const a=P.c1[x.id],b=P.c2?P.c2[x.id]:null; P.item[x.id]=P.checks===1?'first':((a&&b)?'first':(!a&&b)?'second':'revealed');});
+    const all=k===ITEMS.length; ITEMS.forEach(x=>{P.place[x.id]=x.kind;}); P.status='done'; P.msg={t:all?(P.checks===1?'first':'second'):'revealed'};
+  } else { const miss={}; ITEMS.forEach(x=>{if(!res[x.id]) miss[x.kind]=(miss[x.kind]||0)+1;}); P.msg={t:'wrong',k:k,n:ITEMS.length,miss:miss}; }
+}
+const out3=()=>{const v=Object.values(S.r3.item); return {first:v.filter(x=>x==='first').length,second:v.filter(x=>x==='second').length,revealed:v.filter(x=>x==='revealed').length};};
+
+/* ================= views ================= */
+const STEPS=[['r1',B('Round 1','Ronda 1')],['r2',B('Round 2','Ronda 2')],['r3',B('Spot it','Detéctalo')],['refl',B('Reflect','Reflexión')],['turnin',B('Turn in','Entregar')]];
+function stepper(stage){const idx=STEPS.findIndex(s=>s[0]===stage);
+  return `<ol class="stepper">${STEPS.map((s,i)=>`<li class="${i<idx?'done':i===idx?'now':''}" ${i===idx?'aria-current="step"':''}>${s[1]}</li>`).join('')}</ol>`;}
+const needLetters=(len,min)=>len>=min?'':B(`Keep writing: ${min-len} more letters.`,`Sigue escribiendo: faltan ${min-len} letras.`);
+
+function viewWelcome(){return `
+  <section class="hero on-dark">
+    <h2>${B('Make the Chart Lie','Haz que la gráfica mienta')}</h2>
+    <p class="lead">${B('The numbers can be perfectly true and the chart can still mislead you. Today you will draw the same true data two ways, one that says the lunch line is crashing and one that says it is rock steady, and then learn to catch these tricks in other charts.','Los números pueden ser totalmente ciertos y la gráfica aun así puede engañarte. Hoy vas a dibujar los mismos datos verdaderos de dos formas: una que dice que la fila del almuerzo se está desplomando y otra que dice que está firme como una roca. Luego aprenderás a descubrir estos trucos en otras gráficas.')}</p>
+    <div class="how">
+      <div><span class="n">1</span>${B('Change the chart, never the numbers, so it looks like sales are crashing.','Cambia la gráfica, nunca los números, para que parezca que las ventas se desploman.')}</div>
+      <div><span class="n">2</span>${B('Use the same data to make it look rock steady.','Usa los mismos datos para que parezca firme como una roca.')}</div>
+      <div><span class="n">3</span>${B('Spot the trick hiding in six charts, reflect, and download your PDF.','Descubre el truco escondido en seis gráficas, reflexiona y descarga tu PDF.')}</div>
+    </div>
+    <p style="margin-top:14px">${B('The data is made up. Your data is a little different from your classmates\'.','Los datos son inventados. Tus datos son un poco distintos a los de tus compañeros.')}</p>
+  </section>
+  <section class="card">
+    <h2>${B('Before you start','Antes de empezar')}</h2>
+    <div class="fields">
+      <label class="f">${B('Your name','Tu nombre')}<input type="text" id="inName" autocomplete="off" maxlength="60" value="${esc(S.name)}"></label>
+      <label class="f">${B('Period','Periodo')}<input type="text" id="inPeriod" autocomplete="off" maxlength="10" value="${esc(S.period)}"></label>
+    </div>
+    <div class="row" style="margin-top:18px"><button class="btn" id="btnStart" data-act="start" ${S.name.trim().length<2?'disabled':''}>${B('Start Round 1','Empezar Ronda 1')}</button></div>
+  </section>`;}
+
+function controlsHTML(key){
+  const R=S[key], dis=R.status==='done', wk=n=>Array.from({length:WEEKS},(_,i)=>`<option value="${i+1}" ${(i+1)===n?'selected':''}>${B_('Week ' +(i+1),'Semana '+(i+1))}</option>`).join('');
+  return `<div class="ctrls">
+    <label><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">${B('Axis starts at','El eje empieza en')}<strong id="o_ymin" style="font-size:20px">${R.ymin}</strong></div><input type="range" id="c_ymin" data-c="ymin" min="0" max="440" step="5" value="${R.ymin}" ${dis?'disabled':''} style="width:100%"></label>
+    <label><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">${B('Axis ends at','El eje termina en')}<strong id="o_ymax" style="font-size:20px">${R.ymax}</strong></div><input type="range" id="c_ymax" data-c="ymax" min="420" max="700" step="5" value="${R.ymax}" ${dis?'disabled':''} style="width:100%"></label>
+    <label>${B('First week shown','Primera semana mostrada')}<select data-c="start" ${dis?'disabled':''}>${wk(R.start)}</select></label>
+    <label>${B('Last week shown','Última semana mostrada')}<select data-c="end" ${dis?'disabled':''}>${wk(R.end)}</select></label>
+    <label>${B('Chart type','Tipo de gráfica')}<select data-c="type" ${dis?'disabled':''}><option value="line" ${R.type==='line'?'selected':''}>${esc('Line / Líneas')}</option><option value="bar" ${R.type==='bar'?'selected':''}>${esc('Bars / Barras')}</option></select></label>
+    <label>${B('Chart shape','Forma de la gráfica')}<select data-c="shape" ${dis?'disabled':''}><option value="short" ${R.shape==='short'?'selected':''}>${esc('Short and wide / Baja y ancha')}</option><option value="medium" ${R.shape==='medium'?'selected':''}>${esc('Medium / Mediana')}</option><option value="tall" ${R.shape==='tall'?'selected':''}>${esc('Tall and narrow / Alta y angosta')}</option></select></label>
+  </div>
+  <label class="f">${B('Your chart\'s title','El título de tu gráfica')}<input type="text" id="inTitle" maxlength="70" autocomplete="off" value="${esc(R.title)}" placeholder="Lunch sales… / Ventas del almuerzo…" ${dis?'disabled':''}></label>`;
+}
+function B_(en,es){return esc(en)+' / '+esc(es);}
+function meterHTML(key){
+  const R=S[key], c=calc(R), p=c.pct, win=key==='r1'?(p>=GOAL1):(Math.abs(p)<=GOAL2);
+  const lab=key==='r1'?B('How steep the drop looks, as a share of the chart height (goal: 60% or more)','Qué tan empinada se ve la caída, como parte de la altura de la gráfica (meta: 60% o más)',''):B('How steep the change looks, up or down (goal: 10% or less)','Qué tan empinado se ve el cambio, hacia arriba o abajo (meta: 10% o menos)','');
+  const chips=c.tricks.length?c.tricks.map(t=>`<span class="chip">${B(t[1],t[2],'inline')}</span>`).join(''):`<span class="chip none">${B('none yet','ninguno todavía','inline')}</span>`;
+  return `<div class="meter on-dark${win?' win':''}" id="meter"><div style="font-size:15px">${lab}</div><div class="big">${p<0?'+':''}${Math.abs(p)}%${p<0?` <span style="font-size:18px;color:#BCD0E2">${B('rise','subida','inline')}</span>`:''}</div>
+    <div class="goal" aria-hidden="true"><div class="bar" style="width:${Math.min(100,Math.abs(p))}%"></div><div class="line" style="left:${(key==='r1'?GOAL1:GOAL2)}%"></div></div>
+    <div style="margin-top:8px;font-size:14px">${B('Tricks you are using:','Trucos que estás usando:','inline')} ${chips}</div></div>`;
+}
+function lockMsg(key){
+  const R=S[key], left=Math.max(0,MINMOVES-R.moves), p=calc(R).pct;
+  if(R.title.trim().length<10) return `<div class="msg warn">${needLetters(R.title.trim().length,10)} ${B('Write a title for your chart first.','Primero escribe un título para tu gráfica.','inline')}</div>`;
+  if(left>0) return `<div class="msg warn">${B(`Change at least ${left} more ${left===1?'control':'controls'} before you lock in your chart.`,`Cambia al menos ${left} ${left===1?'control':'controles'} más antes de fijar tu gráfica.`)}</div>`;
+  const win=key==='r1'?p>=GOAL1:Math.abs(p)<=GOAL2;
+  return win?`<div class="msg good">${B('You hit the goal. Lock it in, or keep adjusting.','Alcanzaste la meta. Fíjala o sigue ajustando.')}</div>`:`<div class="msg warn">${B('Not at the goal yet. Keep adjusting, or lock in anyway.','Todavía no llegas a la meta. Sigue ajustando o fíjala así.')}</div>`;
+}
+function honestHTML(key){
+  const R=S[key], c=calc(R), real=VALS[0]-VALS[WEEKS-1], pctReal=Math.round(real/VALS[0]*1000)/10, hs=honestSpec(), look=Math.round(real/(hs.hi-hs.lo)*100);
+  return `<section class="card honest" style="margin-top:12px"><h3 style="font-size:19px;margin-bottom:6px">${B('The same data, drawn honestly','Los mismos datos, dibujados con honestidad')}</h3>
+    <div class="chartbox" style="margin-top:6px">${svgChart(hs)}</div>
+    <p style="margin:8px 0 0">${B(`All 8 weeks, axis starting at 0. Lunch sales went from ${VALS[0]} to ${VALS[WEEKS-1]}, a real change of ${real} lunches (${pctReal}%). On this chart that is about ${look}% of the chart height.`,`Las 8 semanas, con el eje empezando en 0. Las ventas de almuerzo pasaron de ${VALS[0]} a ${VALS[WEEKS-1]}, un cambio real de ${real} almuerzos (${pctReal}%). En esta gráfica eso es cerca de ${look}% de la altura.`)}</p></section>`;
+}
+function resultCard(key,next){
+  const R=S[key], c=calc(R);
+  return `<section class="card result" id="result-${key}"><h2>${B('Your locked chart','Tu gráfica fijada')}</h2>
+    <div class="stats"><div class="stat"><span class="big">${Math.abs(c.pct)}%</span>${B(c.pct>=0?'how steep it looks':'how steep it looks (a rise)',c.pct>=0?'qué tan empinada se ve':'qué tan empinada se ve (una subida)')}</div>
+      <div class="stat"><span class="big">${c.tricks.length}</span>${B('tricks used','trucos usados')}</div></div>
+    <p>${B('Not one number changed. Only the drawing did. This is why a chart is an argument, not just a picture of the facts.','Ni un número cambió. Solo cambió el dibujo. Por eso una gráfica es un argumento y no solo una imagen de los hechos.')}</p>
+    <div class="row"><button class="btn" data-act="next" data-to="${next}">${B('Next','Siguiente')}</button><button class="btn ghost" data-act="reopen" data-k="${key}">${B('Keep adjusting','Seguir ajustando')}</button></div></section>`;
+}
+function viewRound(key,next){
+  const R=S[key], done=R.status==='done';
+  const ttl=key==='r1'?B('Round 1: Make the lunch line look like it is crashing','Ronda 1: Haz que la fila del almuerzo parezca desplomarse'):B('Round 2: Same data, now rock steady','Ronda 2: Los mismos datos, ahora firmes como una roca');
+  const intro=key==='r1'
+    ?B('Lunch sales at Lakeview High changed a little over 8 weeks. You may change how the chart is drawn, but you may NOT change any number. Make the chart look like sales are crashing.','Las ventas de almuerzo en Lakeview High cambiaron un poco durante 8 semanas. Puedes cambiar cómo se dibuja la gráfica, pero NO puedes cambiar ningún número. Haz que la gráfica parezca que las ventas se desploman.')
+    :B('Now the cafeteria manager wants a chart showing sales are rock steady. Same data, same rules. Start from your Round 1 settings and change the drawing.','Ahora la encargada de la cafetería quiere una gráfica que muestre que las ventas están firmes como una roca. Los mismos datos, las mismas reglas. Empieza con tus ajustes de la Ronda 1 y cambia el dibujo.');
+  return `${stepper(key)}
+  <section class="card" style="margin-top:12px"><h2>${ttl}</h2><p class="lead">${intro}</p></section>
+  <div id="meterbox" style="margin-top:16px">${meterHTML(key)}</div>
+  <div class="two2"><section class="card" style="margin-top:0"><h3 style="font-size:20px;margin-bottom:6px">${B('Your chart','Tu gráfica')}</h3><div class="chartbox" id="mychart">${svgChart(specFor(R))}</div></section>
+    <section class="card" style="margin-top:0"><h3 style="font-size:20px;margin-bottom:6px">${B('Controls','Controles')}</h3><div id="ctrlbox">${controlsHTML(key)}</div>
+      <div id="lockmsg" style="margin-top:12px">${done?'':lockMsg(key)}</div>
+      <div class="row" style="margin-top:10px"><button class="btn alt" id="btnLock" data-act="lock" ${(done||R.moves<MINMOVES||R.title.trim().length<10)?'disabled':''}>${B('Lock in this chart','Fijar esta gráfica')}</button></div></section></div>
+  ${done?honestHTML(key)+resultCard(key,next):''}`;
+}
+
+function itemHTML(x){
+  const P=S.r3, done=P.status==='done', cls=done?(P.item[x.id]==='revealed'?'':' right'):'';
+  const claim=B(esc(x.claim[0]),esc(x.claim[1]));
+  const note=x.note[0]?`<div class="note">${B(esc(x.note[0]),esc(x.note[1]))}</div>`:'';
+  return `<div class="item${cls}" data-item="${x.id}"><div style="display:flex;gap:8px;align-items:baseline"><span style="font-family:Cambria,Georgia,serif;font-weight:700;font-size:20px">${x.id}</span><div class="claimline">${B('Headline: ','Titular: ','inline')}${claim}</div></div>
+    ${svgChart(Object.assign({w:520},x.spec))}${note}
+    <select data-t="${x.id}" aria-label="Trick in chart ${x.id}" ${done?'disabled':''}><option value="">${esc('What is going on? / ¿Qué pasa?')}</option>${TRICKS.map(t=>`<option value="${t[0]}" ${P.place[x.id]===t[0]?'selected':''}>${esc(t[1])} / ${esc(t[2])}</option>`).join('')}</select>
+    ${done?`<div class="note" style="margin-top:6px">${B('Answer: ','Respuesta: ','inline')}${B(esc(TN[x.kind][1]),esc(TN[x.kind][2]),'inline')}</div>`:''}</div>`;
+}
+function msg3(){
+  const m=S.r3.msg; if(!m) return '';
+  if(m.t==='first') return `<div class="msg good">${B('Perfect! You caught every trick.','¡Perfecto! Descubriste todos los trucos.')}</div>`;
+  if(m.t==='second') return `<div class="msg good">${B('Got it on the second check. You caught every trick.','Lo lograste en la segunda revisión. Descubriste todos los trucos.')}</div>`;
+  if(m.t==='revealed') return `<div class="msg warn">${B('Out of checks. The answers are now showing. Look at the ones you missed.','Ya no tienes revisiones. Se muestran las respuestas. Mira las que fallaste.')} <span class="tagrev">${B('revealed','mostrado','inline')}</span></div>`;
+  const en=Object.keys(m.miss).map(k=>`${m.miss[k]} ${TN[k][1].toLowerCase()}`).join('; '), es=Object.keys(m.miss).map(k=>`${m.miss[k]} ${TN[k][2].toLowerCase()}`).join('; ');
+  return `<div class="msg warn">${B(`Not yet. ${m.k} of ${m.n} are right. Still wrong: ${en}. You have 1 check left.`,`Todavía no. ${m.k} de ${m.n} están bien. Siguen mal: ${es}. Te queda 1 revisión.`)}</div>`;
+}
+function need3(){const n=incomplete3().length; return n?B(`${n} ${n===1?'chart still needs':'charts still need'} an answer.`,`${n} ${n===1?'gráfica todavía necesita':'gráficas todavía necesitan'} una respuesta.`):B('Every chart has an answer. You can check.','Todas las gráficas tienen una respuesta. Ya puedes revisar.');}
+function viewR3(){
+  const P=S.r3, done=P.status==='done', o=out3();
+  return `${stepper('r3')}
+  <section class="card" style="margin-top:12px"><h2>${B('Round 3: Spot the trick','Ronda 3: Descubre el truco')}</h2>
+    <p class="lead">${B('Each of these six charts has one trick, or no trick at all. Pick what is going on in each one. You get 2 checks.','Cada una de estas seis gráficas tiene un truco, o ninguno. Elige qué pasa en cada una. Tienes 2 revisiones.')}</p></section>
+  <div class="itemgrid" id="items">${ITEMS.map(itemHTML).join('')}</div>
+  <section class="card"><div class="msg warn" id="need3">${done?'':need3()}</div>
+    <div class="checkbar"><button class="btn alt" id="btnCheck3" data-act="check3" ${(done||incomplete3().length)?'disabled':''}>${B(`Check my answers (${2-P.checks} left)`,`Revisar mis respuestas (${2-P.checks} restantes)`)}</button><div style="flex:1;min-width:220px" id="msg3">${msg3()}</div></div></section>
+  ${done?`<section class="card result" id="result-r3"><h2>${B('Your results','Tus resultados')}</h2>
+    <div class="stats"><div class="stat"><span class="big">${o.first}</span>${B('right on the 1st check','bien en la 1.ª revisión')}</div><div class="stat"><span class="big">${o.second}</span>${B('fixed on the 2nd check','corregidas en la 2.ª revisión')}</div><div class="stat"><span class="big">${o.revealed}</span>${B('revealed','mostradas')}</div></div>
+    <p>${B('Not every chart is a trick. One of these was honest. The skill is checking the axis, the dates, and the claim before you believe it.','No toda gráfica es un truco. Una de estas era honesta. La habilidad es revisar el eje, las fechas y la afirmación antes de creerla.')}</p>
+    <div class="row"><button class="btn" data-act="next" data-to="refl">${B('Go to reflection','Ir a la reflexión')}</button></div></section>`:''}`;
+}
+function reflNeed(){return needLetters(S.refl.trim().length,20);}
+function viewRefl(){
+  const ok=S.refl.trim().length>=20;
+  return `${stepper('refl')}
+  <section class="card"><h2>${B('Reflect','Reflexiona')}</h2>
+    <p class="lead">${B('1. Which trick would fool the most people, and why? 2. Write one question you will ask yourself the next time you see a chart. 3. Is it ever okay to start an axis above zero? When, and what should the chart do to be honest?','1. ¿Qué truco engañaría a más gente y por qué? 2. Escribe una pregunta que te harás la próxima vez que veas una gráfica. 3. ¿Alguna vez está bien empezar un eje por encima de cero? ¿Cuándo y qué debería hacer la gráfica para ser honesta?')}</p>
+    <textarea id="inRefl" aria-label="Reflection" style="min-height:170px" placeholder="1… 2… 3…">${esc(S.refl)}</textarea>
+    <p class="muted" style="margin:6px 0 0">${B('You can write in English or Spanish.','Puedes escribir en inglés o en español.')}</p>
+    <div class="msg warn" id="reflneed" style="margin-top:8px">${reflNeed()}</div>
+    <div class="row" style="margin-top:10px"><button class="btn" id="btnRefl" data-act="next" data-to="turnin" ${ok?'':'disabled'}>${B('Go to turn in','Ir a entregar')}</button></div></section>`;
+}
+
+/* ---- turn-in ---- */
+function trickTxt(R){const c=calc(R); return c.tricks.length?c.tricks.map(t=>t[1].toLowerCase()).join(', '):'none';}
+function summary(){
+  const o=out3(), L=['MAKE THE CHART LIE — Unit 4, Lesson 8','Name: '+S.name.trim()+'   Period: '+(S.period.trim()||'—'),'Date: '+new Date().toLocaleString(),'Data: lunches sold per week, weeks 1-8: '+VALS.join(', '),''];
+  [['r1','ROUND 1 (make it look like a crash)'],['r2','ROUND 2 (make it look rock steady)']].forEach(([k,nm])=>{const R=S[k], c=calc(R); L.push(nm+': '+(R.status==='done'?'locked':'not locked')+'; control changes '+R.moves); L.push('  Title: '+R.title.trim()); L.push('  Axis '+c.lo+' to '+c.hi+'; weeks '+c.w.a+' to '+c.w.b+'; '+R.type+'; '+R.shape+'; looks like '+(c.pct>=0?'a drop':'a rise')+' of '+Math.abs(c.pct)+'% of chart height'); L.push('  Tricks used: '+trickTxt(R)); L.push('');});
+  L.push('ROUND 3: right on 1st check '+o.first+', fixed on 2nd '+o.second+', revealed '+o.revealed+' (of 6)');
+  ITEMS.forEach(x=>L.push('  '+x.id+': chose "'+(TN[S.r3.place[x.id]]?TN[S.r3.place[x.id]][1]:'—')+'"; answer "'+TN[x.kind][1]+'"'));
+  L.push('','REFLECTION:',S.refl.trim()); return L.join('\n');
+}
+function PDFNAME(){return 'U4L08_MakeTheChartLie_'+PDFLIB.fold(S.name)+'.pdf';}
+function pdfChart(d,x0,top,w,h,sp){
+  const L=34,Rm=8,T=6,Bm=18,pw=w-L-Rm,ph=h-T-Bm,n=sp.xs.length,lo=sp.lo,hi=sp.hi, X=i=>x0+L+(i+0.5)*(pw/n), Y=v=>top+T+ph-(v-lo)/(hi-lo)*ph;
+  d.seg(x0+L,top+T,x0+L,top+T+ph); d.seg(x0+L,top+T+ph,x0+L+pw,top+T+ph);
+  for(let k=0;k<=4;k++){const v=lo+(hi-lo)*k/4; d.text(fmt(v),x0+L-5-PDFLIB.width(fmt(v),'F1',8),Y(v)+3,'F1',8,PDFLIB.GRAY);}
+  const vals=sp.series[0].vals;
+  if(sp.type==='bar'){ const bw=Math.min(40,pw/n*0.6); vals.forEach((v,i)=>{ d.box(X(i)-bw/2,Y(v),bw,Y(lo)-Y(v),2,PDFLIB.MINT); }); }
+  else { for(let i=1;i<n;i++) d.seg(X(i-1),Y(vals[i-1]),X(i),Y(vals[i])); vals.forEach((v,i)=>d.box(X(i)-2,Y(v)-2,4,4,1,PDFLIB.NAVY)); }
+  sp.xs.forEach((xx,i)=>d.textC(xx,X(i),top+T+ph+12,'F1',8,PDFLIB.GRAY));
+}
+function buildPDF(){
+  const d=PDFLIB.doc(), o=out3(); d.title('Make the Chart Lie','Unit 4 · Lesson 8   /   Unidad 4 · Lección 8');
+  d.kv('Name / Nombre',S.name.trim()); d.kv('Period / Periodo',S.period.trim()||'—'); d.kv('Date / Fecha',new Date().toLocaleString());
+  d.para('Data / Datos: lunches sold per week, weeks 1-8 / almuerzos vendidos por semana, semanas 1-8: '+VALS.join(', '),{size:10,color:PDFLIB.GRAY});
+  [['r1','Round 1: make it look like a crash','Ronda 1: que parezca un desplome'],['r2','Round 2: make it look rock steady','Ronda 2: que parezca firme']].forEach(([k,en,es])=>{
+    const R=S[k], c=calc(R); d.heading(en,es);
+    d.para('Title / Título: '+R.title.trim(),{font:'F2',size:11});
+    d.ensure(160); const top=d.y(); pdfChart(d,d.M,top,330,150,specFor(R)); d.setY(top+156);
+    d.line('Axis / Eje: '+fmt(c.lo)+' to '+fmt(c.hi)+'     Weeks / Semanas: '+c.w.a+' to '+c.w.b+'     Type / Tipo: '+R.type+'     Shape / Forma: '+R.shape,{size:10});
+    d.line('Looks like a '+(c.pct>=0?'drop':'rise')+' of / Se ve como '+(c.pct>=0?'una caída':'una subida')+' de: '+Math.abs(c.pct)+'% of chart height     Control changes / Cambios: '+R.moves+'     Status / Estado: '+(R.status==='done'?'Locked / Fijada':'Not locked / Sin fijar'),{size:10});
+    d.line('Tricks used / Trucos usados: '+(c.tricks.length?c.tricks.map(t=>t[1]+' / '+t[2]).join(', '):'none / ninguno'),{size:10});
+  });
+  d.heading('Round 3: Spot the trick (6 charts)','Ronda 3: Descubre el truco (6 gráficas)');
+  d.line('Right on 1st check / Bien en la 1.ª revisión: '+o.first+'     Fixed on 2nd / Corregidas en la 2.ª: '+o.second+'     Revealed / Mostradas: '+o.revealed);
+  ITEMS.forEach(x=>d.para(x.id+'   chose / eligió: '+(TN[S.r3.place[x.id]]?TN[S.r3.place[x.id]][1]:'—')+'   |   answer / respuesta: '+TN[x.kind][1],{size:10,indent:12}));
+  d.heading('Reflection','Reflexión'); d.para(S.refl.trim()||'—');
+  return d.build('Make the Chart Lie - '+S.name.trim());
+}
+function doPDF(){
+  const m=$('#pdfmsg');
+  try{ PDFLIB.download(buildPDF(),PDFNAME()); m.innerHTML=B('Saved! Now upload the PDF to Canvas.','¡Guardado! Ahora sube el PDF a Canvas.','inline'); }
+  catch(err){ m.innerHTML=B('The PDF did not work. Use "Copy as text" below.','El PDF no funcionó. Usa "Copiar como texto" abajo.','inline'); const dt=document.querySelector('details'); if(dt) dt.open=true; }
+}
+function viewTurnin(){return `${stepper('turnin')}
+  <section class="card"><h2>${B('Turn it in','Entrégalo')}</h2>
+    <ol style="padding-left:22px;margin:8px 0 0">
+      <li style="margin-bottom:8px">${B('Press Download my PDF.','Presiona Descargar mi PDF.')}</li>
+      <li style="margin-bottom:8px">${B('Open the Canvas assignment and choose File Upload.','Abre la tarea en Canvas y elige Subir archivo.')}</li>
+      <li>${B('Upload the PDF, then press Submit.','Sube el PDF y presiona Enviar.')}</li></ol>
+    <div class="row" style="margin-top:14px"><button class="btn" id="btnPdf" data-act="pdf">${B('Download my PDF','Descargar mi PDF')}</button><span id="pdfmsg" class="copied" role="status"></span></div>
+    <details style="margin-top:16px"><summary style="cursor:pointer">${B('Trouble downloading? Copy as text instead','¿Problemas para descargar? Copia como texto')}</summary>
+      <textarea id="sumbox" class="sumbox" readonly aria-label="Summary" style="margin-top:10px">${esc(summary())}</textarea>
+      <div class="row" style="margin-top:10px"><button class="btn ghost" data-act="copy">${B('Copy as text','Copiar como texto')}</button><span id="copymsg" class="copied" role="status"></span></div></details>
+  </section>
+  <div class="two2"><section class="card" style="margin-top:16px"><h3 style="font-size:19px">${B('Round 1 chart','Gráfica de la Ronda 1')}</h3><div class="chartbox">${svgChart(specFor(S.r1))}</div></section>
+    <section class="card" style="margin-top:16px"><h3 style="font-size:19px">${B('Round 2 chart','Gráfica de la Ronda 2')}</h3><div class="chartbox">${svgChart(specFor(S.r2))}</div></section></div>
+  <button class="reset" data-act="reset">${B('Start over (clears this device)','Empezar de nuevo (borra este dispositivo)','inline')}</button>`;}
+
+/* ================= render + actions ================= */
+function render(refocus){
+  document.body.setAttribute('data-lang',S.lang); document.documentElement.lang=S.lang;
+  document.querySelectorAll('.langtog button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.l===S.lang));
+  const v={welcome:viewWelcome,r1:()=>viewRound('r1','r2'),r2:()=>viewRound('r2','r3'),r3:viewR3,refl:viewRefl,turnin:viewTurnin}[S.stage];
+  $('#app').innerHTML=v(); save();
+}
+function go(st){
+  if(st==='r2'&&!S.started2){ const a=S.r1; S.r2=Object.assign(round(),{ymin:a.ymin,ymax:a.ymax,start:a.start,end:a.end,type:a.type,shape:a.shape,title:'',moves:0}); S.started2=true; }
+  S.stage=st; render(); window.scrollTo(0,0);
+}
+const cur=()=>S.stage==='r1'?'r1':S.stage==='r2'?'r2':null;
+function liveUpdate(key){
+  const R=S[key]; $('#mychart').innerHTML=svgChart(specFor(R)); $('#meterbox').innerHTML=meterHTML(key); const lm=$('#lockmsg'); if(lm) lm.innerHTML=lockMsg(key);
+  const bl=$('#btnLock'); if(bl) bl.disabled=R.moves<MINMOVES||R.title.trim().length<10; save();
+}
+function setWindow(R,which,val){
+  R[which]=val; let a=R.start,b=R.end; if(b-a<3){ if(which==='start'){ b=Math.min(WEEKS,a+3); if(b-a<3) a=b-3; } else { a=Math.max(1,b-3); if(b-a<3) b=a+3; } R.start=a; R.end=b; }
+}
+document.addEventListener('input',e=>{
+  const t=e.target,id=t.id;
+  if(t.dataset&&t.dataset.c&&t.type==='range'){ const key=cur(); if(!key) return; S[key][t.dataset.c]=+t.value; const o=$('#o_'+t.dataset.c); if(o) o.textContent=t.value; liveUpdate(key); return; }
+  if(id==='inTitle'){ const key=cur(); if(!key) return; S[key].title=t.value; liveUpdate(key); return; }
+  if(id==='inName'){S.name=t.value; save(); const b=$('#btnStart'); if(b) b.disabled=S.name.trim().length<2;}
+  else if(id==='inPeriod'){S.period=t.value; save();}
+  else if(id==='inRefl'){S.refl=t.value; save(); const b=$('#btnRefl'),n=$('#reflneed'); if(b) b.disabled=S.refl.trim().length<20; if(n) n.innerHTML=reflNeed();}
+});
+document.addEventListener('change',e=>{
+  const t=e.target;
+  if(t.dataset&&t.dataset.c&&S.stage.match(/^r[12]$/)){ const key=cur(), R=S[key];
+    if(t.type==='range'){ R.moves++; liveUpdate(key); return; }
+    if(t.dataset.c==='start'||t.dataset.c==='end') setWindow(R,t.dataset.c,+t.value); else R[t.dataset.c]=t.value;
+    R.moves++; $('#ctrlbox').innerHTML=controlsHTML(key); liveUpdate(key); return; }
+  if(t.dataset&&t.dataset.t&&S.stage==='r3'){ S.r3.place[t.dataset.t]=t.value; const n=$('#need3'); if(n) n.innerHTML=need3(); const b=$('#btnCheck3'); if(b) b.disabled=incomplete3().length>0||S.r3.status==='done'; save(); }
+});
+function doCopy(){
+  const ta=$('#sumbox'); ta.value=summary(); const m=$('#copymsg');
+  const ok=()=>{m.innerHTML=B('Copied! Now paste it into Canvas.','¡Copiado! Ahora pégalo en Canvas.','inline');};
+  const fb=()=>{ta.focus();ta.select();try{document.execCommand('copy');ok();}catch(x){m.innerHTML=B('Select the text and press Ctrl+C.','Selecciona el texto y presiona Ctrl+C.','inline');}};
+  if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(ta.value).then(ok,fb); else fb();
+}
+document.addEventListener('click',e=>{
+  const t=e.target.closest('[data-act]'); if(!t||t.disabled) return; const a=t.dataset.act;
+  if(a==='lang'){S.lang=t.dataset.l; render();}
+  else if(a==='start'){ if(S.name.trim().length>=2) go('r1'); }
+  else if(a==='lock'){ const key=cur(), R=S[key]; if(R.moves<MINMOVES||R.title.trim().length<10) return; R.status='done'; R.locks++; render(); const el=$('#result-'+key); if(el) el.scrollIntoView({block:'start'}); }
+  else if(a==='reopen'){ S[t.dataset.k].status='open'; render(); window.scrollTo(0,0); }
+  else if(a==='check3'){ runCheck3(); render(); const el=$('#result-r3'); if(el) el.scrollIntoView({block:'start'}); else {const m=$('#msg3'); if(m) m.scrollIntoView({block:'center'});} }
+  else if(a==='next') go(t.dataset.to);
+  else if(a==='pdf') doPDF();
+  else if(a==='copy') doCopy();
+  else if(a==='reset'){ if(confirm('Start over? This clears your work on this device. / ¿Empezar de nuevo? Esto borra tu trabajo en este dispositivo.')){try{localStorage.removeItem(KEY);}catch(x){} S=fresh(); VALS=makeSeries(S.seed); ITEMS=makeItems(S.seed); render();} }
+});
+
+S=load(); VALS=makeSeries(S.seed); ITEMS=makeItems(S.seed);
+if(!['welcome','r1','r2','r3','refl','turnin'].includes(S.stage)) S.stage='welcome';
+if(S.stage==='r2'&&!S.started2) S.stage='r1';
+if(['r3','refl','turnin'].includes(S.stage)&&!(S.r1.status==='done'&&S.r2.status==='done')) S.stage='welcome';
+if(['refl','turnin'].includes(S.stage)&&S.r3.status!=='done') S.stage='r3';
+render();
+window.__S=()=>S; window.__H={vals:()=>VALS,items:()=>ITEMS,calc:calc,makeSeries:makeSeries,makeItems:makeItems,SHAPE:SHAPE};
+})();
+
+</script>
+</body>
+</html>
