@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CAM Table Flooding Simulator · AP Cybersecurity Unit 3</title>
+<style>
+:root{
+  --green:#1B4332; --dark:#122B21; --gold:#D4A017; --cream:#FBF8F1; --olive:#6B7F3A;
+  --red:#B23A2E; --ink:#2A2A2A; --mute:#5A5A5A; --line:#C9C3B0; --ok:#2E7D4F;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--cream);color:var(--ink);font-family:"Calibri","Carlito",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;font-size:17px;line-height:1.45}
+h1,h2,h3{font-family:"Cambria","Georgia",serif;color:var(--green);margin:0 0 .4em}
+header{background:var(--dark);color:#fff;padding:14px 22px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+header h1{color:#fff;font-size:1.35rem;margin:0}
+header .tag{color:var(--gold);font-weight:700;font-size:.9rem}
+header a{color:var(--gold);font-size:.9rem}
+main{max-width:980px;margin:0 auto;padding:18px 18px 60px}
+.card{background:#fff;border:1.5px solid var(--line);border-radius:10px;padding:18px 20px;margin-bottom:16px}
+.card.dark{background:var(--green);color:#fff;border-color:var(--green)}
+.card.dark h2,.card.dark h3{color:var(--gold)}
+button{font:inherit;cursor:pointer;border-radius:8px;border:2px solid var(--green);background:var(--green);color:#fff;padding:9px 16px;font-weight:700}
+button:hover:not(:disabled){background:var(--dark)}
+button:disabled{opacity:.45;cursor:not-allowed}
+button.alt{background:#fff;color:var(--green)}
+button.danger{background:var(--red);border-color:var(--red)}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+label{display:block;font-weight:700;margin:10px 0 4px}
+input,select{font:inherit;padding:9px 10px;border:2px solid var(--line);border-radius:8px;width:100%;max-width:340px}
+.progress{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+.progress div{flex:1;min-width:110px;padding:6px 8px;border-radius:6px;background:#E8E2CF;font-size:.82rem;font-weight:700;color:var(--mute);text-align:center}
+.progress div.on{background:var(--gold);color:var(--dark)}
+.progress div.done{background:var(--green);color:#fff}
+.stage{display:none}.stage.show{display:block}
+.grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:16px}
+@media(max-width:760px){.grid{grid-template-columns:1fr}}
+svg{width:100%;height:auto;background:#F4F0E4;border-radius:8px;border:1.5px solid var(--line)}
+.nodeRect{fill:var(--green);stroke:none}
+.nodeRect.bad{fill:var(--red)}
+.nodeText{fill:#fff;font:700 14px "Calibri","Carlito",Arial,sans-serif;text-anchor:middle}
+.nodeSub{fill:#F3EFE2;font:12px "Calibri","Carlito",Arial,sans-serif;text-anchor:middle}
+.link{stroke:#9A9580;stroke-width:3}
+table.arp{border-collapse:collapse;width:100%;font-size:.92rem}
+table.arp th{background:var(--green);color:#fff;text-align:left;padding:7px 8px}
+table.arp td{border:1px solid var(--line);padding:7px 8px;font-family:Consolas,"Courier New",monospace;font-size:.85rem}
+table.arp td.who{font-family:inherit;font-size:.9rem;color:var(--mute)}
+table.arp tr.poisoned td{background:var(--red);color:#fff;font-weight:700}
+table.arp tr.poisoned td.who{color:#fff}
+.note{font-size:.88rem;color:var(--mute)}
+.q{margin-top:14px;padding-top:14px;border-top:2px dashed var(--line)}
+.q p{font-weight:700;margin:0 0 8px}
+.opts{display:flex;flex-direction:column;gap:8px}
+.opts button{background:#fff;color:var(--ink);border:2px solid var(--line);text-align:left;font-weight:600}
+.opts button:hover:not(:disabled){background:#F4F0E4}
+.opts button.right{background:#E3F2E8;border-color:var(--ok);color:#14532d}
+.opts button.wrong{background:#FBE4E1;border-color:var(--red);color:#7f1d1d}
+.fb{margin-top:10px;padding:10px 12px;border-radius:8px;display:none;font-size:.95rem}
+.fb.show{display:block}
+.fb.good{background:#E3F2E8;border:1.5px solid var(--ok)}
+.fb.bad{background:#FBE4E1;border:1.5px solid var(--red)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:10px 0}
+.toggle{display:inline-flex;align-items:center;gap:8px;font-weight:700}
+.status{font-weight:700;margin:6px 0;min-height:1.4em}
+.safety{font-size:.85rem;background:#FFF6DA;border:1.5px solid var(--gold);border-radius:8px;padding:8px 12px;margin-bottom:14px}
+#results{display:none}
+.resRow{display:flex;justify-content:space-between;gap:10px;border-bottom:1px solid var(--line);padding:6px 0;font-size:.95rem}
+.badge{font-weight:700;padding:2px 10px;border-radius:99px;font-size:.82rem;white-space:nowrap}
+.badge.y{background:#E3F2E8;color:#14532d}.badge.n{background:#FBE4E1;color:#7f1d1d}
+.big{font-family:"Cambria","Georgia",serif;font-size:2.2rem;color:var(--green);font-weight:700}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+@media print{
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .card.dark{background:#fff!important;color:#000!important;border:2px solid #1B4332!important}
+  .card.dark h2{color:#1B4332!important}
+  .card.dark p{color:#000!important}
+  #results .card{break-inside:auto!important}
+  .resItem{break-inside:avoid;border-bottom:1px solid #bbb;padding:6px 0}
+
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .card.dark{background:#fff!important;color:#000!important;border:2px solid #1B4332!important}
+  .card.dark h2{color:#1B4332!important}
+  .card.dark p{color:#000!important}
+  #results .card{break-inside:auto!important}
+  .resItem{break-inside:avoid;border-bottom:1px solid #bbb;padding:6px 0}
+
+  body{background:#fff;font-size:12pt}
+  header,#gate,#sim,.noprint{display:none!important}
+  #results{display:block!important}
+  .card{border:1px solid #999;break-inside:avoid}
+}
+</style>
+<style>
+.switchWrap{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:760px){.switchWrap{grid-template-columns:1fr}}
+.portGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:10px 0}
+.port{aspect-ratio:1;border-radius:8px;border:2px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;text-align:center;background:#fff;color:var(--mute);padding:4px;transition:all .25s}
+.port.learned{background:var(--green);color:#fff;border-color:var(--green)}
+.port.fake{background:var(--red);color:#fff;border-color:var(--red);opacity:.85}
+.cap{font-weight:700;margin:6px 0}
+.capBar{height:22px;border-radius:11px;background:#E8E2CF;overflow:hidden;border:1.5px solid var(--line)}
+.capFill{height:100%;background:linear-gradient(90deg,#6B7F3A,#1B4332);width:0%;transition:width .3s}
+.capFill.full{background:linear-gradient(90deg,#B23A2E,#7f1d1d)}
+.modeTag{display:inline-block;padding:4px 12px;border-radius:99px;font-weight:700;font-size:.85rem;margin-top:8px}
+.modeTag.normal{background:#E3F2E8;color:#14532d}
+.modeTag.flood{background:#FBE4E1;color:#7f1d1d}
+.resItem{border-bottom:1px solid var(--line);padding:9px 0}
+.resQ{font-weight:700}
+.resHead{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.stageTag{display:inline-block;background:var(--gold);color:var(--dark);font-weight:700;padding:3px 10px;border-radius:99px;font-size:.85rem;margin-bottom:8px}
+</style>
+</head>
+<body>
+<header>
+  <div><div class="tag">AP CYBERSECURITY · UNIT 3 · U3L08 · LO 3.1.A.2</div><h1>CAM Table Flooding Simulator</h1></div>
+  <a href="../../">&larr; Back to class site</a>
+</header>
+<main>
+
+<section id="gate" class="card">
+  <h2>Before you start</h2>
+  <div class="warn"><strong>This is a simulation.</strong> No real switch or network is involved.</div>
+  <p>You're looking at a fictional office switch for <strong>Meridian Analytics</strong>. It has 16 ports and a MAC address table with room for only 8 entries. You'll watch it work normally, then flood it, then act as the eavesdropping adversary.</p>
+  <label for="nm">First and last name</label>
+  <input id="nm" autocomplete="off" placeholder="e.g., Jordan Rivera">
+  <label for="per">Period</label>
+  <select id="per"><option value="">Choose…</option><option>1</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option></select>
+  <div class="row"><button id="startBtn">Begin</button><span id="gateErr" style="color:var(--red);font-weight:700"></span></div>
+</section>
+
+<section id="act" style="display:none">
+  <div class="card" id="st1">
+    <span class="stageTag">Stage 1 of 3</span>
+    <h2>Normal operation</h2>
+    <p>Each time a real device sends traffic, the switch learns its MAC address and which port it's on. Click to send traffic from a few real devices.</p>
+    <div class="switchWrap">
+      <div><div class="cap">Table capacity: <span id="capLabel1">0 / 8</span></div><div class="capBar"><div class="capFill" id="capFill1"></div></div>
+        <div class="portGrid" id="ports1"></div>
+        <span class="modeTag normal" id="modeTag1">Normal mode: selective delivery</span></div>
+      <div><div class="row"><button id="sendReal">Send traffic from next real device</button></div>
+        <div class="status" id="status1"></div></div>
+    </div>
+    <div class="q" id="q1box" style="display:none"></div>
+  </div>
+
+  <div class="card" id="st2" style="display:none">
+    <span class="stageTag">Stage 2 of 3</span>
+    <h2>Flood the table</h2>
+    <p>Now play the adversary. Send frames with fake, made-up MAC addresses as fast as you like, and watch the table fill.</p>
+    <div class="switchWrap">
+      <div><div class="cap">Table capacity: <span id="capLabel2">0 / 8</span></div><div class="capBar"><div class="capFill" id="capFill2"></div></div>
+        <div class="portGrid" id="ports2"></div>
+        <span class="modeTag normal" id="modeTag2">Normal mode: selective delivery</span></div>
+      <div><div class="row"><button id="floodBtn">Send a falsified frame</button></div>
+        <div class="status" id="status2"></div></div>
+    </div>
+    <div class="q" id="q2box" style="display:none"></div>
+    <div class="q" id="q3box" style="display:none"></div>
+  </div>
+
+  <div class="card" id="st3" style="display:none">
+    <span class="stageTag">Stage 3 of 3</span>
+    <h2>Eavesdrop</h2>
+    <p>The switch is now in broadcast mode. Click to intercept a few frames that were never meant for you.</p>
+    <div class="row"><button id="sniffBtn">Intercept the next frame</button></div>
+    <div id="sniffLog" style="margin-top:10px"></div>
+    <div class="q" id="q4box" style="display:none"></div>
+    <div class="q" id="q5box" style="display:none"></div>
+    <div class="row hide" id="finishRow"><button id="resBtn">See my results</button></div>
+  </div>
+</section>
+
+<section id="results" style="display:none">
+  <div class="card dark">
+    <h2>Simulation complete</h2>
+    <p><strong id="rName"></strong> · Period <strong id="rPer"></strong> · <span id="rDate"></span></p>
+    <p>Mr. Sullivan's AP Cybersecurity · U3L08 · CAM Table Flooding Simulator (completion-graded)</p>
+  </div>
+  <div class="card">
+    <div class="big" id="rScore"></div>
+    <p class="note">First-try accuracy. This is practice; read the explanations for any you missed.</p>
+    <div id="rList"></div>
+  </div>
+  <div class="card">
+    <h3>Takeaways</h3>
+    <p><strong>MAC flooding</strong> fills a switch's address table with falsified MAC addresses until there's no room left to learn real ones. The switch fails open into broadcast mode, sending every frame out every port. That lets an adversary <strong>eavesdrop (sniff)</strong> on traffic that was never meant for them.</p>
+  </div>
+  <div class="row noprint">
+    <button id="printBtn">Download as PDF</button>
+    <button class="alt" id="againBtn">Run it again</button>
+    <span class="note">In the print window, change the destination to "Save as PDF", then upload the file to Canvas.</span>
+  </div>
+</section>
+</main>
+<script>
+(function(){
+"use strict";
+const $=id=>document.getElementById(id);
+const CAP=8, PORTS=16;
+const results=[];
+function ask(boxId,id,text,options,correctIdx,explainRight,explainWrong,onCorrect){
+  const box=$(boxId);box.style.display="block";
+  const rec={id,text,firstTry:null,attempts:0};results.push(rec);
+  box.innerHTML=`<div class="q" style="margin-top:0;padding-top:0;border:none"><p>${text}</p><div class="opts"></div><div class="fb"></div></div>`;
+  const wrap=box.querySelector(".opts"),fb=box.querySelector(".fb");
+  const idxs=options.map((_,i)=>i);for(let k=idxs.length-1;k>0;k--){const j=Math.floor(Math.random()*(k+1));[idxs[k],idxs[j]]=[idxs[j],idxs[k]];}
+  idxs.forEach(i=>{const o=options[i];
+    const b=document.createElement("button");b.textContent=o;
+    b.addEventListener("click",()=>{
+      rec.attempts++;
+      if(i===correctIdx){ if(rec.firstTry===null)rec.firstTry=true;
+        b.classList.add("right");wrap.querySelectorAll("button").forEach(x=>x.disabled=true);
+        fb.className="fb show good";fb.innerHTML="<strong>Correct.</strong> "+explainRight; onCorrect&&onCorrect();
+      }else{ if(rec.firstTry===null)rec.firstTry=false;
+        b.classList.add("wrong");b.disabled=true;
+        fb.className="fb show bad";fb.innerHTML="<strong>Not quite.</strong> "+(explainWrong[i]||"Think about it again.");
+      }
+    });
+    wrap.appendChild(b);
+  });
+}
+function buildPorts(containerId,n){ const c=$(containerId); for(let i=0;i<n;i++){const d=document.createElement("div");d.className="port";d.textContent="Port "+(i+1);c.appendChild(d);} }
+buildPorts("ports1",PORTS); buildPorts("ports2",PORTS);
+
+// ---- Stage 1: normal operation ----
+const realDevices=["Laptop A","Laptop B","Printer","Front Desk PC"];
+let realCount=0, table1=0;
+function updateCap(n,labelId,fillId,full){
+  $(labelId).textContent=n+" / "+CAP;
+  $(fillId).style.width=Math.min(100,(n/CAP)*100)+"%";
+  $(fillId).classList.toggle("full",full);
+}
+$("sendReal").addEventListener("click",()=>{
+  if(realCount>=realDevices.length){$("status1").textContent="All sample devices have sent traffic. Table has "+table1+" of "+CAP+" entries used.";return;}
+  const name=realDevices[realCount]; const portIdx=realCount;
+  table1++; updateCap(table1,"capLabel1","capFill1",false);
+  const port=$("ports1").children[portIdx]; port.classList.add("learned"); port.textContent="Port "+(portIdx+1)+"\\n"+name;
+  $("status1").textContent=name+" sent a frame. The switch learned its MAC address and port, and delivered the reply to only that port.";
+  realCount++;
+  if(realCount===realDevices.length){
+    ask("q1box","q1","When a real device sends a frame, what does the switch do with the reply?",
+      ["Delivers it only to the port that device is learned on","Sends it out every port","Deletes it","Sends it to a random port"],0,
+      "A healthy switch is selective: it delivers traffic only to the port holding the matching MAC address.",
+      {1:"That's broadcast mode, which only happens when the table fails. Not here.",2:"The switch delivered it; check the port that lit up.",3:"The switch uses its table, not randomness."},
+      ()=>{const r=document.createElement("div");r.className="row";const b=document.createElement("button");b.textContent="Continue to Stage 2";b.addEventListener("click",()=>{$("st1").style.display="none";$("st2").style.display="block";window.scrollTo(0,0);});r.appendChild(b);$("st1").appendChild(r);});
+  }
+});
+
+// ---- Stage 2: flood ----
+let table2=realCount; // carry over learned entries conceptually, but simpler: start fresh count for this stage's own table
+table2=0; let flooded=false;
+// seed stage 2 ports with the same learned devices for continuity
+for(let i=0;i<realDevices.length;i++){const port=$("ports2").children[i]; port.classList.add("learned"); port.textContent="Port "+(i+1)+"\\n"+realDevices[i]; table2++;}
+updateCap(table2,"capLabel2","capFill2",false);
+$("floodBtn").addEventListener("click",()=>{
+  if(flooded)return;
+  table2++;
+  const idx=Math.min(table2-1,PORTS-1);
+  if(table2<=CAP){
+    updateCap(table2,"capLabel2","capFill2",false);
+    const port=$("ports2").children[idx]; if(port && !port.classList.contains("learned")){port.classList.add("fake");port.textContent="Port "+(idx+1)+"\\nfake MAC";}
+    $("status2").textContent="Falsified frame #"+(table2-realDevices.length>0?table2-realDevices.length:table2)+" sent. Table: "+Math.min(table2,CAP)+" of "+CAP+" entries used.";
+  }
+  if(table2>=CAP && !flooded){
+    flooded=true;
+    updateCap(CAP,"capLabel2","capFill2",true);
+    $("modeTag2").className="modeTag flood"; $("modeTag2").textContent="FLOOD MODE: broadcasting to every port";
+    $("status2").textContent="The table is full. The switch can't learn any more real pairings and fails open into broadcast mode.";
+    $("floodBtn").disabled=true;
+    ask("q2box","q2","Why did the switch switch into broadcast mode?",
+      ["Its MAC address table filled up completely and had no room for more entries","It was told to by the adversary","It always broadcasts at this time of day","The real devices stopped sending traffic"],0,
+      "Once the table has no free space, the switch can no longer look up where to send a frame selectively, so it falls back to sending every frame out every port.",
+      {1:"The adversary never sends a direct command; flooding the table is the whole method.",2:"Nothing about time of day is involved.",3:"The real devices sending traffic is what filled the table in the first place."},
+      ()=>{ask("q3box","q3","What is this attack called?",
+        ["MAC flooding","ARP poisoning","Smurf attack","DNS poisoning"],0,
+        "Sending many frames with different MAC addresses to overflow the table is called MAC flooding.",
+        {1:"ARP poisoning targets a gateway's IP-to-MAC table, not a switch's MAC table.",2:"A smurf attack uses ICMP and a broadcast address, not a switch's table.",3:"DNS poisoning targets DNS records, not a switch."},
+        ()=>{const r=document.createElement("div");r.className="row";const b=document.createElement("button");b.textContent="Continue to Stage 3";b.addEventListener("click",()=>{$("st2").style.display="none";$("st3").style.display="block";window.scrollTo(0,0);});r.appendChild(b);$("st2").appendChild(r);});
+      });
+  }
+});
+
+// ---- Stage 3: eavesdrop ----
+const frames=[
+ {from:"Laptop A",to:"Front Desk PC",content:"\u201CCan you print the Q3 budget for me?\u201D"},
+ {from:"Printer",to:"Laptop A",content:"Print job acknowledged: Q3_Budget.xlsx"},
+ {from:"Laptop B",to:"Front Desk PC",content:"Login attempt: username jsmith"},
+];
+let sniffed=0;
+$("sniffBtn").addEventListener("click",()=>{
+  if(sniffed>=frames.length){return;}
+  const f=frames[sniffed];
+  const d=document.createElement("div"); d.className="card"; d.style.margin="8px 0";
+  d.innerHTML=`<strong>Intercepted:</strong> ${f.from} \u2192 ${f.to}: <em>${f.content}</em><br><span class="note">This frame was not addressed to you, but broadcast mode sent you a copy anyway.</span>`;
+  $("sniffLog").appendChild(d);
+  sniffed++;
+  if(sniffed===frames.length){
+    $("sniffBtn").disabled=true;
+    ask("q4box","q4","What is the name for what you just did — capturing and reading traffic that wasn't addressed to you?",
+      ["Eavesdropping (sniffing)","ARP poisoning","Credential harvesting","Port security"],0,
+      "Capturing data in transit that wasn't meant for you is eavesdropping, also called sniffing.",
+      {1:"ARP poisoning is a different method that targets the gateway's table.",2:"Credential harvesting is the fake-login-page technique from the DNS lesson.",3:"Port security is a defense, not an attack \u2014 and you just saw what happens without it."},
+      ()=>{ask("q5box","q5","Triage first. Which part of the CIA triad does MAC flooding and eavesdropping compromise?",
+        ["Confidentiality","Integrity","Availability"],0,
+        "Traffic meant for specific devices became visible to the adversary. Nothing was altered or blocked \u2014 it was exposed. That's a confidentiality violation.",
+        {1:"None of the intercepted frames were changed.",2:"The real devices could still send and receive traffic; it wasn't blocked."},
+        ()=>{$("finishRow").classList.remove("hide");});
+      });
+  }
+});
+
+$("startBtn").addEventListener("click",()=>{
+  if(!$("nm").value.trim()||!$("per").value){$("gateErr").textContent="Enter your name and choose a period.";return;}
+  $("gate").style.display="none";$("act").style.display="block";
+});
+$("resBtn").addEventListener("click",()=>{
+  $("act").style.display="none";$("results").style.display="block";
+  $("rName").textContent=$("nm").value.trim();$("rPer").textContent=$("per").value;
+  $("rDate").textContent=new Date().toLocaleDateString(undefined,{year:"numeric",month:"long",day:"numeric"});
+  const first=results.filter(r=>r.firstTry).length;
+  $("rScore").textContent=first+" / "+results.length+" correct on first try";
+  $("rList").innerHTML=results.map((r,i)=>`<div class="resItem"><div class="resHead"><div class="resQ">${i+1}. ${r.text.replace(/<[^>]+>/g,"")}</div><span class="badge ${r.firstTry?"y":"n"}">${r.firstTry?"First try":"Needed retry"}</span></div></div>`).join("");
+  window.scrollTo(0,0);
+});
+$("printBtn").addEventListener("click",()=>window.print());
+$("againBtn").addEventListener("click",()=>location.reload());
+})();
+</script>
+</body>
+</html>
