@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>U3L09: Network Audit - What Could Go Wrong?</title>
+<style>
+  :root{
+    --navy:#0B1F3A; --green:#8FC53E; --cream:#F4F1E9; --gold:#D9A441;
+    --ink:#1b2430; --muted:#55606e; --line:#d9d3c3; --card:#ffffff;
+    --head: Cambria, "Iowa Old Style", Georgia, serif;
+    --body: Calibri, Inter, "Segoe UI", Arial, sans-serif;
+    --mono: "IBM Plex Mono", Consolas, "Courier New", monospace;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--cream);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.55}
+  a{color:var(--navy)}
+  :focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+  .topbar{background:var(--navy);color:#fff;padding:10px 20px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+  .topbar .brand{font-family:var(--head);font-weight:700;letter-spacing:.02em}
+  .topbar a{color:var(--green);text-decoration:none;font-weight:600}
+  .topbar a:hover{text-decoration:underline}
+  main{max-width:900px;margin:0 auto;padding:24px 20px 60px}
+  .eyebrow{color:var(--muted);font-size:.85rem;text-transform:uppercase;letter-spacing:.08em;margin:0}
+  h1{font-family:var(--head);color:var(--navy);font-size:2.1rem;line-height:1.2;margin:.2em 0 .1em}
+  .sub{color:var(--muted);margin:0 0 18px}
+  h2{font-family:var(--head);color:var(--navy);font-size:1.5rem;margin:36px 0 8px;padding-bottom:6px;border-bottom:3px solid var(--green)}
+  h3{font-family:var(--head);color:var(--navy);margin:20px 0 6px;font-size:1.15rem}
+  .idbar{display:flex;gap:14px;flex-wrap:wrap;background:#fff;border:1px solid var(--line);border-radius:8px;padding:12px 14px;margin:14px 0 8px}
+  .idbar label{display:flex;gap:8px;align-items:center;font-weight:600}
+  input[type=text],textarea{font:inherit;border:1px solid #b8b09b;border-radius:6px;padding:7px 9px;background:#fff;color:var(--ink);width:100%}
+  .idbar input[type=text]{width:220px}
+  .idbar .period{width:90px}
+  textarea{min-height:74px;resize:vertical}
+  table{width:100%;border-collapse:collapse;background:#fff;margin:10px 0 16px;font-size:.98rem}
+  th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+  th{background:var(--navy);color:#fff;font-weight:600}
+  td input[type=text]{padding:5px 7px}
+  .scroll{overflow-x:auto}
+  code,.mono{font-family:var(--mono);background:#eef0e4;border-radius:4px;padding:1px 6px;font-size:.92em}
+  .callout{background:#fff;border-left:6px solid var(--green);border-radius:6px;padding:12px 16px;margin:14px 0}
+  .callout.note{border-left-color:var(--gold)}
+  .mission{background:var(--card);border:1px solid var(--line);border-left:8px solid var(--green);border-radius:10px;padding:16px 20px;margin:18px 0;break-inside:avoid}
+  .mission h3{margin-top:0;display:flex;align-items:center;gap:12px}
+  .badge{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;background:var(--navy);color:var(--green);font-family:var(--head);font-weight:700;flex:none}
+  .time{margin-left:auto;font-size:.82rem;font-weight:600;color:var(--muted);background:var(--cream);border-radius:999px;padding:2px 10px;white-space:nowrap}
+  .goal{font-weight:600;color:var(--navy);margin:.2em 0 .6em}
+  ol.steps{padding-left:22px;margin:.4em 0}
+  ol.steps li{margin:.35em 0}
+  .check{display:flex;gap:10px;align-items:flex-start;background:var(--cream);border-radius:8px;padding:10px 12px;margin:12px 0 6px}
+  .check input{width:20px;height:20px;margin-top:3px;accent-color:var(--navy);flex:none}
+  details{background:#fbfaf5;border:1px dashed #b8b09b;border-radius:8px;padding:8px 12px;margin:8px 0}
+  summary{cursor:pointer;font-weight:600;color:var(--navy)}
+  .lights{display:flex;gap:14px;flex-wrap:wrap;margin:8px 0}
+  .lights span{display:inline-flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--line);border-radius:999px;padding:3px 12px 3px 6px;font-size:.95rem}
+  .dot{width:16px;height:16px;border-radius:50%;display:inline-block;border:2px solid rgba(0,0,0,.25)}
+  .dot.g{background:#2fb344}.dot.a{background:#f59f00}.dot.r{background:#e03131}
+  .stretch{border-left-color:var(--gold)}
+  .stretch .badge{color:var(--gold)}
+  dl.vocab dt{font-weight:700;color:var(--navy);margin-top:10px}
+  dl.vocab dd{margin:0 0 0 0}
+  .actions{margin:26px 0 6px;display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+  button.pdf{font:inherit;font-weight:700;background:var(--navy);color:#fff;border:0;border-radius:8px;padding:12px 20px;cursor:pointer}
+  button.pdf:hover{background:#163459}
+  .hint{color:var(--muted);font-size:.92rem}
+  .diagram{background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px;margin:14px 0}
+  .diagram svg{width:100%;height:auto;display:block}
+  .ai{background:#fff;border:1px solid var(--line);border-left:8px solid var(--navy);border-radius:10px;padding:14px 18px;margin:14px 0}
+  .ai .label{font-size:.8rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0 0 6px}
+  .prompt{background:#eef0e4;border-radius:8px;padding:10px 14px;font-family:var(--mono);font-size:.95rem}
+  .designs{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}
+  .designs figure{margin:0;background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px}
+  .designs svg{width:100%;height:auto;display:block}
+  .designs figcaption{font-weight:700;color:var(--navy);text-align:center;margin-top:4px}
+  select{font:inherit;border:1px solid #b8b09b;border-radius:6px;padding:5px 7px;background:#fff;color:var(--ink);max-width:100%}
+  @media (max-width:760px){ .designs{grid-template-columns:1fr} }
+  textarea.auto{min-height:36px;height:36px;resize:none;overflow:hidden;line-height:1.35;vertical-align:top}
+  td textarea.auto{padding:5px 7px}
+  .pc{display:none}
+  .tool{background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin:12px 0}
+  .btnrow{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+  .btnrow button,.tool button.act{font:inherit;font-weight:700;background:#fff;color:var(--navy);border:2px solid var(--navy);border-radius:8px;padding:8px 12px;cursor:pointer}
+  .btnrow button[aria-pressed=true]{background:var(--navy);color:#fff}
+  .btnrow button.seen::after{content:" ✓";color:#2f855a}
+  .btnrow button[aria-pressed=true].seen::after{color:var(--green)}
+  .tool button.go{font:inherit;font-weight:700;background:var(--navy);color:#fff;border:0;border-radius:8px;padding:10px 18px;cursor:pointer}
+  .tool button.alt{font:inherit;font-weight:700;background:#fff;color:var(--navy);border:2px solid var(--navy);border-radius:8px;padding:8px 14px;cursor:pointer}
+  .log{background:#10243f;color:#e8eef5;border-radius:8px;padding:12px 14px;font-family:var(--mono);font-size:.92rem;min-height:5.5em;white-space:pre-wrap;overflow-wrap:anywhere}
+  .log .tag{color:var(--green);font-weight:700}
+  td.res.ok{background:#e6f4ea} td.res.bad{background:#fdecea}
+  .stat{display:inline-block;background:var(--cream);border-radius:999px;padding:3px 12px;font-weight:700;margin-right:8px}
+  .stat.warn{background:#fdecea;color:#a12622}
+  .map{background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px;margin:12px 0}
+  .map svg{width:100%;height:auto;display:block}
+  @media print{ .btnrow,.tool button,.log{display:none !important} .noprint-inline{display:none !important} }
+  @media (max-width:640px){ h1{font-size:1.65rem} .time{display:none} }
+  @media print{
+    textarea{display:none !important}
+    .pc{display:block;white-space:pre-wrap;overflow-wrap:anywhere;border:1px solid #888;border-radius:6px;padding:5px 7px;min-height:1.9em;line-height:1.35;background:#fff}
+    body{background:#fff;font-size:11.5pt}
+    .topbar,.actions,.noprint{display:none !important}
+    main{max-width:none;padding:0}
+    .mission,.callout,table,tr{break-inside:avoid}
+    .mission{border:1px solid #999;border-left:6px solid #555}
+    h2{break-after:avoid}
+    textarea{border:1px solid #888}
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <span class="brand">🐾 Bulldog Networking — AP Networking</span>
+  <a href="https://whatwasithinking.us/ap-networking/index.html">← Back to AP Networking</a>
+</div>
+
+<main>
+  <p class="eyebrow">AP Networking · Local Unit 3 · U3L09</p>
+  <h1>Network Audit: What Could Go Wrong?</h1>
+  <p class="sub">Threats and vulnerabilities in a segmented LAN — CB 3.4.A (activity first, concept after)</p>
+
+  <div class="idbar">
+    <label>Name: <input type="text" id="name" autocomplete="name"></label>
+    <label>Period: <input type="text" id="period" class="period"></label>
+  </div>
+  <p class="hint noprint">Everything you do in the audit tool shows up in the "Audit Evidence" table, which prints with your page. Nothing is saved or sent anywhere. When you finish, use "Download as PDF" to save a copy to turn in.</p>
+
+  <h2>The Situation</h2>
+  <p>It's two weeks before the <strong>Bulldog Esports Invitational</strong>. A first version of the network is up, and you are the <strong>network administrator</strong>. Your job today is to <strong>audit your own network</strong>: look for what could hurt the event, before a stranger or a mistake finds it first.</p>
+  <p>Six spots on the network have been flagged for inspection. The numbered badges on the map match the buttons below.</p>
+  <div class="map"><svg viewBox="0 0 760 390" role="img" aria-labelledby="mt md" xmlns="http://www.w3.org/2000/svg" font-family="Calibri, Inter, Arial, sans-serif">
+<title id="mt">The Invitational network as built so far</title>
+<desc id="md">The internet connects to a router (badge 3). The router connects to one switch. Everything sits on one network, 192.168.1.0/24 (badge 4): a staff Wi-Fi access point (badge 2) with spectator phones, admin PCs and a scoreboard on the switch, a file server (badge 5), the Tournament Server (badge 6), and a lobby wall jack on port 14 (badge 1).</desc>
+<rect x="330" y="6" width="100" height="28" rx="6" fill="#fff" stroke="#0B1F3A" stroke-width="1.5"/><text x="380.0" y="24.0" text-anchor="middle" font-size="13" fill="#1b2430">Internet</text><line x1="380" y1="34" x2="380" y2="58" stroke="#0B1F3A" stroke-width="2"/>
+<rect x="330" y="58" width="100" height="32" rx="6" fill="#0B1F3A" stroke="#0B1F3A" stroke-width="1.5"/><text x="380.0" y="78.0" text-anchor="middle" font-size="13" fill="#8FC53E">Router</text><circle cx="430" cy="58" r="12" fill="#8FC53E" stroke="#0B1F3A" stroke-width="2"/><text x="430" y="63" text-anchor="middle" font-size="14" font-weight="700" fill="#0B1F3A">3</text><line x1="380" y1="90" x2="380" y2="166" stroke="#0B1F3A" stroke-width="2"/>
+<rect x="14" y="118" width="732" height="264" rx="10" fill="#F4F1E9" stroke="#0B1F3A" stroke-width="2" stroke-dasharray="7 4"/>
+<circle cx="36" cy="136" r="12" fill="#8FC53E" stroke="#0B1F3A" stroke-width="2"/><text x="36" y="141" text-anchor="middle" font-size="14" font-weight="700" fill="#0B1F3A">4</text><text x="56" y="141" font-size="14" font-weight="700" fill="#0B1F3A">One network for everyone: 192.168.1.0/24</text>
+<rect x="320" y="166" width="120" height="34" rx="6" fill="#fff" stroke="#0B1F3A" stroke-width="1.5"/><text x="380.0" y="187.0" text-anchor="middle" font-size="12" fill="#1b2430">Switch</text>
+<rect x="46" y="166" width="150" height="34" rx="6" fill="#fff" stroke="#0B1F3A" stroke-width="1.5"/><text x="121.0" y="187.0" text-anchor="middle" font-size="12" fill="#1b2430">Staff Wi-Fi access point</text><circle cx="196" cy="166" r="12" fill="#8FC53E" stroke="#0B1F3A" stroke-width="2"/><text x="196" y="171" text-anchor="middle" font-size="14" font-weight="700" fill="#0B1F3A">2</text><line x1="196" y1="183" x2="320" y2="183" stroke="#0B1F3A" stroke-width="2"/>
+<rect x="46" y="236" width="150" height="34" rx="6" fill="#fff" stroke="#0B1F3A" stroke-width="1.5"/><text x="121.0" y="257.0" text-anchor="middle" font-size="12" fill="#1b2430">Spectator phones (120)</text><line x1="121" y1="200" x2="121" y2="236" stroke="#0B1F3A" stroke-width="2"/>
+<rect x="320" y="236" width="120" height="34" rx="6" fill="#fff" stroke="#0B1F3A" stroke-width="1.5"/><text x="380.0" y="257.0" text-anchor="middle" font-size="12" fill="#1b2430">Admin PCs</text><line x1="380" y1="200" x2="380" y2="236" stroke="#0B1F3A" stroke-width="2"/>
+<rect x="320" y="306" width="120" height="34" rx="6" fill="#fff" stroke="#0B1F3A" stroke-width="1.5"/><text x="380.0" y="327.0" text-anchor="middle" font-size="12" fill="#1b2430">Scoreboard</text><line x1="380" y1="270" x2="380" y2="306" stroke="#0B1F3A" stroke-width="2"/>
+<rect x="560" y="166" width="160" height="34" rx="6" fill="#fff" stroke="#0B1F3A" stroke-width="1.5"/><text x="640.0" y="187.0" text-anchor="middle" font-size="12" fill="#1b2430">File server</text><circle cx="720" cy="166" r="12" fill="#8FC53E" stroke="#0B1F3A" stroke-width="2"/><text x="720" y="171" text-anchor="middle" font-size="14" font-weight="700" fill="#0B1F3A">5</text><line x1="440" y1="183" x2="560" y2="183" stroke="#0B1F3A" stroke-width="2"/>
+<rect x="560" y="236" width="160" height="34" rx="6" fill="#fff" stroke="#0B1F3A" stroke-width="1.5"/><text x="640.0" y="257.0" text-anchor="middle" font-size="12" fill="#1b2430">Tournament Server</text><circle cx="720" cy="236" r="12" fill="#8FC53E" stroke="#0B1F3A" stroke-width="2"/><text x="720" y="241" text-anchor="middle" font-size="14" font-weight="700" fill="#0B1F3A">6</text><line x1="500" y1="183" x2="500" y2="253" stroke="#0B1F3A" stroke-width="2"/><line x1="500" y1="253" x2="560" y2="253" stroke="#0B1F3A" stroke-width="2"/>
+<rect x="560" y="306" width="160" height="34" rx="6" fill="#fff" stroke="#0B1F3A" stroke-width="1.5"/><text x="640.0" y="327.0" text-anchor="middle" font-size="12" fill="#1b2430">Lobby wall jack, port 14</text><circle cx="720" cy="306" r="12" fill="#8FC53E" stroke="#0B1F3A" stroke-width="2"/><text x="720" y="311" text-anchor="middle" font-size="14" font-weight="700" fill="#0B1F3A">1</text><line x1="500" y1="253" x2="500" y2="323" stroke="#0B1F3A" stroke-width="2"/><line x1="500" y1="323" x2="560" y2="323" stroke="#0B1F3A" stroke-width="2"/>
+</svg></div>
+
+  <h2>Mission Board</h2>
+
+  <section class="mission" aria-labelledby="m1">
+    <h3 id="m1"><span class="badge">1</span> Inspect the Network <span class="time">about 15 min</span></h3>
+    <p class="goal">Goal: open the inspection log for each flagged spot and read what the admin sees.</p>
+    <div class="tool">
+      <div class="btnrow" id="inspectRow" role="group" aria-label="Flagged spots"></div>
+      <div class="log" id="logPanel" role="status" aria-live="polite">Pick a numbered spot above to read its inspection log.</div>
+    </div>
+    <div class="check"><input type="checkbox" id="c1"><label for="c1">Checkpoint: I opened all six inspection logs.</label></div>
+  </section>
+
+  <section class="mission" aria-labelledby="m2">
+    <h3 id="m2"><span class="badge">2</span> Write Up Each Finding <span class="time">about 12 min</span></h3>
+    <p class="goal">Goal: for each finding, say what kind of problem it is and which property of the network is at risk.</p>
+    <p>Three properties describe what a network protects:</p>
+    <ul>
+      <li><strong>Confidentiality:</strong> only the right people can see the data.</li>
+      <li><strong>Integrity:</strong> data and systems haven't been changed by someone who shouldn't.</li>
+      <li><strong>Availability:</strong> systems and data are there when people need them.</li>
+    </ul>
+    <p>If more than one property could be at risk, pick the one that is <em>most</em> at risk.</p>
+    <div class="scroll"><table id="auditTable">
+      <thead><tr><th>#</th><th>Finding</th><th>What kind of problem?</th><th>Property at risk</th><th>Result</th></tr></thead>
+      <tbody></tbody>
+    </table></div>
+    <div class="btnrow noprint-inline"><button type="button" class="go" id="checkBtn">Check my audit</button></div>
+    <p class="hint">Checking only tells you whether each choice is right. If a row is marked ✘, read the hint, change your answer, and check again.</p>
+    <div class="check"><input type="checkbox" id="c2"><label for="c2">Checkpoint: all six rows are filled in and checked.</label></div>
+  </section>
+
+  <section class="mission" aria-labelledby="m3">
+    <h3 id="m3"><span class="badge">3</span> What Matters Most? <span class="time">about 6 min</span></h3>
+    <p class="goal">Goal: decide which two findings to fix first, and defend your choice.</p>
+    <p>You can't fix everything at once. Choose the <strong>two</strong> findings that put the Invitational at the most risk, and explain why. (There is no single right answer. Use what the logs showed.)</p>
+    <p>Finding numbers: <input type="text" aria-label="Two findings to fix first" style="width:140px"></p>
+    <textarea aria-label="Why these two findings first"></textarea>
+    <div class="check"><input type="checkbox" id="c3"><label for="c3">Checkpoint: I picked two findings and gave a reason.</label></div>
+  </section>
+
+  <section class="mission" aria-labelledby="ev">
+    <h3 id="ev"><span class="badge">✔</span> Your Audit Evidence <span class="time">fills in by itself</span></h3>
+    <p class="hint">This table reads what you did in the audit tool and prints with your page.</p>
+    <div id="evidence"></div>
+  </section>
+
+  <h2>Concept: Threats and Vulnerabilities in a Segmented LAN</h2>
+  <div class="callout">
+    <p>Networks with many kinds of users and devices commonly face <strong>unauthorized access</strong>, <strong>unverified device connections</strong>, and <strong>data exposure</strong>. These risks are why access controls matter: they protect <strong>confidentiality</strong>, <strong>integrity</strong>, and <strong>availability</strong>.</p>
+    <ul>
+      <li><strong>No separation (finding 4 and 6):</strong> when user groups, devices, and resources aren't properly separated, unauthorized users can reach administrative systems and confidential data, and heavy use by one group can interfere with shared resources and everyone's productivity.</li>
+      <li><strong>Weak wireless security (finding 2):</strong> simple passwords, outdated encryption like WEP, or no encryption at all let unauthorized users reach sensitive data.</li>
+      <li><strong>Unknown devices (finding 1):</strong> an unverified device on the network may intercept traffic, spread malware, or bypass internal security controls.</li>
+      <li><strong>Weak firewall rules (finding 3):</strong> an adversary can move <strong>laterally</strong>, from one system or segment to many, when firewall rules are weak or misconfigured.</li>
+      <li><strong>Data exposure (finding 5):</strong> sensitive information is readable by people who shouldn't see it.</li>
+    </ul>
+    <p>Notice the viewpoint: you were the <em>administrator checking your own network</em>. That's how real networks stay safe: find the weak spots first. Next class, you'll choose the controls that fix them.</p>
+  </div>
+
+  <h2>Debrief Questions</h2>
+  <p class="hint">Finish these in class if you have time. Otherwise they are due at the start of our next class.</p>
+  <p><strong>1.</strong> Choose one finding and explain how it could actually hurt the Invitational (a player, a spectator, or the event itself).</p>
+  <textarea aria-label="Question 1"></textarea>
+  <p><strong>2.</strong> Findings 4 and 6 both come from the same root problem, but cause different harms. Explain both.</p>
+  <textarea aria-label="Question 2"></textarea>
+  <p><strong>3.</strong> Why is the firewall rule in finding 3 dangerous even if every user is honest? Use the idea of lateral movement.</p>
+  <textarea aria-label="Question 3"></textarea>
+
+  <h2>Vocabulary</h2>
+  <dl class="vocab">
+    <dt>Vulnerability</dt><dd>A weakness that could be used to cause harm.</dd>
+    <dt>Threat</dt><dd>Something that could take advantage of a weakness.</dd>
+    <dt>Unauthorized access</dt><dd>Someone reaching systems or data they have no right to.</dd>
+    <dt>Confidentiality, integrity, availability</dt><dd>Keeping data private, keeping it unaltered, and keeping it available when needed.</dd>
+    <dt>Lateral movement</dt><dd>An attacker moving from one compromised device to others on the same network or other segments.</dd>
+    <dt>Unverified device</dt><dd>A device connected to the network that no one has checked or approved.</dd>
+    <dt>Segmentation</dt><dd>Separating devices and users into groups so problems and access stay contained.</dd>
+  </dl>
+
+  <div class="actions noprint">
+    <button class="pdf" type="button" onclick="window.print()">📄 Download as PDF</button>
+    <span class="hint">In the print dialog, set <strong>Destination</strong> to <strong>Save as PDF</strong>, then save.</span>
+  </div>
+</main>
+<script>
+(function(){
+  "use strict";
+  var D={"F": [{"id": 1, "name": "Lobby wall jack, port 14", "log": "[switch]  Gi0/14   link UP\n[switch]  Gi0/14   device MAC 3C:22:FB:9A:10:5E\n[inventory]  3C:22:FB:9A:10:5E  NOT FOUND\n[note]  Nobody at the event reports plugging anything in.", "type": "a", "cia": ["C", "I"], "hint": "Look for something on the network that nobody can account for.", "why": "An unknown, unverified device is connected. It could intercept traffic, spread malware, or bypass internal controls (EK 3.4.A.4)."}, {"id": 2, "name": "Staff Wi-Fi", "log": "[wireless]  SSID: BulldogStaff\n[wireless]  Security: WEP\n[wireless]  Password: bulldogs\n[note]  The password is printed on every staff badge card.", "type": "b", "cia": ["C"], "hint": "Read the security type and the password closely.", "why": "Weak wireless security (an outdated type of encryption and a simple password) lets unauthorized people reach sensitive data (EK 3.4.A.3)."}, {"id": 3, "name": "Router firewall rules", "log": "[router]  Rules between segments:\n  1. ALLOW  any source -> any destination  (any service)\n[router]  No other rules configured.", "type": "c", "cia": ["C", "I"], "hint": "What does a rule that allows everything do to the idea of keeping groups apart?", "why": "With weak or misconfigured firewall rules, an adversary who gets into one system can move laterally to others (EK 3.4.A.5)."}, {"id": 4, "name": "Network layout", "log": "[map]  192.168.1.0/24 contains:\n  - Admin PCs\n  - Scoreboard controller\n  - 120 spectator phones\n  - File server, Tournament Server\n[note]  No separate segments.", "type": "d", "cia": ["C", "I"], "hint": "Who shares a network with whom?", "why": "User groups and devices are not separated, so unauthorized people can reach administrative systems and confidential data (EK 3.4.A.2)."}, {"id": 5, "name": "PlayerRoster file share", "log": "[file server]  \\\\\\\\TOURNEY\\\\PlayerRoster  (names, grades, emails)\n[permissions]  Everyone: READ\n[note]  Includes guest-segment devices.", "type": "e", "cia": ["C"], "hint": "Who is allowed to read personal information about players?", "why": "Sensitive data is exposed to people who should not see it (EK 3.4.A.1)."}, {"id": 6, "name": "Tournament Server slowdown", "log": "[monitor]  Tournament Server response time: 240 ms and rising\n[monitor]  90% of traffic on this segment: spectator video streaming\n[note]  Players report lag during matches.", "type": "f", "cia": ["A"], "hint": "What is competing with the players for the same network?", "why": "Without separation, heavy use by one group interferes with shared resources and everyone else's productivity (EK 3.4.A.2). This is an availability problem."}], "TYPES": [["a", "Unknown or unverified device connected"], ["b", "Weak wireless security"], ["c", "Weak or misconfigured firewall rules"], ["d", "Groups and devices not separated"], ["e", "Data exposed to people who shouldn't see it"], ["f", "Shared resources overloaded or interfered with"]], "CIA": [["C", "Confidentiality"], ["I", "Integrity"], ["A", "Availability"]]};
+  var F=D.F,TYPES=D.TYPES,CIA=D.CIA;
+  function $(id){return document.getElementById(id);}
+  var seen={},sel={},res={},checked=false;
+  var row=$("inspectRow");
+  F.forEach(function(f){
+    var b=document.createElement("button"); b.type="button"; b.setAttribute("aria-pressed","false"); b.textContent=f.id+"  "+f.name; b.dataset.id=f.id;
+    b.addEventListener("click",function(){
+      row.querySelectorAll("button").forEach(function(x){x.setAttribute("aria-pressed",x===b?"true":"false");});
+      seen[f.id]=true; b.classList.add("seen");
+      var p=$("logPanel"); p.innerHTML="";
+      var h=document.createElement("span"); h.className="tag"; h.textContent="INSPECTING "+f.id+": "+f.name+"\n\n"; p.appendChild(h);
+      p.appendChild(document.createTextNode(f.log));
+      render();
+    });
+    row.appendChild(b);
+  });
+  var tb=$("auditTable").querySelector("tbody");
+  F.forEach(function(f){
+    var tr=document.createElement("tr");
+    function td(c){var x=document.createElement("td"); if(c) x.appendChild(c); tr.appendChild(x); return x;}
+    td(document.createTextNode(String(f.id)));
+    td(document.createTextNode(f.name));
+    var s1=document.createElement("select"); s1.setAttribute("aria-label","Problem type for finding "+f.id);
+    s1.innerHTML='<option value="">Choose…</option>'+TYPES.map(function(t){return '<option value="'+t[0]+'">'+t[1]+'</option>';}).join("");
+    var s2=document.createElement("select"); s2.setAttribute("aria-label","Property at risk for finding "+f.id);
+    s2.innerHTML='<option value="">Choose…</option>'+CIA.map(function(t){return '<option value="'+t[0]+'">'+t[1]+'</option>';}).join("");
+    td(s1); td(s2);
+    var r=td(null); r.className="res"; r.id="res"+f.id;
+    s1.addEventListener("change",function(){sel[f.id]=sel[f.id]||{}; sel[f.id].t=s1.value; invalidate(f.id); render();});
+    s2.addEventListener("change",function(){sel[f.id]=sel[f.id]||{}; sel[f.id].c=s2.value; invalidate(f.id); render();});
+    tb.appendChild(tr);
+  });
+  function invalidate(id){ delete res[id]; var c=$("res"+id); c.textContent=""; c.className="res"; }
+  function typeLabel(v){var t=TYPES.filter(function(x){return x[0]===v;})[0]; return t?t[1]:"(not chosen)";}
+  function ciaLabel(v){var t=CIA.filter(function(x){return x[0]===v;})[0]; return t?t[1]:"(not chosen)";}
+  $("checkBtn").addEventListener("click",function(){
+    checked=true;
+    F.forEach(function(f){
+      var s=sel[f.id]||{}; var c=$("res"+f.id);
+      var tOk=(s.t===f.type), cOk=(f.cia.indexOf(s.c)>-1);
+      res[f.id]={t:tOk,c:cOk};
+      if(!s.t||!s.c){ c.className="res bad"; c.textContent="✘ Choose both answers."; res[f.id]={t:false,c:false}; return; }
+      if(tOk&&cOk){ c.className="res ok"; c.textContent="✔ "+f.why; }
+      else { c.className="res bad"; c.textContent="✘ "+(!tOk?"The kind of problem isn't right. ":"")+(!cOk?"Rethink which property is most at risk. ":"")+f.hint; }
+    });
+    render();
+  });
+  function render(){
+    var h=$("evidence"); h.innerHTML="";
+    var n=Object.keys(seen).length;
+    var p=document.createElement("p"); p.innerHTML='<span class="stat">Logs inspected: '+n+' of '+F.length+'</span>'; 
+    var score=0,total=F.length*2;
+    F.forEach(function(f){ if(res[f.id]){ if(res[f.id].t) score++; if(res[f.id].c) score++; } });
+    p.innerHTML+='<span class="stat">'+(checked?('Correct choices: '+score+' of '+total):'Not checked yet')+'</span>';
+    h.appendChild(p);
+    var t=document.createElement("table");
+    t.innerHTML="<thead><tr><th>#</th><th>Finding</th><th>I inspected it</th><th>Kind of problem I chose</th><th>Property I chose</th><th>Result</th></tr></thead>";
+    var b=document.createElement("tbody");
+    F.forEach(function(f){
+      var s=sel[f.id]||{}; var r=res[f.id];
+      var tr=document.createElement("tr");
+      [String(f.id),f.name,seen[f.id]?"Yes":"No",typeLabel(s.t),ciaLabel(s.c),(!checked||!r)?"not checked":((r.t&&r.c)?"✔ correct":"✘ needs work")].forEach(function(x){var d=document.createElement("td"); d.textContent=x; tr.appendChild(d);});
+      b.appendChild(tr);
+    });
+    t.appendChild(b); h.appendChild(t);
+  }
+  render();
+})();
+</script>
+<script>
+(function(){
+  "use strict";
+  function grow(t){t.style.height="auto";t.style.height=(t.scrollHeight+2)+"px";}
+  document.querySelectorAll("input[type=text]").forEach(function(i){
+    if(i.id==="name"||i.id==="period"||i.closest(".router")) return;
+    var t=document.createElement("textarea");
+    t.rows=1; t.className="auto";
+    ["aria-label","style"].forEach(function(a){ if(i.hasAttribute(a)) t.setAttribute(a,i.getAttribute(a)); });
+    i.parentNode.replaceChild(t,i);
+  });
+  var areas=Array.prototype.slice.call(document.querySelectorAll("textarea"));
+  areas.forEach(function(t){
+    var d=document.createElement("div");
+    d.className="pc"; d.setAttribute("aria-hidden","true");
+    if(t.hasAttribute("style")) d.setAttribute("style",t.getAttribute("style"));
+    t.parentNode.insertBefore(d,t.nextSibling);
+    function sync(){d.textContent=t.value;}
+    t.addEventListener("input",function(){sync();if(t.className==="auto")grow(t);});
+    t._sync=sync; sync(); if(t.className==="auto") grow(t);
+  });
+  window.addEventListener("beforeprint",function(){areas.forEach(function(t){t._sync();});});
+  window.addEventListener("resize",function(){areas.forEach(function(t){if(t.className==="auto")grow(t);});});
+})();
+</script>
+</body>
+</html>

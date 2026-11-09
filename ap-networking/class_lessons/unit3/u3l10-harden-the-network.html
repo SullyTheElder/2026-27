@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>U3L10: Harden the Network - Choose Your Controls</title>
+<style>
+  :root{
+    --navy:#0B1F3A; --green:#8FC53E; --cream:#F4F1E9; --gold:#D9A441;
+    --ink:#1b2430; --muted:#55606e; --line:#d9d3c3; --card:#ffffff;
+    --head: Cambria, "Iowa Old Style", Georgia, serif;
+    --body: Calibri, Inter, "Segoe UI", Arial, sans-serif;
+    --mono: "IBM Plex Mono", Consolas, "Courier New", monospace;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--cream);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.55}
+  a{color:var(--navy)}
+  :focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+  .topbar{background:var(--navy);color:#fff;padding:10px 20px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+  .topbar .brand{font-family:var(--head);font-weight:700;letter-spacing:.02em}
+  .topbar a{color:var(--green);text-decoration:none;font-weight:600}
+  .topbar a:hover{text-decoration:underline}
+  main{max-width:900px;margin:0 auto;padding:24px 20px 60px}
+  .eyebrow{color:var(--muted);font-size:.85rem;text-transform:uppercase;letter-spacing:.08em;margin:0}
+  h1{font-family:var(--head);color:var(--navy);font-size:2.1rem;line-height:1.2;margin:.2em 0 .1em}
+  .sub{color:var(--muted);margin:0 0 18px}
+  h2{font-family:var(--head);color:var(--navy);font-size:1.5rem;margin:36px 0 8px;padding-bottom:6px;border-bottom:3px solid var(--green)}
+  h3{font-family:var(--head);color:var(--navy);margin:20px 0 6px;font-size:1.15rem}
+  .idbar{display:flex;gap:14px;flex-wrap:wrap;background:#fff;border:1px solid var(--line);border-radius:8px;padding:12px 14px;margin:14px 0 8px}
+  .idbar label{display:flex;gap:8px;align-items:center;font-weight:600}
+  input[type=text],textarea{font:inherit;border:1px solid #b8b09b;border-radius:6px;padding:7px 9px;background:#fff;color:var(--ink);width:100%}
+  .idbar input[type=text]{width:220px}
+  .idbar .period{width:90px}
+  textarea{min-height:74px;resize:vertical}
+  table{width:100%;border-collapse:collapse;background:#fff;margin:10px 0 16px;font-size:.98rem}
+  th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+  th{background:var(--navy);color:#fff;font-weight:600}
+  td input[type=text]{padding:5px 7px}
+  .scroll{overflow-x:auto}
+  code,.mono{font-family:var(--mono);background:#eef0e4;border-radius:4px;padding:1px 6px;font-size:.92em}
+  .callout{background:#fff;border-left:6px solid var(--green);border-radius:6px;padding:12px 16px;margin:14px 0}
+  .callout.note{border-left-color:var(--gold)}
+  .mission{background:var(--card);border:1px solid var(--line);border-left:8px solid var(--green);border-radius:10px;padding:16px 20px;margin:18px 0;break-inside:avoid}
+  .mission h3{margin-top:0;display:flex;align-items:center;gap:12px}
+  .badge{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;background:var(--navy);color:var(--green);font-family:var(--head);font-weight:700;flex:none}
+  .time{margin-left:auto;font-size:.82rem;font-weight:600;color:var(--muted);background:var(--cream);border-radius:999px;padding:2px 10px;white-space:nowrap}
+  .goal{font-weight:600;color:var(--navy);margin:.2em 0 .6em}
+  ol.steps{padding-left:22px;margin:.4em 0}
+  ol.steps li{margin:.35em 0}
+  .check{display:flex;gap:10px;align-items:flex-start;background:var(--cream);border-radius:8px;padding:10px 12px;margin:12px 0 6px}
+  .check input{width:20px;height:20px;margin-top:3px;accent-color:var(--navy);flex:none}
+  details{background:#fbfaf5;border:1px dashed #b8b09b;border-radius:8px;padding:8px 12px;margin:8px 0}
+  summary{cursor:pointer;font-weight:600;color:var(--navy)}
+  .lights{display:flex;gap:14px;flex-wrap:wrap;margin:8px 0}
+  .lights span{display:inline-flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--line);border-radius:999px;padding:3px 12px 3px 6px;font-size:.95rem}
+  .dot{width:16px;height:16px;border-radius:50%;display:inline-block;border:2px solid rgba(0,0,0,.25)}
+  .dot.g{background:#2fb344}.dot.a{background:#f59f00}.dot.r{background:#e03131}
+  .stretch{border-left-color:var(--gold)}
+  .stretch .badge{color:var(--gold)}
+  dl.vocab dt{font-weight:700;color:var(--navy);margin-top:10px}
+  dl.vocab dd{margin:0 0 0 0}
+  .actions{margin:26px 0 6px;display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+  button.pdf{font:inherit;font-weight:700;background:var(--navy);color:#fff;border:0;border-radius:8px;padding:12px 20px;cursor:pointer}
+  button.pdf:hover{background:#163459}
+  .hint{color:var(--muted);font-size:.92rem}
+  .diagram{background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px;margin:14px 0}
+  .diagram svg{width:100%;height:auto;display:block}
+  .ai{background:#fff;border:1px solid var(--line);border-left:8px solid var(--navy);border-radius:10px;padding:14px 18px;margin:14px 0}
+  .ai .label{font-size:.8rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0 0 6px}
+  .prompt{background:#eef0e4;border-radius:8px;padding:10px 14px;font-family:var(--mono);font-size:.95rem}
+  .designs{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}
+  .designs figure{margin:0;background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px}
+  .designs svg{width:100%;height:auto;display:block}
+  .designs figcaption{font-weight:700;color:var(--navy);text-align:center;margin-top:4px}
+  select{font:inherit;border:1px solid #b8b09b;border-radius:6px;padding:5px 7px;background:#fff;color:var(--ink);max-width:100%}
+  @media (max-width:760px){ .designs{grid-template-columns:1fr} }
+  textarea.auto{min-height:36px;height:36px;resize:none;overflow:hidden;line-height:1.35;vertical-align:top}
+  td textarea.auto{padding:5px 7px}
+  .pc{display:none}
+  .tool{background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin:12px 0}
+  .btnrow{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+  .btnrow button,.tool button.act{font:inherit;font-weight:700;background:#fff;color:var(--navy);border:2px solid var(--navy);border-radius:8px;padding:8px 12px;cursor:pointer}
+  .btnrow button[aria-pressed=true]{background:var(--navy);color:#fff}
+  .btnrow button.seen::after{content:" ✓";color:#2f855a}
+  .btnrow button[aria-pressed=true].seen::after{color:var(--green)}
+  .tool button.go{font:inherit;font-weight:700;background:var(--navy);color:#fff;border:0;border-radius:8px;padding:10px 18px;cursor:pointer}
+  .tool button.alt{font:inherit;font-weight:700;background:#fff;color:var(--navy);border:2px solid var(--navy);border-radius:8px;padding:8px 14px;cursor:pointer}
+  .log{background:#10243f;color:#e8eef5;border-radius:8px;padding:12px 14px;font-family:var(--mono);font-size:.92rem;min-height:5.5em;white-space:pre-wrap;overflow-wrap:anywhere}
+  .log .tag{color:var(--green);font-weight:700}
+  td.res.ok{background:#e6f4ea} td.res.bad{background:#fdecea}
+  .stat{display:inline-block;background:var(--cream);border-radius:999px;padding:3px 12px;font-weight:700;margin-right:8px}
+  .stat.warn{background:#fdecea;color:#a12622}
+  .map{background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px;margin:12px 0}
+  .map svg{width:100%;height:auto;display:block}
+  @media print{ .btnrow,.tool button,.log{display:none !important} .noprint-inline{display:none !important} }
+  @media (max-width:640px){ h1{font-size:1.65rem} .time{display:none} }
+  @media print{
+    textarea{display:none !important}
+    .pc{display:block;white-space:pre-wrap;overflow-wrap:anywhere;border:1px solid #888;border-radius:6px;padding:5px 7px;min-height:1.9em;line-height:1.35;background:#fff}
+    body{background:#fff;font-size:11.5pt}
+    .topbar,.actions,.noprint{display:none !important}
+    main{max-width:none;padding:0}
+    .mission,.callout,table,tr{break-inside:avoid}
+    .mission{border:1px solid #999;border-left:6px solid #555}
+    h2{break-after:avoid}
+    textarea{border:1px solid #888}
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <span class="brand">🐾 Bulldog Networking — AP Networking</span>
+  <a href="https://whatwasithinking.us/ap-networking/index.html">← Back to AP Networking</a>
+</div>
+
+<main>
+  <p class="eyebrow">AP Networking · Local Unit 3 · U3L10</p>
+  <h1>Harden the Network: Choose Your Controls</h1>
+  <p class="sub">Security controls for a segmented LAN — CB 3.4.B (activity first, concept after)</p>
+
+  <div class="idbar">
+    <label>Name: <input type="text" id="name" autocomplete="name"></label>
+    <label>Period: <input type="text" id="period" class="period"></label>
+  </div>
+  <p class="hint noprint">Your choices and results show up in the "Hardening Evidence" table, which prints with your page. Nothing is saved or sent anywhere. When you finish, use "Download as PDF" to save a copy to turn in.</p>
+
+  <h2>The Situation</h2>
+  <p>Last class you audited the <strong>Bulldog Esports Invitational</strong> network and found six problems. Now you fix them. The committee has given you a <strong>budget</strong>, and the volunteers who will run the event can only keep up with controls that are simple and few. That means you can't just buy everything.</p>
+  <p>Each control costs <strong>points</strong> (setup effort and equipment). If two findings use the <em>same</em> control, you only pay for it once.</p>
+
+  <h2>Mission Board</h2>
+
+  <section class="mission" aria-labelledby="m1">
+    <h3 id="m1"><span class="badge">1</span> Choose a Control for Each Finding <span class="time">about 15 min</span></h3>
+    <p class="goal">Goal: pick one control per finding, and stay inside the budget.</p>
+    <div class="tool">
+      <p><label>Budget: <select id="budget" aria-label="Budget"><option value="8">8 points</option><option value="5">5 points (challenge)</option></select></label>
+         <span class="stat" id="costStat">Cost so far: 0 points</span><span class="stat" id="ctlStat">Controls chosen: 0</span></p>
+      <div class="scroll"><table id="ctlTable">
+        <thead><tr><th>#</th><th>Finding</th><th>Control I choose</th><th>Result</th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+      <div class="btnrow noprint-inline"><button type="button" class="go" id="applyBtn">Apply my controls</button><button type="button" class="alt" id="resetBtn">Clear everything</button></div>
+      <p id="applyMsg" role="status" class="hint"></p>
+    </div>
+    <div class="check"><input type="checkbox" id="c1"><label for="c1">Checkpoint: I chose a control for every finding and applied them.</label></div>
+  </section>
+
+  <section class="mission" aria-labelledby="m2">
+    <h3 id="m2"><span class="badge">2</span> Read the Re-Audit <span class="time">about 10 min</span></h3>
+    <p class="goal">Goal: see which findings are really fixed, and improve your plan.</p>
+    <ol class="steps">
+      <li>Look at the <strong>Result</strong> column. ✔ means resolved, ◐ means partly, ✘ means not resolved.</li>
+      <li>Change any control that didn't fully work, then apply again.</li>
+      <li>If you're over budget, find a way to cover more than one finding with the same control, or swap a costly control for a cheaper one that still works.</li>
+    </ol>
+    <p>Which finding was the hardest to fix within the budget, and why? </p>
+    <textarea aria-label="Hardest finding to fix within budget"></textarea>
+    <div class="check"><input type="checkbox" id="c2"><label for="c2">Checkpoint: my plan resolves all six findings within the budget.</label></div>
+  </section>
+
+  <section class="mission stretch" aria-labelledby="m3">
+    <h3 id="m3"><span class="badge">★</span> Challenge: Tighter Budget <span class="time">optional</span></h3>
+    <p>Switch the budget to <strong>5 points</strong>. You can't fix everything now, so decide which findings to fix and which risk to accept. Write your plan and defend what you left unfixed.</p>
+    <textarea aria-label="Challenge plan and what I left unfixed"></textarea>
+  </section>
+
+  <section class="mission" aria-labelledby="ev">
+    <h3 id="ev"><span class="badge">✔</span> Your Hardening Evidence <span class="time">fills in by itself</span></h3>
+    <p class="hint">This table reads your choices and the last result you applied, and prints with your page.</p>
+    <div id="evidence"></div>
+  </section>
+
+  <h2>Concept: Security Controls for a Segmented LAN</h2>
+  <div class="callout">
+    <p>Segmented networks use security controls to reduce the impact of unauthorized access. Good controls follow the <strong>principle of least privilege</strong>: users and devices get only the <strong>minimum access</strong> they need to do their jobs.</p>
+    <ul>
+      <li><strong>Limit unauthorized access:</strong> isolated guest wireless networks, distinct address ranges (DHCP pools) for device groups, and physically separate network hardware.</li>
+      <li><strong>Limit the impact of weak wireless security:</strong> a unique SSID, a strong password, and WPA2/WPA3 encryption.</li>
+      <li><strong>Limit unknown or unverified devices:</strong> MAC address filtering (allow only approved devices), shutting down unused ports, and DHCP reservations that give addresses only to known devices.</li>
+      <li><strong>Limit lateral movement:</strong> allow only essential services (like printing) between segments, and use <strong>deny-by-default</strong> firewall policies that block traffic between subnets.</li>
+    </ul>
+    <p>Notice the trade-off you faced: stronger separation usually costs more money, setup, or upkeep. Choosing <em>appropriate</em> controls means matching them to the real risk and the resources you have. MAC filtering and firewall policies get a deeper look in the next topic.</p>
+  </div>
+
+  <h2>Debrief Questions</h2>
+  <p class="hint">Finish these in class if you have time. Otherwise they are due at the start of our next class.</p>
+  <p><strong>1.</strong> Explain the principle of least privilege using the PlayerRoster fix.</p>
+  <textarea aria-label="Question 1"></textarea>
+  <p><strong>2.</strong> Why is a "deny by default" firewall policy safer than "allow any to any"?</p>
+  <textarea aria-label="Question 2"></textarea>
+  <p><strong>3.</strong> If the budget dropped to 5 points, which control would you protect at all costs, and which would you give up first? Explain your reasoning.</p>
+  <textarea aria-label="Question 3"></textarea>
+
+  <h2>Vocabulary</h2>
+  <dl class="vocab">
+    <dt>Security control</dt><dd>A measure that reduces the chance or impact of a threat.</dd>
+    <dt>Principle of least privilege</dt><dd>Giving users and devices only the minimum access needed to do their tasks.</dd>
+    <dt>Deny by default</dt><dd>A policy that blocks everything unless a rule specifically allows it.</dd>
+    <dt>MAC address filtering</dt><dd>Allowing only approved devices to connect, based on each device's hardware address.</dd>
+    <dt>DHCP reservation</dt><dd>A setting that always gives the same address to a specific, known device.</dd>
+    <dt>Guest network</dt><dd>A separate network for visitors, kept away from internal systems.</dd>
+  </dl>
+
+  <div class="actions noprint">
+    <button class="pdf" type="button" onclick="window.print()">📄 Download as PDF</button>
+    <span class="hint">In the print dialog, set <strong>Destination</strong> to <strong>Save as PDF</strong>, then save.</span>
+  </div>
+</main>
+<script>
+(function(){
+  "use strict";
+  var D={"C": [{"id": "c1", "t": "Create an isolated guest wireless network", "cost": 2}, {"id": "c2", "t": "Give each device group its own address range (DHCP pool)", "cost": 1}, {"id": "c3", "t": "Put groups on their own physical network hardware", "cost": 5}, {"id": "c4", "t": "Give the staff Wi-Fi a unique name, a strong password, and WPA2/WPA3", "cost": 1}, {"id": "c5", "t": "Turn on MAC address filtering (approved devices only)", "cost": 2}, {"id": "c6", "t": "Shut down unused switch ports", "cost": 1}, {"id": "c7", "t": "Use DHCP reservations so only known devices get addresses", "cost": 2}, {"id": "c8", "t": "Allow only essential services between segments (like printing)", "cost": 2}, {"id": "c9", "t": "Deny by default: block traffic between subnets unless a rule allows it", "cost": 2}, {"id": "c10", "t": "Apply least privilege: only the admin group can open the roster", "cost": 1}, {"id": "d1", "t": "Post the Wi-Fi password on the lobby wall", "cost": 0}, {"id": "d2", "t": "Leave it as it is and keep an eye on it", "cost": 0}, {"id": "d3", "t": "Add more spectator access points to the same network", "cost": 3}], "F": [{"id": 1, "t": "Unknown device on the lobby wall jack (port 14)"}, {"id": 2, "t": "Staff Wi-Fi uses WEP and the password 'bulldogs'"}, {"id": 3, "t": "One firewall rule: allow any to any"}, {"id": 4, "t": "Admin PCs, scoreboard, and 120 spectator phones share one network"}, {"id": 5, "t": "PlayerRoster is readable by Everyone, including guest devices"}, {"id": 6, "t": "Spectator video streaming is slowing the Tournament Server"}], "E": {"1": {"c6": ["ok", "Unused ports are shut down, so no one can simply plug in at the lobby jack."], "c5": ["ok", "Only approved devices are allowed on, so the unknown device is refused."], "c7": ["ok", "Only known devices receive addresses, so the unknown device gets nothing."]}, "2": {"c4": ["ok", "A unique name, a strong password, and WPA2/WPA3 close the weak-wireless hole."]}, "3": {"c9": ["ok", "Traffic between subnets is blocked unless a rule allows it, so lateral movement is stopped by default."], "c8": ["ok", "Only essential services cross between segments, so everything else is blocked."]}, "4": {"c1": ["ok", "Spectators move to an isolated guest network, away from the admin systems."], "c3": ["ok", "Physically separate hardware keeps the groups apart, though it costs the most."], "c2": ["part", "Separate address ranges organize the groups, but by themselves they don't stop traffic from crossing. Something must still block it."]}, "5": {"c10": ["ok", "Only the admin group can open the roster. That is the principle of least privilege: the minimum access needed to do the job."], "c9": ["part", "Blocking traffic between subnets keeps guests out, but anyone on the same segment could still open the roster."]}, "6": {"c1": ["ok", "Spectator video moves to the guest network, so it no longer competes with the Tournament Server."], "c3": ["ok", "Physically separate hardware keeps spectator traffic off the tournament network, at a high cost."], "c2": ["part", "Separate address ranges don't separate the traffic by themselves."]}}, "G": {"d1": "This makes the problem worse, not better.", "d2": "Watching without changing anything leaves the problem in place.", "d3": "More access points on the same network adds capacity but no separation."}};
+  var C=D.C,F=D.F,E=D.E,G=D.G;
+  function $(id){return document.getElementById(id);}
+  var pick={},applied=null;
+  var byId={}; C.forEach(function(c){byId[c.id]=c;});
+  var tb=$("ctlTable").querySelector("tbody");
+  F.forEach(function(f){
+    var tr=document.createElement("tr");
+    function td(n){var x=document.createElement("td"); if(n) x.appendChild(n); tr.appendChild(x); return x;}
+    td(document.createTextNode(String(f.id))); td(document.createTextNode(f.t));
+    var s=document.createElement("select"); s.setAttribute("aria-label","Control for finding "+f.id);
+    s.innerHTML='<option value="">Choose a control…</option>'+C.map(function(c){return '<option value="'+c.id+'">'+c.t+' ('+c.cost+' pt'+(c.cost===1?'':'s')+')</option>';}).join("");
+    s.addEventListener("change",function(){pick[f.id]=s.value; applied=null; clearRes(); stats(); render();});
+    td(s);
+    var r=td(null); r.className="res"; r.id="res"+f.id;
+    tb.appendChild(tr);
+  });
+  function clearRes(){F.forEach(function(f){var c=$("res"+f.id);c.textContent="";c.className="res";}); $("applyMsg").textContent="";}
+  function cost(){var seen={},t=0; F.forEach(function(f){var id=pick[f.id]; if(id&&!seen[id]){seen[id]=1;t+=byId[id].cost;}}); return t;}
+  function count(){var seen={},n=0; F.forEach(function(f){var id=pick[f.id]; if(id&&!seen[id]){seen[id]=1;n++;}}); return n;}
+  function budget(){return parseInt($("budget").value,10);}
+  function stats(){
+    var c=cost(),b=budget(); var el=$("costStat");
+    el.textContent="Cost so far: "+c+" of "+b+" points"; el.className="stat"+(c>b?" warn":"");
+    $("ctlStat").textContent="Controls chosen: "+count();
+  }
+  $("budget").addEventListener("change",function(){applied=null;clearRes();stats();render();});
+  function evalOne(f){
+    var id=pick[f.id];
+    if(!id) return {s:"none",t:"No control chosen."};
+    var e=(E[f.id]||{})[id];
+    if(e) return {s:e[0],t:e[1]};
+    return {s:"no",t:(G[id]||"This control doesn't address what the audit found.")};
+  }
+  $("applyBtn").addEventListener("click",function(){
+    var out={},ok=0,part=0;
+    F.forEach(function(f){
+      var r=evalOne(f); out[f.id]=r; var c=$("res"+f.id);
+      if(r.s==="ok"){c.className="res ok";c.textContent="✔ Resolved. "+r.t;ok++;}
+      else if(r.s==="part"){c.className="res bad";c.textContent="◐ Partly. "+r.t;part++;}
+      else {c.className="res bad";c.textContent="✘ Not resolved. "+r.t;}
+    });
+    applied={res:out,ok:ok,part:part,cost:cost(),budget:budget(),n:count()};
+    var m=$("applyMsg");
+    m.textContent=ok+" of "+F.length+" findings resolved. Cost "+applied.cost+" of "+applied.budget+" points"+(applied.cost>applied.budget?" (over budget).":".");
+    render();
+  });
+  $("resetBtn").addEventListener("click",function(){
+    pick={}; applied=null; tb.querySelectorAll("select").forEach(function(s){s.value="";}); clearRes(); stats(); render();
+  });
+  function render(){
+    var h=$("evidence"); h.innerHTML="";
+    var p=document.createElement("p");
+    var a=applied;
+    p.innerHTML='<span class="stat">Budget: '+budget()+' points</span><span class="stat'+((a?a.cost:cost())>budget()?' warn':'')+'">Cost: '+(a?a.cost:cost())+' points</span><span class="stat">'+(a?('Resolved: '+a.ok+' of '+F.length+' ('+a.part+' partly)'):'Not applied yet')+'</span>';
+    h.appendChild(p);
+    var t=document.createElement("table");
+    t.innerHTML="<thead><tr><th>#</th><th>Finding</th><th>Control I chose</th><th>Cost</th><th>Result</th></tr></thead>";
+    var b=document.createElement("tbody");
+    F.forEach(function(f){
+      var id=pick[f.id]; var r=a&&a.res[f.id];
+      var cells=[String(f.id),f.t,id?byId[id].t:"(none)",id?String(byId[id].cost):"-",(!a)?"not applied":(r.s==="ok"?"✔ resolved":(r.s==="part"?"◐ partly":"✘ not resolved"))];
+      var tr=document.createElement("tr"); cells.forEach(function(x){var d=document.createElement("td");d.textContent=x;tr.appendChild(d);}); b.appendChild(tr);
+    });
+    t.appendChild(b); h.appendChild(t);
+  }
+  stats(); render();
+  window.__h={pick:function(id,v){pick[id]=v;}};
+})();
+</script>
+<script>
+(function(){
+  "use strict";
+  function grow(t){t.style.height="auto";t.style.height=(t.scrollHeight+2)+"px";}
+  document.querySelectorAll("input[type=text]").forEach(function(i){
+    if(i.id==="name"||i.id==="period"||i.closest(".router")) return;
+    var t=document.createElement("textarea");
+    t.rows=1; t.className="auto";
+    ["aria-label","style"].forEach(function(a){ if(i.hasAttribute(a)) t.setAttribute(a,i.getAttribute(a)); });
+    i.parentNode.replaceChild(t,i);
+  });
+  var areas=Array.prototype.slice.call(document.querySelectorAll("textarea"));
+  areas.forEach(function(t){
+    var d=document.createElement("div");
+    d.className="pc"; d.setAttribute("aria-hidden","true");
+    if(t.hasAttribute("style")) d.setAttribute("style",t.getAttribute("style"));
+    t.parentNode.insertBefore(d,t.nextSibling);
+    function sync(){d.textContent=t.value;}
+    t.addEventListener("input",function(){sync();if(t.className==="auto")grow(t);});
+    t._sync=sync; sync(); if(t.className==="auto") grow(t);
+  });
+  window.addEventListener("beforeprint",function(){areas.forEach(function(t){t._sync();});});
+  window.addEventListener("resize",function(){areas.forEach(function(t){if(t.className==="auto")grow(t);});});
+})();
+</script>
+</body>
+</html>
