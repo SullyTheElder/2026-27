@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Breach at Meridian Simulator · AP Cybersecurity Unit 3</title>
+<style>
+:root{
+  --green:#1B4332; --dark:#122B21; --gold:#D4A017; --cream:#FBF8F1; --olive:#6B7F3A;
+  --red:#B23A2E; --ink:#2A2A2A; --mute:#5A5A5A; --line:#C9C3B0; --ok:#2E7D4F;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--cream);color:var(--ink);font-family:"Calibri","Carlito",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;font-size:17px;line-height:1.45}
+h1,h2,h3{font-family:"Cambria","Georgia",serif;color:var(--green);margin:0 0 .4em}
+header{background:var(--dark);color:#fff;padding:14px 22px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+header h1{color:#fff;font-size:1.35rem;margin:0}
+header .tag{color:var(--gold);font-weight:700;font-size:.9rem}
+header a{color:var(--gold);font-size:.9rem}
+main{max-width:980px;margin:0 auto;padding:18px 18px 60px}
+.card{background:#fff;border:1.5px solid var(--line);border-radius:10px;padding:18px 20px;margin-bottom:16px}
+.card.dark{background:var(--green);color:#fff;border-color:var(--green)}
+.card.dark h2{color:var(--gold)}
+button{font:inherit;cursor:pointer;border-radius:8px;border:2px solid var(--green);background:var(--green);color:#fff;padding:9px 16px;font-weight:700}
+button:hover:not(:disabled){background:var(--dark)}
+button:disabled{opacity:.45;cursor:not-allowed}
+button.alt{background:#fff;color:var(--green)}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+label{display:block;font-weight:700;margin:10px 0 4px}
+input,select{font:inherit;padding:9px 10px;border:2px solid var(--line);border-radius:8px;width:100%;max-width:340px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:10px 0}
+.note{font-size:.88rem;color:var(--mute)}
+.q{margin-top:14px;padding-top:14px;border-top:2px dashed var(--line)}
+.q p{font-weight:700;margin:0 0 8px}
+.opts{display:flex;flex-direction:column;gap:8px}
+.opts button{background:#fff;color:var(--ink);border:2px solid var(--line);text-align:left;font-weight:600}
+.opts button:hover:not(:disabled){background:#F4F0E4}
+.opts button.right{background:#E3F2E8;border-color:var(--ok);color:#14532d}
+.opts button.wrong{background:#FBE4E1;border-color:var(--red);color:#7f1d1d}
+.fb{margin-top:10px;padding:10px 12px;border-radius:8px;display:none;font-size:.95rem}
+.fb.show{display:block}
+.fb.good{background:#E3F2E8;border:1.5px solid var(--ok)}
+.fb.bad{background:#FBE4E1;border:1.5px solid var(--red)}
+.status{font-weight:700;margin:6px 0;min-height:1.4em}
+.warn{background:#FFF6DA;border:1.5px solid var(--gold);border-radius:8px;padding:8px 12px;margin-bottom:14px}
+.badge{font-weight:700;padding:2px 10px;border-radius:99px;font-size:.82rem;white-space:nowrap}
+.badge.y{background:#E3F2E8;color:#14532d}.badge.n{background:#FBE4E1;color:#7f1d1d}
+.big{font-family:"Cambria","Georgia",serif;font-size:2.2rem;color:var(--green);font-weight:700}
+.hide{display:none}
+.stageTag{display:inline-block;background:var(--gold);color:var(--dark);font-weight:700;padding:3px 10px;border-radius:99px;font-size:.85rem;margin-bottom:8px}
+.netmap{display:flex;flex-wrap:wrap;gap:10px;margin:12px 0}
+.devbox{flex:1;min-width:140px;border:2px solid var(--line);border-radius:10px;padding:10px 12px;background:#fff;text-align:center;opacity:.4;transition:all .3s}
+.devbox.active{opacity:1;border-color:var(--green)}
+.devbox.compromised{opacity:1;border-color:var(--red);background:#FBE4E1}
+.devbox .lbl{font-weight:700;color:var(--green)}
+.devbox.compromised .lbl{color:var(--red)}
+.devbox .sub{font-size:.82rem;color:var(--mute)}
+.resItem{border-bottom:1px solid var(--line);padding:9px 0}
+.resQ{font-weight:700}
+.resHead{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+@media print{
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  body{background:#fff;font-size:12pt}
+  header,#gate,#act{display:none!important}
+  #results{display:block!important}
+  .card{border:1px solid #999;break-inside:avoid}
+  .card.dark{background:#fff!important;color:#000!important;border:2px solid #1B4332!important}
+  .card.dark h2{color:#1B4332!important}
+  .card.dark p{color:#000!important}
+  #results .card{break-inside:auto!important}
+  .resItem{break-inside:avoid;border-bottom:1px solid #bbb;padding:6px 0}
+}
+</style>
+
+</head>
+<body>
+<header>
+  <div><div class="tag">AP CYBERSECURITY · UNIT 3 · U3L09 · LO 3.1.B.1–3</div><h1>Breach at Meridian</h1></div>
+  <a href="../../">&larr; Back to class site</a>
+</header>
+<main>
+
+<section id="gate" class="card">
+  <h2>Before you start</h2>
+  <div class="warn"><strong>This is a simulation.</strong> No real network, device, or port is involved.</div>
+  <p>You'll follow an adversary step by step as they plug into an open port at a fictional company, <strong>Meridian Analytics</strong>, map the network, spoof a trusted device, and move laterally to a second machine.</p>
+  <label for="nm">First and last name</label>
+  <input id="nm" autocomplete="off" placeholder="e.g., Jordan Rivera">
+  <label for="per">Period</label>
+  <select id="per"><option value="">Choose…</option><option>1</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option></select>
+  <div class="row"><button id="startBtn">Begin</button><span id="gateErr" style="color:var(--red);font-weight:700"></span></div>
+</section>
+
+<section id="act" style="display:none">
+  <div class="card">
+    <span class="stageTag" id="stageTag">Stage 1 of 4</span>
+    <h2 id="stageTitle">An open door</h2>
+    <div class="netmap" id="netmap"></div>
+    <div class="status" id="status"></div>
+    <div class="row" id="nextRow"><button id="nextBtn">Next step</button></div>
+    <div id="qzone"></div>
+  </div>
+</section>
+
+<section id="results" style="display:none">
+  <div class="card dark">
+    <h2>Simulation complete</h2>
+    <p><strong id="rName"></strong> · Period <strong id="rPer"></strong> · <span id="rDate"></span></p>
+    <p>Mr. Sullivan's AP Cybersecurity · U3L09 · Breach at Meridian Simulator (completion-graded)</p>
+  </div>
+  <div class="card">
+    <div class="big" id="rScore"></div>
+    <p class="note">First-try accuracy. This is practice; read the explanations for any you missed.</p>
+    <div id="rList"></div>
+  </div>
+  <div class="card">
+    <h3>Takeaways</h3>
+    <p>Without <strong>port security</strong>, physical access to a data port grants LAN access. From there, an adversary can <strong>map</strong> the network, <strong>spoof</strong> a trusted device, and move <strong>laterally</strong> to compromise more devices — all without breaking in from the outside a second time.</p>
+  </div>
+  <div class="row noprint">
+    <button id="printBtn">Download as PDF</button>
+    <button class="alt" id="againBtn">Run it again</button>
+    <span class="note">In the print window, change the destination to "Save as PDF", then upload the file to Canvas.</span>
+  </div>
+</section>
+</main>
+<script>
+(function(){
+"use strict";
+const $=id=>document.getElementById(id);
+const results=[];
+
+function ask(parentId,id,text,options,correctIdx,explainRight,explainWrong,onCorrect){
+  const box=document.createElement("div"); box.className="q"; $(parentId).appendChild(box);
+  const rec={id,text,firstTry:null,attempts:0}; results.push(rec);
+  box.innerHTML=`<p>${text}</p><div class="opts"></div><div class="fb"></div>`;
+  const wrap=box.querySelector(".opts"),fb=box.querySelector(".fb");
+  const idxs=options.map((_,i)=>i);for(let k=idxs.length-1;k>0;k--){const j=Math.floor(Math.random()*(k+1));[idxs[k],idxs[j]]=[idxs[j],idxs[k]];}
+  idxs.forEach(i=>{const o=options[i];
+    const b=document.createElement("button");b.textContent=o;
+    b.addEventListener("click",()=>{
+      rec.attempts++;
+      if(i===correctIdx){ if(rec.firstTry===null)rec.firstTry=true;
+        b.classList.add("right");wrap.querySelectorAll("button").forEach(x=>x.disabled=true);
+        fb.className="fb show good";fb.innerHTML="<strong>Correct.</strong> "+explainRight; onCorrect&&onCorrect();
+      }else{ if(rec.firstTry===null)rec.firstTry=false;
+        b.classList.add("wrong");b.disabled=true;
+        fb.className="fb show bad";fb.innerHTML="<strong>Not quite.</strong> "+(explainWrong[i]||"Think about it again.");
+      }
+    });
+    wrap.appendChild(b);
+  });
+}
+
+const devices=[
+  {id:"port",label:"Open data port",sub:"Lobby wall jack",state:"active"},
+  {id:"adv",label:"Adversary's laptop",sub:"Just plugged in",state:"compromised"},
+  {id:"fileserver",label:"File server",sub:"192.168.4.10",state:""},
+  {id:"hrpc",label:"HR workstation",sub:"192.168.4.22 — trusted device",state:""},
+  {id:"printer",label:"Office printer",sub:"192.168.4.30",state:""}
+];
+function renderMap(){
+  const c=$("netmap"); c.innerHTML="";
+  devices.forEach(d=>{
+    const el=document.createElement("div"); el.className="devbox"+(d.state?" "+d.state:"");
+    el.innerHTML=`<div class="lbl">${d.label}</div><div class="sub">${d.sub}</div>`;
+    c.appendChild(el);
+  });
+}
+renderMap();
+
+let stage=0;
+const stages=[
+  { tag:"Stage 1 of 4", title:"An open door",
+    status:"The lobby has an open data port with no port security. The adversary plugs a laptop directly into it.",
+    reveal:()=>{},
+    q:(done)=>{ ask("qzone","q1","Why does plugging into this port give the adversary access to the LAN?",
+      ["Port security isn't enabled, so the switch doesn't check who's allowed to connect","The port automatically recognizes trusted laptops","The adversary already had a password","The port is a wireless access point"],0,
+      "Without port security, any device plugged into the port is treated as part of the LAN \u2014 no login or check required.",
+      {1:"The switch has no way to recognize this laptop as trusted; it's a stranger.",2:"No password was used or needed here.",3:"This is a wired data port, not a wireless access point \u2014 that's a different vulnerability (3.1.B.6)."},
+      done); } },
+  { tag:"Stage 2 of 4", title:"Mapping the network",
+    status:"Now on the LAN, the adversary probes around to see what else is out there.",
+    reveal:()=>{ devices.find(d=>d.id==="fileserver").state="active"; devices.find(d=>d.id==="hrpc").state="active"; devices.find(d=>d.id==="printer").state="active"; renderMap(); },
+    q:(done)=>{ ask("qzone","q2","What is the adversary doing by probing the network to find the file server, the HR workstation, and the printer?",
+      ["Mapping the network","Flooding the network","Spoofing a device","Encrypting traffic"],0,
+      "Learning what devices exist and how they connect is mapping \u2014 the adversary is scouting the terrain before deciding where to go next.",
+      {1:"Flooding means overwhelming the network; nothing here is being overwhelmed.",2:"Spoofing means pretending to be a device; that comes next.",3:"Nothing is being encrypted in this step."},
+      done); } },
+  { tag:"Stage 3 of 4", title:"Spoofing a trusted device",
+    status:"The adversary notices the HR workstation (192.168.4.22) is trusted by the file server. They configure their own laptop to use that same address.",
+    reveal:()=>{ devices.find(d=>d.id==="hrpc").sub="192.168.4.22 — now claimed by the adversary too"; renderMap(); },
+    q:(done)=>{ ask("qzone","q3","What has the adversary just done?",
+      ["Spoofed the HR workstation by claiming its address as their own","Physically stolen the HR workstation","Deleted the HR workstation's files","Changed the file server's password"],0,
+      "Pretending to be a legitimate device already on the network \u2014 here, by claiming its address \u2014 is spoofing.",
+      {1:"Nothing physical happened; this is a network-level impersonation.",2:"No files were touched in this step.",3:"No password was involved."},
+      done); } },
+  { tag:"Stage 4 of 4", title:"Moving laterally",
+    status:"Trusted by the file server, the adversary's laptop now reaches it directly and compromises it too.",
+    reveal:()=>{ devices.find(d=>d.id==="fileserver").state="compromised"; renderMap(); },
+    q:(done)=>{ ask("qzone","q4","What is it called when an adversary uses one compromised foothold to reach and compromise a second device on the same LAN?",
+      ["Lateral movement","Port security","MAC flooding","Credential harvesting"],0,
+      "Using a first compromised device as a stepping stone to reach others on the LAN is lateral movement.",
+      {1:"Port security is the defense that would have stopped step 1, not what's happening now.",2:"MAC flooding targets a switch's address table; nothing like that happened here.",3:"Credential harvesting is the fake-login-page technique from an earlier lesson."},
+      ()=>{ done();
+        ask("qzone","q5","Triage first. Looking back at the whole chain, what was the ROOT cause that made all four stages possible?",
+          ["The switch port in the lobby had no port security enabled","The file server had a weak password","The HR workstation user clicked a phishing link","The printer was out of toner"],0,
+          "Every later stage depended on the adversary getting onto the LAN in the first place. That happened because port security wasn't enabled \u2014 the root cause.",
+          {1:"No password was guessed or cracked in this chain.",2:"No phishing happened in this scenario.",3:"That's irrelevant to the breach."},
+          ()=>{$("nextRow").classList.add("hide"); const r=document.createElement("div");r.className="row";const b=document.createElement("button");b.textContent="See my results";b.addEventListener("click",showResults);r.appendChild(b);$("qzone").appendChild(r);});
+      }); } }
+];
+
+function doStage(){
+  const S=stages[stage];
+  $("stageTag").textContent=S.tag; $("stageTitle").textContent=S.title;
+  $("status").textContent=S.status; S.reveal();
+  $("nextBtn").style.display="none";
+  S.q(()=>{ stage++;
+    if(stage<stages.length){ const r=document.createElement("div");r.className="row";const b=document.createElement("button");b.textContent="Next step";b.addEventListener("click",()=>{ $("qzone").innerHTML=""; doStage(); });r.appendChild(b); $("qzone").appendChild(r); }
+  });
+}
+$("nextBtn").addEventListener("click",()=>{ $("nextBtn").style.display="none"; doStage(); });
+
+$("startBtn").addEventListener("click",()=>{
+  if(!$("nm").value.trim()||!$("per").value){$("gateErr").textContent="Enter your name and choose a period.";return;}
+  $("gate").style.display="none";$("act").style.display="block";
+});
+function showResults(){
+  $("act").style.display="none";$("results").style.display="block";
+  $("rName").textContent=$("nm").value.trim();$("rPer").textContent=$("per").value;
+  $("rDate").textContent=new Date().toLocaleDateString(undefined,{year:"numeric",month:"long",day:"numeric"});
+  const first=results.filter(r=>r.firstTry).length;
+  $("rScore").textContent=first+" / "+results.length+" correct on first try";
+  $("rList").innerHTML=results.map((r,i)=>`<div class="resItem"><div class="resHead"><div class="resQ">${i+1}. ${r.text.replace(/<[^>]+>/g,"")}</div><span class="badge ${r.firstTry?"y":"n"}">${r.firstTry?"First try":"Needed retry"}</span></div></div>`).join("");
+  window.scrollTo(0,0);
+}
+$("printBtn").addEventListener("click",()=>window.print());
+$("againBtn").addEventListener("click",()=>location.reload());
+
+doStage();
+})();
+</script>
+</body>
+</html>
