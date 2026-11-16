@@ -294,6 +294,13 @@ select{max-width:100%;min-width:0;text-overflow:ellipsis}
 .code .ln i{display:inline-block;width:2.4em;color:#7F9BB5;font-style:normal;user-select:none}
 .code .ln.bugged{background:rgba(232,96,76,.28);border-radius:4px}
 .code .ln.fixed{background:rgba(20,144,127,.35);border-radius:4px}
+.code .gl{display:block;white-space:normal;padding:0 8px 8px 2.4em;font-family:Lato,'Segoe UI',sans-serif;font-size:13.5px;line-height:1.35}
+.code .gl .bi{display:block}
+.code .gl .bi .en,.code .gl .bi .es{display:block}
+.code .gl .bi .en,.code .gl .bi .es{color:#BFE9DD}
+.code .gl .bi .es,body[data-lang="es"] .code .gl .bi .en{color:#9FB6CC}
+details.decoder{margin-top:8px;border:2px solid var(--line);border-radius:10px;padding:6px 12px;background:#fff}
+details.decoder summary{cursor:pointer}
 .spec{background:#FFF3D6;border:2px solid var(--amber);border-radius:10px;padding:10px 14px;margin-top:8px}
 .ttable{width:100%;border-collapse:collapse;margin-top:10px;font-size:15px}
 .ttable th,.ttable td{border:2px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}
@@ -470,7 +477,7 @@ const SCRIPTS=[
  {id:'max',name:['Highest score','Puntaje más alto'],
   spec:['Return the highest number in the list. The numbers can be negative, like temperature changes.','Devuelve el número más alto de la lista. Los números pueden ser negativos, como cambios de temperatura.'],
   call:'highest(scores)',code:['def highest(scores):','    best = 0','    for s in scores:','        if s > best:','            best = s','    return best'],
-  bugLine:2,fixedLine:'    best = scores[0]',bugText:'best = 0',
+  bugLine:2,gloss:[['A recipe named highest. It takes in a list of scores.','Una receta llamada highest. Recibe una lista de puntajes.'],['Start by saying the best score so far is 0.','Empieza diciendo que el mejor puntaje hasta ahora es 0.'],['Go through the list, one score at a time. Call the current one s.','Recorre la lista, un puntaje a la vez. Llama s al actual.'],['If this score is bigger than the best so far...','Si este puntaje es mayor que el mejor hasta ahora...'],['...make it the new best.','...hazlo el nuevo mejor.'],['When the list is done, give back the best.','Cuando termine la lista, devuelve el mejor.']],fixedGloss:['Start with the first score in the list as the best so far.','Empieza con el primer puntaje de la lista como el mejor hasta ahora.'],fixedLine:'    best = scores[0]',bugText:'best = 0',
   fixes:['best = scores[0]','best = 100','if s < best:'],rightFix:0,
   fixWhy:['Starting at 0 only works when some number is above 0. Start with the first number in the list instead.','Empezar en 0 solo funciona si algún número es mayor que 0. Mejor empieza con el primer número de la lista.'],
   bugWords:['best = 0','best=0','negative','scores[0]','first number','first item','first value','start at 0','starts at 0'],
@@ -503,7 +510,7 @@ const SCRIPTS=[
  {id:'grade',name:['Letter grade','Calificación en letras'],
   spec:['90 or more is an A. 80 to 89 is a B. 70 to 79 is a C. Below 70 is an F.','90 o más es A. De 80 a 89 es B. De 70 a 79 es C. Menos de 70 es F.'],
   call:'grade(score)',code:['def grade(score):','    if score > 90:','        return "A"','    if score >= 80:','        return "B"','    if score >= 70:','        return "C"','    return "F"'],
-  bugLine:2,fixedLine:'    if score >= 90:',bugText:'score > 90',
+  bugLine:2,gloss:[['This is a recipe named grade. It takes in a score.','Esta es una receta llamada grade. Recibe una nota.'],['If the score is bigger than 90 (not equal to 90)...','Si la nota es mayor que 90 (no igual a 90)...'],['...give back the letter A and stop.','...devuelve la letra A y termina.'],['Otherwise, if the score is 80 or more...','Si no, si la nota es 80 o más...'],['...give back B and stop.','...devuelve B y termina.'],['Otherwise, if the score is 70 or more...','Si no, si la nota es 70 o más...'],['...give back C and stop.','...devuelve C y termina.'],['If nothing above matched, give back F.','Si nada de lo anterior coincidió, devuelve F.']],fixedGloss:['If the score is 90 or more (including 90)...','Si la nota es 90 o más (incluido el 90)...'],fixedLine:'    if score >= 90:',bugText:'score > 90',
   fixes:['if score >= 90:','if score > 89:  # but only for odd scores','if score >= 80:'],rightFix:0,
   fixWhy:['The rule says 90 or more, so a score of exactly 90 must be an A. "> 90" skips 90 because 90 is not greater than 90.','La regla dice 90 o más, así que un 90 exacto debe ser A. "> 90" se salta el 90 porque 90 no es mayor que 90.'],
   bugWords:['> 90','>= 90','>90','>=90','exactly 90','score of 90','boundary','line 2'],
@@ -538,7 +545,25 @@ function promptCheck(sc,text){
   return {c1:c1,c2:c2,c3:c3,fixed:c1&&(c2||c3)};
 }
 function codeLines(sc,fixed){return sc.code.map((l,i)=>(fixed&&i+1===sc.bugLine)?sc.fixedLine:l);}
-function codeHTML(sc,fixed,mark){return '<div class="code" role="img" aria-label="Code">'+codeLines(sc,fixed).map((l,i)=>`<span class="ln${(mark==='bug'&&i+1===sc.bugLine&&!fixed)?' bugged':''}${(fixed&&i+1===sc.bugLine)?' fixed':''}"><i>${i+1}</i>${l.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</span>`).join('')+'</div>';}
+function codeHTML(sc,fixed,mark,gloss){
+  const gl=sc.gloss||null;
+  return '<div class="code on-dark" role="img" aria-label="Code">'+codeLines(sc,fixed).map((l,i)=>{
+    let h=`<span class="ln${(mark==='bug'&&i+1===sc.bugLine&&!fixed)?' bugged':''}${(fixed&&i+1===sc.bugLine)?' fixed':''}"><i>${i+1}</i>${l.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</span>`;
+    if(gloss&&gl){ const g=(fixed&&i+1===sc.bugLine&&sc.fixedGloss)?sc.fixedGloss:gl[i]; h+=`<span class="gl"><span class="bi"><span class="en">${g[0]}</span><span class="es">${g[1]}</span></span></span>`; }
+    return h;}).join('')+'</div>';}
+const BASIC=['grade','max'];
+const DECODER=[['def name(input):','Starts a recipe (a function): its name, then what goes in.','Empieza una receta (una función): su nombre y lo que entra.'],
+ ['if ... :','Checks something. The lines pushed to the right run only if it is true.','Revisa algo. Las líneas hacia la derecha se ejecutan solo si es verdad.'],
+ ['return','Gives back the answer and stops right there.','Devuelve la respuesta y se detiene ahí mismo.'],
+ ['for s in scores:','Repeats for every item in the list, one at a time. s is the current item.','Se repite para cada elemento de la lista, uno por uno. s es el elemento actual.'],
+ ['best = 0','Puts a value in a named box (a variable).','Pone un valor en una caja con nombre (una variable).'],
+ ['>   >=','Bigger than   /   bigger than or equal to.','Mayor que   /   mayor o igual que.'],
+ ['scores[0]','The first item in the list.','El primer elemento de la lista.'],
+ ['indent (spaces)','Lines pushed to the right belong to the line above them.','Las líneas hacia la derecha pertenecen a la línea de arriba.']];
+function decoderHTML(){
+  const bi=(en,es)=>`<span class="bi"><span class="en">${en}</span><span class="es">${es}</span></span>`;
+  return `<details class="decoder"><summary>${bi('Code decoder: what the symbols mean','Descodificador: qué significan los símbolos')}</summary><table class="ttable"><tbody>${DECODER.map(r=>`<tr><td><code>${r[0].replace(/</g,'&lt;')}</code></td><td>${bi(r[1],r[2])}</td></tr>`).join('')}</tbody></table></details>`;
+}
 
 const KEY='u4-aicoder1-v1';
 const B=(en,es,c)=>`<span class="bi${c?' '+c:''}"><span class="en">${en}</span><span class="es">${es}</span></span>`;
@@ -548,12 +573,13 @@ const len=s=>s.trim().length;
 const needLetters=(n,min)=>n>=min?'':B(`Keep writing: ${min-n} more letters.`,`Sigue escribiendo: faltan ${min-n} letras.`);
 
 /* ================= state ================= */
-function fresh(){return {v:1,name:'',period:'',lang:'en',stage:'welcome',seed:Math.floor(Math.random()*1e9)+1,
+function fresh(){return {v:1,name:'',period:'',lang:'en',stage:'welcome',gloss:true,seed:Math.floor(Math.random()*1e9)+1,
   p1:{place:{},checks:0,status:'open',c1:null,c2:null,item:{},msg:null},p2:{line:'',fix:'',tries:0,status:'open',revealed:false},p3:{prompts:[],status:'open',revealed:false},refl:''};}
 let S, SC, ITEMS, FIXOPTS;
 function load(){try{const o=JSON.parse(localStorage.getItem(KEY)); if(o&&o.v===1&&o.p1&&o.p2&&o.p3) return o;}catch(e){} return fresh();}
+function glossBar(){return `<div style="margin-top:8px"><label style="display:inline-flex;gap:8px;align-items:center"><input type="checkbox" id="ckGloss" ${S.gloss!==false?'checked':''} style="width:22px;height:22px"> ${B('Show plain-language notes under each line','Mostrar notas en lenguaje sencillo bajo cada línea','inline')}</label></div>`+decoderHTML();}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
-function setup(){SC=SCRIPTS[S.seed%SCRIPTS.length]; ITEMS=makeItems(SC,S.seed); const r=rngOf(S.seed+99); FIXOPTS=shuf(r,SC.fixes.map((t,i)=>({t:t,right:i===SC.rightFix})));}
+function setup(){SC=SB[BASIC[S.seed%BASIC.length]]; ITEMS=makeItems(SC,S.seed); const r=rngOf(S.seed+99); FIXOPTS=shuf(r,SC.fixes.map((t,i)=>({t:t,right:i===SC.rightFix})));}
 
 /* ================= Part 1 checker ================= */
 const incomplete1=()=>ITEMS.filter(i=>!S.p1.place[i.id]);
@@ -607,7 +633,7 @@ function viewP1(){
   return `${stepper('p1')}
   <section class="card" style="margin-top:12px"><h2>${B('Part 1: Trace the AI\'s code','Parte 1: Rastrea el código de la IA')}</h2>
     <p class="lead">${B(`The AI wrote <strong>${esc(SC.name[0])}</strong>. Read the code and the spec. For each input, predict exactly what this code gives, even if it is not what the spec wants. Trace it line by line. You get 2 checks.`,`La IA escribió <strong>${esc(SC.name[1])}</strong>. Lee el código y la especificación. Para cada entrada, predice exactamente qué da este código, aunque no sea lo que la especificación quiere. Rastréalo línea por línea. Tienes 2 revisiones.`)}</p>
-    ${specHTML()}${codeHTML(SC,false,null)}</section>
+    ${specHTML()}${glossBar()}${codeHTML(SC,false,null,(S.gloss!==false))}</section>
   <section class="card">${ITEMS.map(itemHTML).join('')}
     <div class="msg warn" id="need1" style="margin-top:12px">${done?'':(inc?B(`${inc} ${inc===1?'prediction still needs':'predictions still need'} an answer.`,`${inc} ${inc===1?'predicción todavía necesita':'predicciones todavía necesitan'} una respuesta.`):B('Every input has a prediction. You can check.','Todas las entradas tienen una predicción. Ya puedes revisar.'))}</div>
     <div class="checkbar"><button class="btn alt" id="btnCheck1" data-act="check1" ${(done||inc)?'disabled':''}>${B(`Check my predictions (${2-P.checks} left)`,`Revisar mis predicciones (${2-P.checks} restantes)`)}</button><div style="flex:1;min-width:220px" id="msg1">${msg1()}</div></div></section>
@@ -622,7 +648,7 @@ function viewP2(){
   return `${stepper('p2')}
   <section class="card" style="margin-top:12px"><h2>${B('Part 2: Find the bug','Parte 2: Halla el error')}</h2>
     <p class="lead">${B('One line is the reason the code fails. Pick the line and pick the change that fixes it. You get 2 tries.','Una línea es la razón por la que el código falla. Elige la línea y elige el cambio que la arregla. Tienes 2 intentos.')}</p>
-    ${specHTML()}${codeHTML(SC,false,done?'bug':null)}
+    ${specHTML()}${glossBar()}${codeHTML(SC,false,done?'bug':null,(S.gloss!==false))}
     <div class="ctrls" style="margin-top:10px"><label>${B('Which line has the bug?','¿Qué línea tiene el error?')}<select id="selLine" ${done?'disabled':''}><option value="">${esc('Pick a line / Elige una línea')}</option>${lines.map(n=>`<option value="${n}" ${String(P.line)===String(n)?'selected':''}>${esc((B_('Line '+n,'Línea '+n)))}</option>`).join('')}</select></label>
       <label>${B('Which change fixes it?','¿Qué cambio lo arregla?')}<select id="selFix" ${done?'disabled':''}><option value="">${esc('Pick a change / Elige un cambio')}</option>${FIXOPTS.map((o,i)=>`<option value="${i}" ${String(P.fix)===String(i)?'selected':''}>${esc(o.t)}</option>`).join('')}</select></label></div>
     <div id="msg2" style="margin-top:10px">${msg2()}</div>
@@ -648,7 +674,7 @@ function viewP3(){
   return `${stepper('p3')}
   <section class="card" style="margin-top:12px"><h2>${B('Part 3: Ask the AI to fix it','Parte 3: Pídele a la IA que lo arregle')}</h2>
     <p class="lead">${B('A vague message like "fix it" gets a vague answer. Write a prompt that tells the AI exactly what is wrong. Name the problem (a line or the code), say what should happen instead, and give an example. You get 3 prompts.','Un mensaje vago como "arréglalo" recibe una respuesta vaga. Escribe una instrucción que le diga a la IA exactamente qué está mal. Nombra el problema (una línea o el código), di qué debería pasar en su lugar y da un ejemplo. Tienes 3 instrucciones.')}</p>
-    ${specHTML()}${codeHTML(SC,false,null)}
+    ${specHTML()}${glossBar()}${codeHTML(SC,false,null,(S.gloss!==false))}
     ${done?'':`<label class="f">${B('Your prompt to the AI helper','Tu instrucción para el ayudante de IA')}<textarea id="inPrompt" maxlength="400" style="min-height:90px" placeholder="Line __ should __ instead of __. For example, when the input is __ it should give __."></textarea></label>
     <div class="msg warn" id="pneed" style="margin-top:8px">${needLetters(0,20)}</div>
     <div class="row" style="margin-top:10px"><button class="btn alt" id="btnSend" data-act="send" disabled>${B(`Send to the AI helper (${left} ${left===1?'prompt':'prompts'} left)`,`Enviar al ayudante de IA (${left} ${left===1?'instrucción':'instrucciones'} restantes)`)}</button></div>`}
@@ -729,6 +755,7 @@ document.addEventListener('input',e=>{
 });
 document.addEventListener('change',e=>{
   const t=e.target;
+  if(t.id==='ckGloss'){S.gloss=t.checked; render(); return;}
   if(t.dataset&&t.dataset.i&&S.stage==='p1'){ S.p1.place[t.dataset.i]=t.value; const inc=incomplete1().length; $('#need1').innerHTML=inc?B(`${inc} ${inc===1?'prediction still needs':'predictions still need'} an answer.`,`${inc} ${inc===1?'predicción todavía necesita':'predicciones todavía necesitan'} una respuesta.`):B('Every input has a prediction. You can check.','Todas las entradas tienen una predicción. Ya puedes revisar.'); $('#btnCheck1').disabled=inc>0||S.p1.status==='done'; document.querySelectorAll('.mc label').forEach(l=>{const r=l.querySelector('input'); l.classList.toggle('sel',r.checked);}); save(); return; }
   if(t.id==='selLine'){ S.p2.line=t.value; $('#btnCheck2').disabled=!(S.p2.line&&S.p2.fix!==''); save(); return; }
   if(t.id==='selFix'){ S.p2.fix=t.value; $('#btnCheck2').disabled=!(S.p2.line&&S.p2.fix!==''); save(); return; }
