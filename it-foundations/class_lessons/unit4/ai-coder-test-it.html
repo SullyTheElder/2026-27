@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Test It Like a Pro — Unit 4</title>
+<style>
+:root{--navy:#0F2238;--navy2:#1B3553;--teal:#14907F;--teal-d:#0C6B5E;--mint:#CDEFE4;--amber:#F2B134;--amber-d:#A86F08;--coral:#E8604C;--coral-l:#FCE4DF;--bg:#EEF3F7;--line:#C9D5E0;--sub:#475C72;--ok:#0C6B5E}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:Calibri,Carlito,"Segoe UI",system-ui,sans-serif;background:var(--bg);color:var(--navy);font-size:17px;line-height:1.45;-webkit-text-size-adjust:100%}
+h1,h2,h3{font-family:Cambria,Caladea,Georgia,serif;margin:0;line-height:1.15}
+button,select,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* both languages always visible; toggle swaps which is primary */
+.bi{display:flex;flex-direction:column}
+.bi.inline{display:inline-flex;vertical-align:top}
+body[data-lang="en"] .bi .en{order:1;font-weight:700}
+body[data-lang="en"] .bi .es{order:2;font-style:italic;font-weight:400;font-size:.86em;color:var(--sub)}
+body[data-lang="es"] .bi .es{order:1;font-weight:700}
+body[data-lang="es"] .bi .en{order:2;font-style:italic;font-weight:400;font-size:.86em;color:var(--sub)}
+.on-dark .bi .en,.on-dark .bi .es{color:#fff}
+body[data-lang="en"] .on-dark .bi .es,body[data-lang="es"] .on-dark .bi .en{color:#BCD0E2}
+.btn .bi{align-items:center;text-align:center}
+.btn .bi .en,.btn .bi .es{color:inherit !important}
+
+header{background:var(--navy);color:#fff;padding:12px 18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+header .back{color:#BCD0E2;text-decoration:none;font-size:15px;border:1px solid #3B5675;padding:6px 10px;border-radius:6px}
+header .ttl{flex:1;min-width:180px}
+header h1{font-size:26px}
+header .sub{font-size:14px;color:#BCD0E2}
+.langtog{display:flex;border:1px solid #3B5675;border-radius:8px;overflow:hidden}
+.langtog button{background:transparent;color:#BCD0E2;border:0;padding:7px 14px;font-weight:700}
+.langtog button[aria-pressed="true"]{background:var(--teal);color:#fff}
+main{max-width:1000px;margin:0 auto;padding:16px 16px 60px}
+.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:18px;margin-top:16px}
+.card h2{font-size:23px;margin-bottom:8px}
+.lead{font-size:18px;margin:0}
+.muted{color:var(--sub)}
+.stepper{display:flex;gap:6px;flex-wrap:wrap;list-style:none;padding:0;margin:14px 0 0}
+.stepper li{flex:1 1 90px;min-width:84px;border-top:5px solid var(--line);padding-top:5px;font-size:13px;color:var(--sub)}
+.stepper li.done{border-color:var(--teal);color:var(--teal-d)}
+.stepper li.now{border-color:var(--amber);color:var(--navy)}
+.stepper .bi .en,.stepper .bi .es{font-size:13px !important}
+.btn{border:0;border-radius:10px;padding:11px 20px;background:var(--teal);color:#fff;min-height:48px}
+.btn:hover:not(:disabled){background:var(--teal-d)}
+.btn:disabled{background:#B8C6D2;color:#fff;cursor:not-allowed}
+.btn.alt{background:var(--navy)}
+.btn.alt:hover:not(:disabled){background:var(--navy2)}
+.btn.ghost{background:#fff;color:var(--navy);border:2px solid var(--navy)}
+.btn.amber{background:var(--amber);color:var(--navy)}
+.btn.amber:hover:not(:disabled){background:#E09E1C}
+.btn.amber:disabled{background:#B8C6D2;color:#fff}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.hero{background:var(--navy);color:#fff;border-radius:12px;padding:26px 22px;margin-top:16px}
+.hero h2{font-size:34px;margin-bottom:10px;color:#fff}
+.how{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;margin-top:16px}
+.how>div{background:var(--navy2);border-radius:10px;padding:12px 14px}
+.how .n{font-family:Cambria,Caladea,Georgia,serif;font-size:26px;color:var(--amber);display:block}
+label.f{display:block;margin-top:14px}
+label.f .bi{margin-bottom:4px}
+input[type=text],textarea{width:100%;border:2px solid var(--line);border-radius:8px;padding:10px 12px;background:#fff;min-height:46px}
+input[type=text]:focus,textarea:focus{border-color:var(--teal)}
+textarea{min-height:120px;resize:vertical}
+.fields{display:grid;grid-template-columns:2fr 1fr;gap:12px;max-width:520px}
+@media (max-width:620px){.fields{grid-template-columns:1fr}}
+.msg.good{color:var(--ok)}
+.msg.warn{color:#8A3A00}
+
+/* Part 1: number game */
+.guessrow{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap}
+.guessrow .gin{width:170px}
+.guessrow input{font-size:28px;text-align:center;font-weight:700}
+.fb{min-height:64px;margin:12px 0;font-size:20px}
+.fb .big{font-family:Cambria,Caladea,Georgia,serif;font-size:30px;font-weight:700}
+.fb.up .big{color:var(--teal-d)}
+.fb.down .big{color:#9A3412}
+.fb.win .big{color:var(--ok)}
+.log{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:8px}
+.log li{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:5px 10px;font-weight:700;font-size:18px;display:flex;align-items:center;gap:8px}
+.log li.dup{background:var(--coral-l);border-color:var(--coral)}
+.log .tag{font-size:12px;font-weight:700;color:#A12C1B}
+.rangebar{position:relative;height:30px;background:#fff;border:2px solid var(--navy);border-radius:8px;overflow:hidden;margin:6px 0}
+.rangebar .fill{position:absolute;top:0;bottom:0;background:var(--mint);border-left:3px solid var(--teal);border-right:3px solid var(--teal)}
+.rangelab{display:flex;justify-content:space-between;font-size:14px;color:var(--sub)}
+
+/* Part 2: card wall */
+.target{display:inline-flex;align-items:baseline;gap:10px;background:var(--navy);color:#fff;border-radius:10px;padding:8px 16px}
+.target .num{font-family:Cambria,Caladea,Georgia,serif;font-size:34px;font-weight:700;color:var(--amber)}
+.wall{display:grid;grid-template-columns:repeat(8,1fr);gap:8px;margin-top:12px}
+@media (max-width:620px){.wall{grid-template-columns:repeat(4,1fr)}}
+.tile{aspect-ratio:1/1.1;min-height:56px;border-radius:10px;border:3px solid var(--navy);font-family:Cambria,Caladea,Georgia,serif;font-weight:700;font-size:22px;display:flex;align-items:center;justify-content:center;padding:0}
+.tile.down{background:var(--amber);box-shadow:0 3px 0 var(--amber-d);color:var(--navy)}
+.tile.down:hover:not(:disabled){transform:translateY(-2px)}
+.tile.down .pos{font-size:16px;background:#fff;border:2px solid var(--navy);border-radius:6px;min-width:30px;padding:0 4px}
+.tile.up{background:#fff;color:var(--navy)}
+.tile.up.found{background:var(--mint);border-color:var(--teal);outline:4px solid var(--teal)}
+.tile.up.bad{border-color:var(--coral)}
+.tile.rev{background:#F6F9FB;color:var(--sub);border-style:dashed;border-color:var(--line)}
+.tile:disabled{cursor:default}
+.tilepos{display:block;font-size:11px;font-weight:400;color:var(--sub);font-family:Calibri,Carlito,sans-serif}
+
+/* results */
+.result{border:3px solid var(--teal)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin:10px 0}
+.stat{background:var(--bg);border-radius:10px;padding:10px 14px}
+.stat .big{font-family:Cambria,Caladea,Georgia,serif;font-size:34px;font-weight:700;display:block;line-height:1.1}
+.bars{margin-top:8px}
+.bar{display:grid;grid-template-columns:minmax(150px,240px) 1fr 40px;gap:10px;align-items:center;margin:6px 0}
+.bar .track{background:var(--bg);border-radius:6px;height:20px;overflow:hidden}
+.bar .fill{height:100%;border-radius:6px}
+.bar .num{font-weight:700;text-align:right}
+@media (max-width:560px){.bar{grid-template-columns:1fr 1fr 34px}}
+.strats{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-top:10px}
+.strat{text-align:left;background:#fff;border:3px solid var(--line);border-radius:12px;padding:12px 14px}
+.strat:hover{border-color:var(--teal)}
+.strat[aria-pressed="true"]{border-color:var(--teal);background:var(--mint)}
+.strat .h{font-family:Cambria,Caladea,Georgia,serif;font-size:19px;margin-bottom:4px}
+.strat .bi .en,.strat .bi .es{font-weight:400}
+body[data-lang="en"] .strat .bi .en{font-weight:600}
+body[data-lang="es"] .strat .bi .es{font-weight:600}
+body[data-lang="en"] .strat .h .bi .en,body[data-lang="es"] .strat .h .bi .es{font-weight:700}
+.sumbox{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:14px;min-height:240px;background:#F6F9FB}
+.copied{color:var(--ok);font-weight:700}
+.challenge{border:3px dashed var(--amber)}
+.reset{background:none;border:0;color:var(--sub);text-decoration:underline;font-size:14px;margin-top:22px}
+
+/* ---- Build a Feed ---- */
+.persona{background:var(--mint);border-radius:12px;padding:14px 16px;margin-top:12px}
+.sliders{display:flex;flex-direction:column;gap:14px}
+.sl{border-bottom:1px solid var(--line);padding-bottom:12px}
+.sl:last-child{border-bottom:0}
+.sl .top{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.sl output{font-family:Cambria,Caladea,Georgia,serif;font-size:26px;font-weight:700;color:var(--teal-d);min-width:28px;text-align:right}
+.sl input[type=range]{width:100%;accent-color:#14907F;height:34px}
+.sl .hint{font-size:14px;color:var(--sub)}
+.scale{display:flex;justify-content:space-between;font-size:12px;color:var(--sub)}
+.layout{display:grid;grid-template-columns:minmax(300px,380px) 1fr;gap:16px;align-items:start}
+@media (max-width:860px){.layout{grid-template-columns:1fr}}
+.meter{background:var(--navy);color:#fff;border-radius:12px;padding:12px 16px;margin-bottom:12px}
+.meter .big{font-family:Cambria,Caladea,Georgia,serif;font-size:38px;font-weight:700;color:var(--amber);line-height:1}
+.meter .goal{height:14px;background:#2B476A;border-radius:7px;position:relative;margin-top:8px;overflow:hidden}
+.meter .goal .bar{position:absolute;left:0;top:0;bottom:0;background:var(--amber);border-radius:7px}
+.meter .goal .line{position:absolute;top:-2px;bottom:-2px;width:3px;background:#fff}
+.meter.win .big{color:#7CE8C9}
+.meter.win .goal .bar{background:#7CE8C9}
+.feed{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.post{display:grid;grid-template-columns:38px 1fr 54px;gap:10px;align-items:start;background:#fff;border:2px solid var(--line);border-radius:12px;padding:10px 12px}
+.post.in{border-color:var(--teal);background:#F7FCFA}
+.post.out{opacity:.62}
+.post.wanted{box-shadow:inset 6px 0 0 var(--teal)}
+.post .rank{font-family:Cambria,Caladea,Georgia,serif;font-size:24px;font-weight:700;color:var(--navy2)}
+.post .who{font-size:14px;color:var(--sub);margin-bottom:2px}
+.post .txt{font-size:16px}
+.post .txt .bi .en,.post .txt .bi .es{font-weight:400}
+body[data-lang="en"] .post .txt .bi .en{font-weight:600}
+body[data-lang="es"] .post .txt .bi .es{font-weight:600}
+.badges{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.bdg{font-size:12px;border:1px solid var(--line);border-radius:6px;padding:1px 7px;background:var(--bg);color:var(--navy2);font-weight:600}
+.bdg.hot{background:var(--coral-l);border-color:var(--coral);color:#8A2A1A}
+.bdg.ad{background:#FFF3D6;border-color:var(--amber);color:#7A5200}
+.delta{font-weight:700;font-size:15px;text-align:right}
+.delta.up{color:var(--teal-d)} .delta.down{color:#9A3412}
+.cut{display:flex;align-items:center;gap:10px;color:var(--sub);font-size:14px;margin:4px 0}
+.cut:before,.cut:after{content:"";flex:1;border-top:3px dashed var(--coral)}
+.cols2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:860px){.cols2{grid-template-columns:1fr}}
+.wlist{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 10px}
+.wlist>span{display:inline-flex;gap:6px;align-items:baseline;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:2px 8px;font-size:14px;font-weight:700}
+.poll{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin-top:10px}
+.poll button{text-align:left;background:#fff;border:3px solid var(--line);border-radius:12px;padding:10px 14px}
+.poll button:hover{border-color:var(--teal)}
+.poll button[aria-pressed="true"]{border-color:var(--teal);background:var(--mint)}
+
+
+/* ---- Who Gets Flagged ---- */
+.grp{margin-top:10px}
+.grp h4{margin:0 0 6px;font-family:Cambria,Caladea,Georgia,serif;font-size:17px;color:var(--navy2)}
+.tiles{display:grid;grid-template-columns:repeat(10,1fr);gap:6px}
+@media (max-width:620px){.tiles{grid-template-columns:repeat(5,1fr)}}
+.tile2{position:relative;border:2px solid var(--line);background:#fff;border-radius:8px;padding:6px 0;font-size:13px;font-weight:700;color:var(--sub);min-height:44px}
+.tile2.flag{background:var(--amber);border-color:var(--navy);color:var(--navy);box-shadow:0 2px 0 var(--amber-d)}
+.tile2.sel{outline:4px solid var(--teal);outline-offset:1px}
+.tile2.need:after{content:"●";position:absolute;right:4px;top:0;color:#0C6B5E;font-size:14px}
+.tile2.fa{border-color:var(--coral);background:var(--coral-l);color:#8A2A1A}
+.tile2.miss{border-style:dashed;border-color:var(--teal)}
+.legend2{display:flex;flex-wrap:wrap;gap:10px 18px;font-size:14px;margin-top:10px;color:var(--sub)}
+.legend2 i{display:inline-block;width:14px;height:14px;border-radius:4px;border:2px solid var(--navy);vertical-align:-2px;margin-right:5px}
+.inspect{background:var(--bg);border:2px solid var(--line);border-radius:10px;padding:10px 14px;margin-top:10px;min-height:64px}
+.m3{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin-top:8px}
+.m3>div{background:#1B3553;border-radius:8px;padding:6px 10px}
+.m3 .v{font-family:Cambria,Caladea,Georgia,serif;font-size:26px;font-weight:700;color:var(--amber);line-height:1.1}
+.m3 .l{font-size:12px;color:#BCD0E2}
+.m3 .ok .v{color:#7CE8C9}
+.chk{font-size:15px;margin-top:8px}
+
+
+/* ---- Clean It Up ---- */
+.dtab{display:flex;flex-direction:column;gap:6px;margin-top:10px}
+.drow{display:grid;grid-template-columns:76px minmax(90px,1fr) 205px 84px 235px;gap:8px;align-items:center;background:#fff;border:2px solid var(--line);border-radius:10px;padding:6px 10px}
+.drow.head{background:transparent;border:0;font-weight:700;color:var(--sub);padding-top:0;padding-bottom:0;font-size:14px}
+.drow .id{font-weight:700;font-size:14px;color:var(--navy2)}
+.drow .id small{display:block;font-weight:400;color:var(--sub)}
+.drow .raw{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:16px;font-weight:700;background:var(--bg);border-radius:6px;padding:4px 8px;overflow-wrap:anywhere}
+.drow .raw.blank{color:var(--sub);font-style:italic;font-weight:400}
+.drow select,.drow input[type=text]{min-height:40px;padding:6px 8px;font-size:15px}
+.drow.right{border-color:var(--teal);background:#F7FCFA}
+.drow.wrong{border-color:var(--coral);background:var(--coral-l)}
+.drow:has(select[data-f="act"] option[value="keep"]:checked){border-color:#9DB4C8}
+@media (max-width:760px){.drow{grid-template-columns:1fr 1fr}.drow.head{display:none}.drow .raw,.drow .id{grid-column:1/-1}}
+.m2{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-top:8px}
+.m2>div{background:#1B3553;border-radius:8px;padding:8px 12px}
+.m2 .v{font-family:Cambria,Caladea,Georgia,serif;font-size:30px;font-weight:700;color:var(--amber);line-height:1.1}
+.m2 .l{font-size:13px;color:#BCD0E2}
+.m2 .good .v{color:#7CE8C9}
+.chartbox{background:#fff;border:2px solid var(--line);border-radius:12px;padding:10px;overflow-x:auto}
+.chartbox svg{width:100%;height:auto;min-width:420px}
+.opts{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end}
+.opts label{display:block}
+select.s1{width:auto;min-width:170px}
+
+
+/* ---- Make the Chart Lie ---- */
+.ctrls{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px 14px;margin-top:6px}
+.ctrls label{display:block}
+.ctrls select{min-height:42px}
+.two2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:860px){.two2{grid-template-columns:1fr}}
+.chip{display:inline-block;background:var(--coral-l);border:1px solid var(--coral);color:#8A2A1A;border-radius:999px;padding:2px 10px;font-size:14px;font-weight:700;margin:2px 4px 2px 0}
+.chip.none{background:var(--bg);border-color:var(--line);color:var(--sub);font-weight:400}
+.on-dark .chip .bi .en,.on-dark .chip .bi .es{color:#8A2A1A !important;font-size:14px !important}
+.on-dark .chip.none .bi .en,.on-dark .chip.none .bi .es{color:#475C72 !important}
+.itemgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:14px;margin-top:12px}
+.item{background:#fff;border:2px solid var(--line);border-radius:12px;padding:10px 12px}
+.item.right{border-color:var(--teal);background:#F7FCFA}
+.item .claimline{font-size:16px;margin:4px 0 6px}
+.item svg{width:100%;height:auto;display:block}
+.item .note{font-size:13px;color:var(--sub);margin-top:4px}
+.item select{margin-top:8px}
+.honest{border:2px dashed var(--teal);background:#F7FCFA}
+.two2>*,.itemgrid>*,.ctrls>*{min-width:0}
+.item select,.ctrls select{max-width:100%;text-overflow:ellipsis}
+
+
+/* ---- Honest Infographic ---- */
+.poster{border:3px solid var(--navy);border-radius:14px;overflow:hidden;background:#fff}
+.poster .band{padding:16px 18px;color:#fff}
+.poster .band h3{font-family:Cambria,Caladea,Georgia,serif;font-size:26px;line-height:1.1;margin:0;color:#fff;overflow-wrap:anywhere}
+.poster .band p{margin:6px 0 0;font-size:16px;opacity:.95;overflow-wrap:anywhere}
+.poster .body{padding:12px 14px}
+.poster .facts{display:grid;grid-template-columns:1fr 1.4fr;gap:10px;margin-top:10px}
+@media (max-width:620px){.poster .facts{grid-template-columns:1fr}}
+.poster .fact{border-radius:10px;padding:10px 12px}
+.poster .fact .num{font-family:Cambria,Caladea,Georgia,serif;font-size:34px;font-weight:700;line-height:1}
+.poster .small{font-size:12px;color:#475C72;margin-top:8px}
+.checks{list-style:none;padding:0;margin:8px 0 0;display:flex;flex-direction:column;gap:6px}
+.checks li{display:flex;gap:10px;align-items:flex-start;background:#fff;border:2px solid var(--line);border-radius:10px;padding:6px 10px}
+.checks li.ok{border-color:var(--teal);background:#F7FCFA}
+.checks li.bad{border-color:var(--coral);background:var(--coral-l)}
+.checks li.tip{border-style:dashed}
+.checks .ic{font-weight:700;font-size:18px;min-width:22px}
+.qrow{background:#fff;border:2px solid var(--line);border-radius:10px;padding:10px 12px;margin-top:10px}
+.qrow .opts2{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.qrow .opts2 button{border:3px solid var(--line);background:#fff;border-radius:10px;padding:6px 14px;font-weight:700}
+.qrow .opts2 button[aria-pressed="true"]{border-color:var(--teal);background:var(--mint)}
+.swatch{display:inline-flex;gap:6px;align-items:center}
+.swatch i{width:18px;height:18px;border-radius:5px;border:2px solid #0F2238;display:inline-block}
+@media (min-width:861px){#posterbox{position:sticky;top:10px}}
+.fb{background:#FFF3D6;border:2px solid var(--amber);border-radius:10px;padding:10px 14px;margin-top:10px}
+
+
+/* ---- Pitch Your Game ---- */
+.engines{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;margin-top:10px}
+.engines button{text-align:left;border:3px solid var(--line);background:#fff;border-radius:12px;padding:10px 12px}
+.engines button[aria-pressed="true"]{border-color:var(--teal);background:var(--mint)}
+.engines .nm{font-family:Cambria,Caladea,Georgia,serif;font-size:20px;font-weight:700;color:var(--navy2)}
+.engines .fr{font-size:12px;color:var(--sub);margin-top:4px}
+.tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.tags>span{background:var(--bg);border:2px solid var(--line);border-radius:999px;padding:2px 10px;font-size:14px;display:inline-flex;gap:6px;align-items:baseline}
+select{max-width:100%;min-width:0;text-overflow:ellipsis}
+.two2>section{min-width:0}
+.stepsol{margin:6px 0 0;padding-left:22px}
+.stepsol li{margin:3px 0}
+.poster .sec{margin-top:10px}
+.poster .sec .lab{font-weight:700;font-size:13px;letter-spacing:.3px;text-transform:uppercase;color:#475C72}
+
+
+/* ---- AI as the Coder ---- */
+.code{background:#0F2238;color:#E8F0F7;border-radius:12px;padding:12px 14px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:14.5px;line-height:1.55;overflow-x:auto;margin:8px 0}
+.code .ln{display:block;white-space:pre}
+.code .ln i{display:inline-block;width:2.4em;color:#7F9BB5;font-style:normal;user-select:none}
+.code .ln.bugged{background:rgba(232,96,76,.28);border-radius:4px}
+.code .ln.fixed{background:rgba(20,144,127,.35);border-radius:4px}
+.spec{background:#FFF3D6;border:2px solid var(--amber);border-radius:10px;padding:10px 14px;margin-top:8px}
+.ttable{width:100%;border-collapse:collapse;margin-top:10px;font-size:15px}
+.ttable th,.ttable td{border:2px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}
+.ttable th{background:var(--bg);font-size:13px}
+.ttable td.ok{background:var(--mint);font-weight:700}
+.ttable td.no{background:var(--coral-l);font-weight:700}
+.mc{display:grid;gap:6px;margin-top:6px}
+.mc label{display:flex;gap:8px;align-items:center;border:2px solid var(--line);background:#fff;border-radius:8px;padding:6px 10px;cursor:pointer}
+.mc label.sel{border-color:var(--teal);background:var(--mint)}
+.aibox{border:3px solid var(--navy2);border-radius:12px;background:#fff;padding:10px 14px;margin-top:10px}
+.aibox .who{font-weight:700;color:var(--navy2);font-size:14px}
+.pchips{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.pchips>span{border:2px solid var(--line);border-radius:999px;padding:2px 10px;font-size:13px;background:#fff;display:inline-flex;gap:6px;align-items:baseline}
+.pchips>span.y{border-color:var(--teal);background:var(--mint)}
+.pchips>span.n{border-color:var(--coral);background:var(--coral-l)}
+.edgechips{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.edgechips>span{border:2px solid var(--line);border-radius:999px;padding:2px 10px;font-size:13px;background:#fff;display:inline-flex;gap:6px;align-items:baseline}
+.edgechips>span.y{border-color:var(--teal);background:var(--mint)}
+.trow{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.trow input{flex:1;min-width:200px}
+.attempt{border-left:5px solid var(--line);padding:4px 0 4px 10px;margin-top:10px}
+
+@media (prefers-reduced-motion:reduce){*{transition:none !important;animation:none !important}}
+</style>
+</head>
+<body data-lang="en">
+<header class="on-dark">
+  <a class="back" href="../index.html"><span class="bi inline"><span class="en">← Lessons</span><span class="es">← Lecciones</span></span></a>
+  <div class="ttl"><h1>Test It Like a Pro</h1>
+    <div class="sub"><span class="bi inline"><span class="en">Unit 4 · AI as the Coder 2</span><span class="es">Unidad 4 · IA como programadora 2</span></span></div></div>
+  <div class="langtog" role="group" aria-label="Main language / Idioma principal">
+    <button type="button" data-act="lang" data-l="en" aria-pressed="true">EN</button>
+    <button type="button" data-act="lang" data-l="es" aria-pressed="false">ES</button>
+  </div>
+</header>
+<main id="app"></main>
+<div id="live" class="sr" aria-live="polite"></div>
+<script>
+(function(){
+'use strict';
+/* ===== tiny dependency-free PDF writer (Helvetica, WinAnsi, vector shapes) ===== */
+const PDFLIB=(function(){
+  const R=[278,278,355,556,556,889,667,191,333,333,389,584,278,333,278,278,556,556,556,556,556,556,556,556,556,556,278,278,584,584,584,556,1015,
+    667,667,722,722,667,611,778,722,278,500,667,556,833,722,778,667,778,722,667,611,722,667,944,667,667,611,278,278,278,469,556,333,
+    556,556,500,556,556,278,556,556,222,222,500,222,833,556,556,556,556,333,500,278,556,500,722,500,500,500,334,260,334,584];
+  const BD=[278,333,474,556,556,889,722,238,333,333,389,584,278,333,278,278,556,556,556,556,556,556,556,556,556,556,333,333,584,584,584,611,975,
+    722,722,722,722,667,611,778,722,278,556,722,611,833,722,778,667,778,722,667,611,722,667,944,667,667,611,333,278,333,584,556,333,
+    556,611,556,611,556,333,611,611,278,278,556,278,889,611,611,611,611,389,556,333,611,556,778,556,556,500,389,280,389,584];
+  const MAP={'\u2018':0x91,'\u2019':0x92,'\u201C':0x93,'\u201D':0x94,'\u2013':0x96,'\u2014':0x97,'\u2026':0x85,'\u2022':0x95};
+  function cw(ch,font){
+    let c=ch.codePointAt(0);
+    if(c<32||c>126){ if(ch==='\u00BF') c=63; else if(ch==='\u00A1') c=33; else { const b=ch.normalize('NFD')[0].codePointAt(0); c=(b>=32&&b<=126)?b:110; } }
+    const tab=font==='F2'?BD:R; return (tab[c-32]||556)/1000;
+  }
+  function sw(s,font,size){let w=0; for(const ch of s) w+=cw(ch,font); return w*size;}
+  function enc(s){
+    let o=''; s=String(s).normalize('NFC');
+    for(const ch of s){
+      let c=ch.codePointAt(0);
+      if(MAP[ch]) c=MAP[ch]; else if(c>255) c=63;
+      if(c===40||c===41||c===92) o+='\\'+String.fromCharCode(c);
+      else if(c<32) o+=' ';
+      else if(c>126) o+='\\'+c.toString(8).padStart(3,'0');
+      else o+=String.fromCharCode(c);
+    } return o;
+  }
+  function wrap(s,font,size,maxW){
+    const out=[];
+    String(s).split(/\r?\n/).forEach(par=>{
+      let line='';
+      par.split(/\s+/).filter(Boolean).forEach(w0=>{
+        let w=w0;
+        while(sw(w,font,size)>maxW){            // break very long words
+          let k=1; while(k<w.length&&sw(w.slice(0,k+1),font,size)<=maxW) k++;
+          if(line){out.push(line); line='';}
+          out.push(w.slice(0,k)); w=w.slice(k);
+        }
+        const t=line?line+' '+w:w;
+        if(sw(t,font,size)<=maxW) line=t; else {out.push(line); line=w;}
+      });
+      out.push(line);
+    });
+    return out;
+  }
+  const NAVY=[0.059,0.133,0.22], TEAL=[0.047,0.42,0.369], GRAY=[0.28,0.36,0.45], MINT=[0.804,0.937,0.894], AMBER=[0.992,0.941,0.816], WHITE=[1,1,1];
+  function doc(){
+    const W=612,H=792,M=54; const pages=[]; let cur=null; let y=M;
+    const f=n=>(Math.round(n*100)/100).toString();
+    const col=(c,s)=>`${f(c[0])} ${f(c[1])} ${f(c[2])} ${s?'RG':'rg'}\n`;
+    const d={W,H,M};
+    d.newPage=()=>{ if(cur!==null) pages.push(cur); cur=''; y=M; };
+    d.y=()=>y; d.setY=v=>{y=v;};
+    d.ensure=h=>{ if(cur===null||y+h>H-M) d.newPage(); };
+    d.text=(s,x,base,font,size,c)=>{ cur+=col(c||NAVY,false)+`BT /${font} ${size} Tf ${f(x)} ${f(H-base)} Td (${enc(s)}) Tj ET\n`; };
+    d.textC=(s,cx,base,font,size,c)=>{ d.text(s,cx-sw(s,font,size)/2,base,font,size,c); };
+    d.title=(en,sub)=>{ d.ensure(60); d.text(en,M,y+20,'F2',22,NAVY); d.text(sub,M,y+38,'F3',11,GRAY); y+=54; };
+    d.kv=(k,v)=>{ d.ensure(18); d.text(k+':',M,y+11,'F2',11,NAVY); const lines=wrap(v,'F1',11,W-2*M-150);
+      lines.forEach((l,i)=>{ if(i>0) d.ensure(15); d.text(l,M+150,y+11,'F1',11,NAVY); y+=15; }); if(!lines.length) y+=15; };
+    d.gap=n=>{y+=n;};
+    d.heading=(en,es)=>{ d.ensure(52); y+=10; d.text(en,M,y+12,'F2',13,TEAL); d.text(es,M,y+26,'F3',10.5,GRAY);
+      cur+=col(TEAL,true)+`0.8 w ${M} ${f(H-(y+31))} m ${W-M} ${f(H-(y+31))} l S\n`; y+=40; };
+    d.para=(s,o)=>{ o=o||{}; const size=o.size||11, font=o.font||'F1', lead=size*1.35, w=W-2*M-(o.indent||0);
+      wrap(s,font,size,w).forEach(l=>{ d.ensure(lead+2); d.text(l,M+(o.indent||0),y+size,font,size,o.color||NAVY); y+=lead; }); y+=4; };
+    d.line=(s,o)=>d.para(s,o);
+    /* ---- shapes (top-left coordinates) ---- */
+    function rr(x,top,w,h,r){const k=0.5523*r,X=x,Y=H-top;
+      return `${f(X+r)} ${f(Y)} m ${f(X+w-r)} ${f(Y)} l ${f(X+w-r+k)} ${f(Y)} ${f(X+w)} ${f(Y-r+k)} ${f(X+w)} ${f(Y-r)} c ${f(X+w)} ${f(Y-h+r)} l `+
+        `${f(X+w)} ${f(Y-h+r-k)} ${f(X+w-r+k)} ${f(Y-h)} ${f(X+w-r)} ${f(Y-h)} c ${f(X+r)} ${f(Y-h)} l ${f(X+r-k)} ${f(Y-h)} ${f(X)} ${f(Y-h+r-k)} ${f(X)} ${f(Y-h+r)} c `+
+        `${f(X)} ${f(Y-r)} l ${f(X)} ${f(Y-r+k)} ${f(X+r-k)} ${f(Y)} ${f(X+r)} ${f(Y)} c h\n`;}
+    d.box=(x,top,w,h,r,fill)=>{ cur+='q\n'+col(fill,false)+col(NAVY,true)+'1.2 w\n'+rr(x,top,w,h,Math.min(r,h/2,w/2))+'B\nQ\n'; };
+    d.diamond=(cx,top,w,h,fill)=>{ const Y=H-top; cur+='q\n'+col(fill,false)+col(NAVY,true)+`1.2 w\n${f(cx)} ${f(Y)} m ${f(cx+w/2)} ${f(Y-h/2)} l ${f(cx)} ${f(Y-h)} l ${f(cx-w/2)} ${f(Y-h/2)} l h B\nQ\n`; };
+    d.seg=(x1,y1,x2,y2)=>{ cur+='q\n'+col(NAVY,true)+`1.2 w ${f(x1)} ${f(H-y1)} m ${f(x2)} ${f(H-y2)} l S\nQ\n`; };
+    d.arrow=(x,y1,y2)=>{ d.seg(x,y1,x,y2-4); cur+='q\n'+col(NAVY,false)+`${f(x-4)} ${f(H-(y2-6))} m ${f(x+4)} ${f(H-(y2-6))} l ${f(x)} ${f(H-y2)} l f\nQ\n`; };
+    d.centerLines=(lines,cx,top,h,size,font,c)=>{ const lead=size*1.2, tot=lines.length*lead; let b=top+(h-tot)/2+lead*0.78;
+      lines.forEach(l=>{ d.textC(l,cx,b,font||'F1',size,c); b+=lead; }); };
+    d.wrap=(s,font,size,w)=>wrap(s,font,size,w);
+    d.build=title=>{
+      if(cur!==null) pages.push(cur); if(!pages.length) pages.push('');
+      const n=pages.length, objs=[]; const kids=[];
+      objs[1]='<< /Type /Catalog /Pages 2 0 R >>';
+      for(let i=0;i<n;i++) kids.push((6+2*i)+' 0 R');
+      objs[2]=`<< /Type /Pages /Kids [${kids.join(' ')}] /Count ${n} >>`;
+      objs[3]='<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>';
+      objs[4]='<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>';
+      objs[5]='<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Oblique /Encoding /WinAnsiEncoding >>';
+      pages.forEach((p,i)=>{
+        objs[6+2*i]=`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${W} ${H}] /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R >> >> /Contents ${7+2*i} 0 R >>`;
+        objs[7+2*i]=`<< /Length ${p.length} >>\nstream\n${p}endstream`;
+      });
+      const info=6+2*n; objs[info]=`<< /Title (${enc(title||'')}) /Producer (Class Resources Site) >>`;
+      let out='%PDF-1.4\n%\u00E2\u00E3\u00CF\u00D3\n'; const off=[];
+      for(let i=1;i<=info;i++){ off[i]=out.length; out+=`${i} 0 obj\n${objs[i]}\nendobj\n`; }
+      const xr=out.length; out+=`xref\n0 ${info+1}\n0000000000 65535 f \n`;
+      for(let i=1;i<=info;i++) out+=String(off[i]).padStart(10,'0')+' 00000 n \n';
+      out+=`trailer\n<< /Size ${info+1} /Root 1 0 R /Info ${info} 0 R >>\nstartxref\n${xr}\n%%EOF`;
+      const u=new Uint8Array(out.length); for(let i=0;i<out.length;i++) u[i]=out.charCodeAt(i)&255; return u;
+    };
+    d.newPage();
+    return d;
+  }
+  function fold(s){return String(s).normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^A-Za-z0-9]+/g,'_').replace(/^_+|_+$/g,'')||'student';}
+  function download(bytes,name){
+    const blob=new Blob([bytes],{type:'application/pdf'}), url=URL.createObjectURL(blob);
+    const a=document.createElement('a'); a.href=url; a.download=name; document.body.appendChild(a); a.click();
+    setTimeout(()=>{URL.revokeObjectURL(url); a.remove();},2000);
+  }
+  return {doc,fold,download,width:sw,NAVY,TEAL,GRAY,MINT,AMBER,WHITE};
+})();
+
+/* ================= shared engine: four AI-written scripts, each with one planted bug ================= */
+function rngOf(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+const NAMES=['Fox','Owl','Bear','Wolf','Hawk','Lynx','Otter','Crow'];
+function shuf(r,a){a=a.slice(); for(let i=a.length-1;i>0;i--){const j=Math.floor(r()*(i+1)); const t=a[i]; a[i]=a[j]; a[j]=t;} return a;}
+const SCRIPTS=[
+ {id:'search',name:['Guess the secret number','Adivina el número secreto'],
+  spec:['Find a secret number from 1 to 100. After each guess you are told higher or lower. Always guess the middle of what is left. Return how many guesses it took.','Encuentra un número secreto del 1 al 100. Después de cada intento te dicen mayor o menor. Siempre adivina el punto medio de lo que queda. Devuelve cuántos intentos tomó.'],
+  call:'find(secret)',code:['def find(secret):','    low = 1','    high = 100','    guesses = 0','    while low <= high:','        mid = (low + high) // 2','        guesses = guesses + 1','        if mid == secret:','            return guesses','        if mid < secret:','            low = mid','        else:','            high = mid - 1'],
+  bugLine:11,fixedLine:'            low = mid + 1',bugText:'low = mid',
+  fixes:['low = mid + 1','low = mid - 1','high = mid + 1'],rightFix:0,
+  fixWhy:['The search must move PAST the guess it just tried. With "low = mid" it can get stuck on the same guess forever.','La búsqueda debe pasar MÁS ALLÁ del intento que acaba de probar. Con "low = mid" puede quedarse atascada en el mismo intento para siempre.'],
+  bugWords:['low = mid','low=mid','mid + 1','mid+1','stuck','forever','infinite','never finish','loop'],
+  run(x,fixed){let low=1,high=100,g=0; while(low<=high){ if(g>=30) return {stuck:true,g:g}; const mid=Math.floor((low+high)/2); g++; if(mid===x) return {g:g}; if(mid<x) low=fixed?mid+1:mid; else high=mid-1;} return {g:g};},
+  fmtOut(r){return r.stuck?'never finishes (stuck after 30 guesses)':r.g+' guesses';},
+  fmtIn(x){return 'secret = '+x;},
+  parseIn(t){const n=parseInt(String(t).trim(),10); return (String(t).trim()===String(n)&&n>=1&&n<=100)?n:null;},
+  inputHint:['A whole number from 1 to 100.','Un número entero del 1 al 100.'],
+  edgeIdeas:['the smallest number (1)','the biggest number (100)','a number near the top, like 99','a number right in the middle (50)'],
+  edgeIdeasEs:['el número más pequeño (1)','el número más grande (100)','un número cerca del tope, como 99','un número justo en el medio (50)'],
+  cats(x){const c=[]; if(x<=2) c.push('low'); if(x>=95) c.push('high'); if(x>=45&&x<=55) c.push('middle'); return c;},
+  catNames:{low:['a very low number','un número muy bajo'],high:['a number near the top','un número cerca del tope'],middle:['a number in the middle','un número en el medio']},
+  inspector:[100,99,97],
+  gen(r){const all=[...Array(100)].map((_,i)=>i+1); const same=s=>this.fmtOut(this.run(s,false))===this.fmtOut(this.run(s,true)); const fail=all.filter(s=>!same(s)), pass=all.filter(same); return {fail:shuf(r,fail),pass:shuf(r,pass)};},
+  distract(r,right,used){const d=[]; for(const n of shuf(r,[3,4,5,6,7,8])){const t=n+' guesses'; if(t!==right&&!used.has(t)) d.push(t);} const st='never finishes (stuck after 30 guesses)'; if(st!==right&&!used.has(st)) d.unshift(st); return d;}},
+ {id:'max',name:['Highest score','Puntaje más alto'],
+  spec:['Return the highest number in the list. The numbers can be negative, like temperature changes.','Devuelve el número más alto de la lista. Los números pueden ser negativos, como cambios de temperatura.'],
+  call:'highest(scores)',code:['def highest(scores):','    best = 0','    for s in scores:','        if s > best:','            best = s','    return best'],
+  bugLine:2,fixedLine:'    best = scores[0]',bugText:'best = 0',
+  fixes:['best = scores[0]','best = 100','if s < best:'],rightFix:0,
+  fixWhy:['Starting at 0 only works when some number is above 0. Start with the first number in the list instead.','Empezar en 0 solo funciona si algún número es mayor que 0. Mejor empieza con el primer número de la lista.'],
+  bugWords:['best = 0','best=0','negative','scores[0]','first number','first item','first value','start at 0','starts at 0'],
+  run(x,fixed){let best=fixed?x[0]:0; for(const s of x) if(s>best) best=s; return {v:best};},
+  fmtOut(r){return String(r.v);},
+  fmtIn(x){return 'scores = ['+x.join(', ')+']';},
+  parseIn(t){const p=String(t).split(',').map(s=>s.trim()); if(p.length<1||p.length>8||p.some(s=>!/^-?\d{1,2}$/.test(s))) return null; return p.map(Number);},
+  inputHint:['1 to 8 whole numbers from -99 to 99, separated by commas.','De 1 a 8 números enteros de -99 a 99, separados por comas.'],
+  edgeIdeas:['all negative numbers','just one number','a list with repeats','a list with zero in it'],
+  edgeIdeasEs:['todos los números negativos','un solo número','una lista con repetidos','una lista con un cero'],
+  cats(x){const c=[]; if(x.every(v=>v<0)) c.push('neg'); if(x.length===1) c.push('one'); if(new Set(x).size<x.length) c.push('dup'); if(x.includes(0)) c.push('zero'); return c;},
+  catNames:{neg:['all negative numbers','todos negativos'],one:['a single number','un solo número'],dup:['repeated numbers','números repetidos'],zero:['a zero','un cero']},
+  inspector:[[-4,-9,-1],[-7],[-3,-3,-8]],
+  gen(r){const fail=[],pass=[]; for(let i=0;i<40;i++){const n=3+Math.floor(r()*3); fail.push([...Array(n)].map(()=>-(1+Math.floor(r()*20)))); pass.push([...Array(n)].map(()=>1+Math.floor(r()*20)));} return {fail:fail,pass:pass};},
+  distract(r,right,used){const d=[]; for(const v of ['0','-1','5','12','-7']){ if(v!==right&&!used.has(v)) d.push(v);} return shuf(r,d);}},
+ {id:'rank',name:['Who goes first','Quién va primero'],
+  spec:['Each card has speed, power, and luck. Score = speed x 3 + power x 2 + luck x 1. Return the name of the card with the highest score. If there is a tie, the first card wins.','Cada carta tiene velocidad, poder y suerte. Puntaje = velocidad x 3 + poder x 2 + suerte x 1. Devuelve el nombre de la carta con el puntaje más alto. Si hay empate, gana la primera carta.'],
+  call:'winner(cards)',code:['def winner(cards):','    best = cards[0]','    for c in cards:','        score = c.speed*3 + c.power*2 + c.luck*2','        top = best.speed*3 + best.power*2 + best.luck*2','        if score > top:','            best = c','    return best.name'],
+  bugLine:4,fixedLine:'        score = c.speed*3 + c.power*2 + c.luck*1',bugText:'c.luck*2',
+  fixes:['score = c.speed*3 + c.power*2 + c.luck*1','score = c.speed*2 + c.power*3 + c.luck*1','if score >= top:'],rightFix:0,
+  fixWhy:['The rule says luck counts 1, but line 4 counts luck twice. Line 5 uses the same wrong weight, so the best card is also scored wrong.','La regla dice que la suerte vale 1, pero la línea 4 cuenta la suerte dos veces. La línea 5 usa el mismo peso equivocado.'],
+  bugWords:['luck','*2','* 2','weight','line 4','luck*1','luck * 1'],
+  run(x,fixed){const w=fixed?1:2; let best=x[0]; for(const c of x){ const sc=c.s*3+c.p*2+c.l*w, top=best.s*3+best.p*2+best.l*w; if(sc>top) best=c;} return {v:best.n};},
+  fmtOut(r){return r.v;},
+  fmtIn(x){return x.map(c=>c.n+' (speed '+c.s+', power '+c.p+', luck '+c.l+')').join('; ');},
+  parseIn(){return null;},
+  inspector:[],
+  gen(r){const fail=[],pass=[]; for(let i=0;i<300&&(fail.length<8||pass.length<8);i++){const nm=shuf(r,NAMES).slice(0,3); const set=nm.map(n=>({n:n,s:1+Math.floor(r()*6),p:1+Math.floor(r()*6),l:1+Math.floor(r()*9)})); const a=this.run(set,false).v,b=this.run(set,true).v; if(a!==b&&fail.length<8) fail.push(set); else if(a===b&&pass.length<8) pass.push(set);} return {fail:fail,pass:pass};},
+  distract(r,right,used,inp){const d=[]; (inp||[]).forEach(c=>{if(c.n!==right&&!used.has(c.n)) d.push(c.n);}); return shuf(r,d);}},
+ {id:'grade',name:['Letter grade','Calificación en letras'],
+  spec:['90 or more is an A. 80 to 89 is a B. 70 to 79 is a C. Below 70 is an F.','90 o más es A. De 80 a 89 es B. De 70 a 79 es C. Menos de 70 es F.'],
+  call:'grade(score)',code:['def grade(score):','    if score > 90:','        return "A"','    if score >= 80:','        return "B"','    if score >= 70:','        return "C"','    return "F"'],
+  bugLine:2,fixedLine:'    if score >= 90:',bugText:'score > 90',
+  fixes:['if score >= 90:','if score > 89:  # but only for odd scores','if score >= 80:'],rightFix:0,
+  fixWhy:['The rule says 90 or more, so a score of exactly 90 must be an A. "> 90" skips 90 because 90 is not greater than 90.','La regla dice 90 o más, así que un 90 exacto debe ser A. "> 90" se salta el 90 porque 90 no es mayor que 90.'],
+  bugWords:['> 90','>= 90','>90','>=90','exactly 90','score of 90','boundary','line 2'],
+  run(x,fixed){ if(fixed? x>=90 : x>90) return {v:'A'}; if(x>=80) return {v:'B'}; if(x>=70) return {v:'C'}; return {v:'F'}; },
+  fmtOut(r){return r.v;},
+  fmtIn(x){return 'score = '+x;},
+  parseIn(t){const n=parseInt(String(t).trim(),10); return (String(t).trim()===String(n)&&n>=0&&n<=100)?n:null;},
+  inputHint:['A whole number from 0 to 100.','Un número entero de 0 a 100.'],
+  edgeIdeas:['exactly 90 (a boundary)','exactly 80 or 70','the lowest score (0)','the highest score (100)'],
+  edgeIdeasEs:['exactamente 90 (un límite)','exactamente 80 o 70','la nota más baja (0)','la nota más alta (100)'],
+  cats(x){const c=[]; if([90,80,70].includes(x)) c.push('bound'); if(x===0) c.push('zero'); if(x===100) c.push('top'); return c;},
+  catNames:{bound:['a boundary like 90, 80, or 70','un límite como 90, 80 o 70'],zero:['the lowest score (0)','la nota más baja (0)'],top:['the highest score (100)','la nota más alta (100)']},
+  inspector:[90,80,70],
+  gen(r){const all=[...Array(101)].map((_,i)=>i); const fail=all.filter(s=>this.run(s,false).v!==this.run(s,true).v), pass=all.filter(s=>this.run(s,false).v===this.run(s,true).v); return {fail:shuf(r,fail),pass:shuf(r,pass)};},
+  distract(r,right,used){const d=['A','B','C','F'].filter(v=>v!==right&&!used.has(v)); return shuf(r,d);}}
+];
+const SB={}; SCRIPTS.forEach(s=>SB[s.id]=s);
+function runPair(sc,x){const bug=sc.fmtOut(sc.run(x,false)), ref=sc.fmtOut(sc.run(x,true)); return {bug:bug,ref:ref,ok:bug===ref};}
+/* Part 1 items for Monday: 5 inputs (at least 1 failing, at least 2 passing), each with 4 shuffled options */
+function makeItems(sc,seed){
+  const r=rngOf(seed*31+sc.id.length), pools=sc.gen(r); const nf=Math.min(2,pools.fail.length), inputs=[]; pools.fail.slice(0,nf).forEach(x=>inputs.push(x)); pools.pass.slice(0,5-nf).forEach(x=>inputs.push(x));
+  const order=shuf(r,inputs.map((x,i)=>i));
+  return order.map((k,i)=>{const x=inputs[k], p=runPair(sc,x); const used=new Set([p.bug,p.ref]); const opts=[p.bug]; if(p.ref!==p.bug) opts.push(p.ref); for(const d of sc.distract(r,p.bug,used,x)){ if(opts.length>=4) break; if(!opts.includes(d)) opts.push(d); }
+    while(opts.length<4) opts.push('none of these'+(opts.length>3?'':' '.repeat(opts.length)));
+    return {id:'I'+(i+1),x:x,bug:p.bug,ref:p.ref,opts:shuf(r,opts)};});
+}
+/* ================= the simulated AI helper ================= */
+function promptCheck(sc,text){
+  const t=String(text).toLowerCase(); const m=t.match(/line\s*#?\s*(\d+)/); const byLine=!!(m&&parseInt(m[1],10)===sc.bugLine);
+  const byWord=sc.bugWords.some(w=>t.includes(w.toLowerCase()));
+  const c1=byLine||byWord, c2=/\b(should|instead|expected|supposed|must|needs? to|change .{1,40} to|replace .{1,40} with)\b/.test(t), c3=/\d/.test(t)&&/(example|for instance|e\.g\.|when|\bif\b|input|\bfor\b)/.test(t);
+  return {c1:c1,c2:c2,c3:c3,fixed:c1&&(c2||c3)};
+}
+function codeLines(sc,fixed){return sc.code.map((l,i)=>(fixed&&i+1===sc.bugLine)?sc.fixedLine:l);}
+function codeHTML(sc,fixed,mark){return '<div class="code" role="img" aria-label="Code">'+codeLines(sc,fixed).map((l,i)=>`<span class="ln${(mark==='bug'&&i+1===sc.bugLine&&!fixed)?' bugged':''}${(fixed&&i+1===sc.bugLine)?' fixed':''}"><i>${i+1}</i>${l.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</span>`).join('')+'</div>';}
+
+const KEY='u4-aicoder2-v1';
+const B=(en,es,c)=>`<span class="bi${c?' '+c:''}"><span class="en">${en}</span><span class="es">${es}</span></span>`;
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const $=s=>document.querySelector(s);
+const len=s=>s.trim().length;
+const needLetters=(n,min)=>n>=min?'':B(`Keep writing: ${min-n} more letters.`,`Sigue escribiendo: faltan ${min-n} letras.`);
+const POOL=['search','max','grade'], MINTESTS=5, MAXTESTS=8;
+
+/* ================= state ================= */
+function fresh(){return {v:1,name:'',period:'',lang:'en',stage:'welcome',seed:Math.floor(Math.random()*1e9)+1,tests:[],p3:{prompts:[],status:'open',revealed:false},refl:''};}
+let S, SC;
+function load(){try{const o=JSON.parse(localStorage.getItem(KEY)); if(o&&o.v===1&&Array.isArray(o.tests)&&o.p3) return o;}catch(e){} return fresh();}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+function setup(){SC=SB[POOL[S.seed%POOL.length]];}
+const key=x=>JSON.stringify(x);
+const failing=()=>S.tests.filter(t=>!runPair(SC,t.x).ok);
+const covered=()=>{const set=new Set(); S.tests.forEach(t=>SC.cats(t.x).forEach(c=>set.add(c))); return set;};
+const canAsk=()=>S.tests.length>=MINTESTS&&failing().length>=1;
+
+/* ================= views ================= */
+const STEPS=[['tests',B('Write tests','Escribe pruebas')],['ask',B('Ask the AI','Pídele a la IA')],['verify',B('Verify','Verifica')],['refl',B('Reflect','Reflexión')],['turnin',B('Turn in','Entregar')]];
+function stepper(stage){const idx=STEPS.findIndex(s=>s[0]===stage);
+  return `<ol class="stepper">${STEPS.map((s,i)=>`<li class="${i<idx?'done':i===idx?'now':''}" ${i===idx?'aria-current="step"':''}>${s[1]}</li>`).join('')}</ol>`;}
+function specHTML(){return `<div class="spec"><strong>${B('What the code is supposed to do','Lo que el código debe hacer','inline')}:</strong> ${B(esc(SC.spec[0]),esc(SC.spec[1]))}</div>`;}
+function viewWelcome(){return `
+  <section class="hero on-dark">
+    <h2>${B('Test It Like a Pro','Pruébalo como un profesional')}</h2>
+    <p class="lead">${B('Good programmers do not just run the code once. They try to break it. Today an AI gives you a script that looks right. Your job is to write test inputs that expose its hidden bug, then direct the AI to fix it, then check that the fix really works.','Los buenos programadores no solo corren el código una vez. Intentan romperlo. Hoy una IA te da un código que parece correcto. Tu trabajo es escribir entradas de prueba que muestren su error escondido, luego dirigir a la IA para arreglarlo y revisar que el arreglo de verdad funciona.')}</p>
+    <div class="how">
+      <div><span class="n">1</span>${B('Write at least 5 tests. Try to find an input where the code is wrong.','Escribe al menos 5 pruebas. Trata de encontrar una entrada donde el código se equivoque.')}</div>
+      <div><span class="n">2</span>${B('Write a prompt that tells the AI what to fix.','Escribe una instrucción que le diga a la IA qué arreglar.')}</div>
+      <div><span class="n">3</span>${B('Check the fix with your tests and a set of inspector tests.','Revisa el arreglo con tus pruebas y un conjunto de pruebas del inspector.')}</div>
+    </div>
+    <p style="margin-top:14px">${B('This is a work-day activity. Go at your own pace. If you missed the last lesson, you can still do this one.','Esta es una actividad para el día de trabajo. Ve a tu ritmo. Si te perdiste la lección anterior, igual puedes hacer esta.')}</p>
+  </section>
+  <section class="card"><h2>${B('Before you start','Antes de empezar')}</h2>
+    <div class="fields"><label class="f">${B('Your name','Tu nombre')}<input type="text" id="inName" autocomplete="off" maxlength="60" value="${esc(S.name)}"></label><label class="f">${B('Period','Periodo')}<input type="text" id="inPeriod" autocomplete="off" maxlength="10" value="${esc(S.period)}"></label></div>
+    <div class="row" style="margin-top:18px"><button class="btn" id="btnStart" data-act="start" ${S.name.trim().length<2?'disabled':''}>${B('Start writing tests','Empezar a escribir pruebas')}</button></div></section>`;}
+
+function testsTable(withFixed,inspector){
+  const rows=(inspector?SC.inspector.map(x=>({x:x})):S.tests);
+  return `<div style="overflow-x:auto"><table class="ttable"><thead><tr><th>#</th><th>${B('Input','Entrada','inline')}</th><th>${B('Spec says','La especificación dice','inline')}</th><th>${B(withFixed?'Fixed code gives':'Code gives',withFixed?'El código arreglado da':'El código da','inline')}</th><th>${B('Match?','¿Coincide?','inline')}</th></tr></thead><tbody>${rows.map((t,i)=>{const p=runPair(SC,t.x); const out=withFixed?p.ref:p.bug, ok=out===p.ref; return `<tr><td>${i+1}</td><td><code>${esc(SC.fmtIn(t.x))}</code></td><td>${esc(p.ref)}</td><td>${esc(out)}</td><td class="${ok?'ok':'no'}">${ok?B('yes','sí','inline'):B('NO','NO','inline')}</td></tr>`;}).join('')}</tbody></table></div>`;
+}
+function edgeChips(){
+  const cov=covered(); return `<div class="edgechips">${Object.keys(SC.catNames).map(k=>`<span class="${cov.has(k)?'y':''}">${cov.has(k)?'✓':'○'} ${B(esc(SC.catNames[k][0]),esc(SC.catNames[k][1]),'inline')}</span>`).join('')}</div>`;
+}
+function viewTests(){
+  const n=S.tests.length, nf=failing().length, ok=canAsk();
+  const ideas=SC.edgeIdeas.map((t,i)=>B(esc(t),esc(SC.edgeIdeasEs[i]),'inline')).join('; ');
+  return `${stepper('tests')}
+  <section class="card" style="margin-top:12px"><h2>${B('Part 1: Try to break the code','Parte 1: Trata de romper el código')}</h2>
+    <p class="lead">${B(`The AI wrote <strong>${esc(SC.name[0])}</strong>. It runs without errors, but it has one hidden bug. Add test inputs and watch the Match column. A test that shows NO has caught the bug. Add at least 5 tests (up to 8).`,`La IA escribió <strong>${esc(SC.name[1])}</strong>. Corre sin errores, pero tiene un error escondido. Agrega entradas de prueba y mira la columna Coincide. Una prueba que muestre NO atrapó el error. Agrega al menos 5 pruebas (hasta 8).`)}</p>
+    ${specHTML()}${codeHTML(SC,false,null)}
+    <div class="trow" style="margin-top:10px"><label style="flex:1;min-width:220px">${B('A new test input','Una nueva entrada de prueba')} <span class="muted">(${B(esc(SC.inputHint[0]),esc(SC.inputHint[1]),'inline')})</span><input type="text" id="inTest" autocomplete="off" maxlength="40" ${n>=MAXTESTS?'disabled':''} placeholder="${SC.id==='max'?'-3, -8, -1':'90'}"></label><button class="btn alt" id="btnAdd" data-act="add" ${n>=MAXTESTS?'disabled':''}>${B('Add test','Agregar prueba')}</button></div>
+    <div class="msg warn" id="addmsg" style="margin-top:8px"></div></section>
+  <section class="card"><h3 style="font-size:19px">${B(`Your tests (${n} of ${MINTESTS} needed)`,`Tus pruebas (${n} de ${MINTESTS} necesarias)`)}</h3>
+    ${n?testsTable(false,false)+`<div style="margin-top:8px">${S.tests.map((t,i)=>`<button class="btn ghost" data-act="rm" data-i="${i}" style="padding:4px 10px;min-height:0;font-size:13px">${B('Remove','Quitar','inline')} #${i+1}</button> `).join('')}</div>`:`<p class="muted">${B('No tests yet.','Todavía no hay pruebas.')}</p>`}
+    <div style="margin-top:10px"><strong>${B('Kinds of cases your tests cover','Tipos de casos que cubren tus pruebas','inline')}:</strong>${edgeChips()}</div>
+    <div class="msg ${ok?'good':'warn'}" id="testmsg" style="margin-top:10px">${ok?B(`Bug caught! ${nf} of your ${n} tests expose it. Go on to ask the AI to fix it.`,`¡Error atrapado! ${nf} de tus ${n} pruebas lo muestran. Sigue para pedirle a la IA que lo arregle.`):(n>=MINTESTS?B(`All ${n} tests match, so the bug is hiding. Try an edge case: ${ideas}.`,`Las ${n} pruebas coinciden, así que el error se esconde. Prueba un caso extremo: ${ideas}.`):B(`Add ${MINTESTS-n} more ${MINTESTS-n===1?'test':'tests'}, and try to find an input where the code is wrong.`,`Agrega ${MINTESTS-n} ${MINTESTS-n===1?'prueba':'pruebas'} más y trata de encontrar una entrada donde el código se equivoque.`))}</div>
+    <div class="row" style="margin-top:10px"><button class="btn" id="btnAsk" data-act="next" data-to="ask" ${ok?'':'disabled'}>${B('Ask the AI to fix it','Pedirle a la IA que lo arregle')}</button></div></section>`;
+}
+function promptBlock(p,i){
+  const chip=(ok,en,es)=>`<span class="${ok?'y':'n'}">${ok?'✓':'✗'} ${B(en,es,'inline')}</span>`;
+  return `<div class="attempt"><div><strong>${B('Your prompt','Tu instrucción','inline')} ${i+1}:</strong> “${esc(p.text)}”</div>
+    <div class="pchips">${chip(p.c1,'names the problem','nombra el problema')}${chip(p.c2,'says what should happen','dice qué debería pasar')}${chip(p.c3,'gives an example','da un ejemplo')}</div>
+    <div class="aibox"><div class="who">${B('AI helper','Ayudante de IA','inline')}</div>${p.fixed?`<p>${B('Got it. I changed that line.','Entendido. Cambié esa línea.')}</p>${codeHTML(SC,true,null)}`:`<p>${B('Sure! I tidied up the code and renamed a variable to make it cleaner.','¡Claro! Ordené el código y cambié el nombre de una variable para que quede más limpio.')}</p>${codeHTML(SC,false,null)}<p class="muted" style="margin:6px 0 0">${B('Your failing tests would still fail. The AI did not know which line you meant.','Tus pruebas que fallan seguirían fallando. La IA no supo a qué línea te referías.')}</p>`}</div></div>`;
+}
+function viewAsk(){
+  const P=S.p3, done=P.status==='done', left=3-P.prompts.length, fail=failing()[0];
+  const hint=(!done&&P.prompts.length>=1)?`<div class="fb" style="margin-top:10px"><strong>${B('Hint','Pista','inline')}:</strong> ${B(`Your failing test points at line ${SC.bugLine}.`,`Tu prueba que falla apunta a la línea ${SC.bugLine}.`)}</div>`:'';
+  return `${stepper('ask')}
+  <section class="card" style="margin-top:12px"><h2>${B('Part 2: Ask the AI to fix it','Parte 2: Pídele a la IA que lo arregle')}</h2>
+    <p class="lead">${B('Use what your failing test showed you. Name the problem (a line or the code), say what should happen instead, and give an example. You get 3 prompts.','Usa lo que te mostró tu prueba que falla. Nombra el problema (una línea o el código), di qué debería pasar en su lugar y da un ejemplo. Tienes 3 instrucciones.')}</p>
+    ${specHTML()}${codeHTML(SC,false,null)}
+    <div style="margin-top:8px"><strong>${B('A test that failed','Una prueba que falló','inline')}:</strong> <code>${esc(SC.fmtIn(fail.x))}</code> ${B(`→ spec says ${esc(runPair(SC,fail.x).ref)}, code gives ${esc(runPair(SC,fail.x).bug)}`,`→ la especificación dice ${esc(runPair(SC,fail.x).ref)}, el código da ${esc(runPair(SC,fail.x).bug)}`,'inline')}</div>
+    ${hint}
+    ${done?'':`<label class="f">${B('Your prompt to the AI helper','Tu instrucción para el ayudante de IA')}<textarea id="inPrompt" maxlength="400" style="min-height:90px" placeholder="Line __ should __ instead of __. For example, when the input is __ it should give __."></textarea></label>
+    <div class="msg warn" id="pneed" style="margin-top:8px">${needLetters(0,20)}</div>
+    <div class="row" style="margin-top:10px"><button class="btn alt" id="btnSend" data-act="send" disabled>${B(`Send to the AI helper (${left} ${left===1?'prompt':'prompts'} left)`,`Enviar al ayudante de IA (${left} ${left===1?'instrucción':'instrucciones'} restantes)`)}</button></div>`}
+    ${P.prompts.map(promptBlock).join('')}
+    ${done&&P.revealed?`<div class="aibox"><div class="who">${B('The fix','El arreglo','inline')}</div><p>${B('Out of prompts. Here is the fix, with the line changed.','Ya no tienes instrucciones. Aquí está el arreglo, con la línea cambiada.')}</p>${codeHTML(SC,true,null)}</div>`:''}</section>
+  ${done?`<section class="card result"><h2>${B('The AI fixed it','La IA lo arregló')}</h2><div class="row"><button class="btn" data-act="next" data-to="verify">${B('Verify the fix','Verificar el arreglo')}</button></div></section>`:''}`;
+}
+function viewVerify(){
+  const insp=SC.inspector.map(x=>({x:x})), cov=covered();
+  const rows=insp.map(t=>{const p=runPair(SC,t.x); const mine=SC.cats(t.x).some(c=>cov.has(c)); return {x:t.x,p:p,mine:mine};});
+  const missed=rows.filter(r=>!r.p.ok&&!r.mine).length, bugCases=rows.filter(r=>!r.p.ok).length;
+  return `${stepper('verify')}
+  <section class="card" style="margin-top:12px"><h2>${B('Part 3: Verify the fix','Parte 3: Verifica el arreglo')}</h2>
+    <p class="lead">${B('A fix is not done until you re-run the tests. First, your own tests with the fixed code. Then three inspector tests you did not write.','Un arreglo no está terminado hasta que vuelves a correr las pruebas. Primero, tus propias pruebas con el código arreglado. Luego tres pruebas del inspector que tú no escribiste.')}</p>
+    <h3 style="font-size:18px">${B('Your tests, with the fixed code','Tus pruebas, con el código arreglado')}</h3>${testsTable(true,false)}
+    <h3 style="font-size:18px;margin-top:16px">${B('Inspector tests','Pruebas del inspector')}</h3>
+    <div style="overflow-x:auto"><table class="ttable"><thead><tr><th>${B('Input','Entrada','inline')}</th><th>${B('Spec says','La especificación dice','inline')}</th><th>${B('Original code','Código original','inline')}</th><th>${B('Fixed code','Código arreglado','inline')}</th><th>${B('Did your tests cover this kind of case?','¿Tus pruebas cubrían este tipo de caso?','inline')}</th></tr></thead><tbody>${rows.map(r=>`<tr><td><code>${esc(SC.fmtIn(r.x))}</code></td><td>${esc(r.p.ref)}</td><td class="${r.p.ok?'ok':'no'}">${esc(r.p.bug)}</td><td class="ok">${esc(r.p.ref)}</td><td class="${r.mine?'ok':'no'}">${r.mine?B('yes','sí','inline'):B('no','no','inline')}</td></tr>`).join('')}</tbody></table></div>
+    <p>${B(`The fixed code matches the spec on every test. The original code was wrong on ${bugCases} of the 3 inspector tests, and ${missed===0?'your tests had already covered those kinds of cases.':`your tests had not covered ${missed} of those kinds of cases, so a different set of tests could have missed the bug.`}`,`El código arreglado coincide con la especificación en todas las pruebas. El código original estaba mal en ${bugCases} de las 3 pruebas del inspector, y ${missed===0?'tus pruebas ya habían cubierto esos tipos de casos.':`tus pruebas no habían cubierto ${missed} de esos tipos de casos, así que otro conjunto de pruebas podría haber pasado por alto el error.`}`)}</p>
+    <div class="row"><button class="btn" data-act="next" data-to="refl">${B('Go to reflection','Ir a la reflexión')}</button></div></section>`;
+}
+function reflNeed(){return needLetters(len(S.refl),20);}
+function viewRefl(){
+  const ok=len(S.refl)>=20;
+  return `${stepper('refl')}
+  <section class="card"><h2>${B('Reflect','Reflexiona')}</h2>
+    <p class="lead">${B('1. Which of your tests caught the bug, and why did you choose that input? 2. What kinds of cases did your tests miss? 3. How will you test AI-written code in your game project?','1. ¿Cuál de tus pruebas atrapó el error y por qué elegiste esa entrada? 2. ¿Qué tipos de casos no cubrieron tus pruebas? 3. ¿Cómo vas a probar el código escrito por una IA en tu proyecto de juego?')}</p>
+    <textarea id="inRefl" aria-label="Reflection" style="min-height:170px" placeholder="1… 2… 3…">${esc(S.refl)}</textarea>
+    <p class="muted" style="margin:6px 0 0">${B('You can write in English or Spanish.','Puedes escribir en inglés o en español.')}</p>
+    <div class="msg warn" id="reflneed" style="margin-top:8px">${reflNeed()}</div>
+    <div class="row" style="margin-top:10px"><button class="btn" id="btnRefl" data-act="next" data-to="turnin" ${ok?'':'disabled'}>${B('Go to turn in','Ir a entregar')}</button></div></section>`;
+}
+
+/* ---- PDF ---- */
+function PDFNAME(){return 'U4_AICoder2_TestIt_'+PDFLIB.fold(S.name)+'.pdf';}
+function buildPDF(){
+  const d=PDFLIB.doc(); d.title('AI as the Coder 2: Test It Like a Pro','Unit 4   /   Unidad 4');
+  d.kv('Name / Nombre',S.name.trim()); d.kv('Period / Periodo',S.period.trim()||'—'); d.kv('Date / Fecha',new Date().toLocaleString()); d.kv('Script / Código',SC.name[0]+' / '+SC.name[1]);
+  d.para('Spec / Especificación: '+SC.spec[0],{size:10});
+  d.heading('The AI\'s code','El código de la IA'); codeLines(SC,false).forEach((l,i)=>d.para((i+1<10?' ':'')+(i+1)+'   '+l,{size:9.5,indent:6}));
+  d.heading('My tests','Mis pruebas'); d.line('Tests written / Pruebas escritas: '+S.tests.length+'     Tests that caught the bug / Pruebas que atraparon el error: '+failing().length);
+  S.tests.forEach((t,i)=>{const p=runPair(SC,t.x); d.para((i+1)+'.  '+SC.fmtIn(t.x)+'   |   spec says / la especificación dice: '+p.ref+'   |   code gives / el código da: '+p.bug+'   |   '+(p.ok?'match':'CAUGHT THE BUG'),{size:9.5,indent:6});});
+  const cov=covered(); d.line('Kinds of cases covered / Tipos de casos cubiertos: '+(Object.keys(SC.catNames).filter(k=>cov.has(k)).map(k=>SC.catNames[k][0]).join('; ')||'none / ninguno'),{size:10});
+  d.heading('Asking the AI to fix it','Pedirle a la IA que lo arregle');
+  S.p3.prompts.forEach((p,i)=>{d.para('Prompt '+(i+1)+': "'+p.text+'"',{size:10,indent:6}); d.line('    names the problem: '+(p.c1?'yes':'no')+'   says what should happen: '+(p.c2?'yes':'no')+'   gives an example: '+(p.c3?'yes':'no')+'   =>   '+(p.fixed?'AI fixed it / la IA lo arregló':'AI did not fix it / la IA no lo arregló'),{size:9.5});});
+  if(S.p3.revealed) d.line('Fix revealed after 3 prompts / Arreglo mostrado después de 3 instrucciones',{size:9.5});
+  d.heading('Inspector tests','Pruebas del inspector');
+  SC.inspector.forEach(x=>{const p=runPair(SC,x); const mine=SC.cats(x).some(c=>cov.has(c)); d.para(SC.fmtIn(x)+'   |   spec: '+p.ref+'   |   original code: '+p.bug+'   |   fixed code: '+p.ref+'   |   my tests covered this kind of case / mis pruebas cubrían este caso: '+(mine?'yes / sí':'no'),{size:9.5,indent:6});});
+  d.heading('Reflection','Reflexión'); d.para(S.refl.trim()||'—');
+  return d.build('AI as the Coder 2 - '+S.name.trim());
+}
+function summary(){
+  const L=['AI AS THE CODER 2 — TEST IT LIKE A PRO','Name: '+S.name.trim()+'   Period: '+(S.period.trim()||'—'),'Date: '+new Date().toLocaleString(),'Script: '+SC.name[0],'Spec: '+SC.spec[0],'','CODE:'].concat(codeLines(SC,false).map((l,i)=>(i+1)+'  '+l));
+  L.push('','MY TESTS ('+S.tests.length+', caught the bug: '+failing().length+'):'); S.tests.forEach((t,i)=>{const p=runPair(SC,t.x); L.push('  '+(i+1)+'. '+SC.fmtIn(t.x)+' | spec '+p.ref+' | code '+p.bug+' | '+(p.ok?'match':'CAUGHT THE BUG'));});
+  L.push('','PROMPTS:'); S.p3.prompts.forEach((p,i)=>L.push('  '+(i+1)+': "'+p.text+'" -> '+(p.fixed?'AI fixed it':'AI did not fix it'))); L.push('','REFLECTION:',S.refl.trim()); return L.join('\n');
+}
+function doPDF(){
+  const m=$('#pdfmsg');
+  try{ PDFLIB.download(buildPDF(),PDFNAME()); m.innerHTML=B('Saved! Now upload the PDF to Canvas.','¡Guardado! Ahora sube el PDF a Canvas.','inline'); }
+  catch(err){ m.innerHTML=B('The PDF did not work. Use "Copy as text" below.','El PDF no funcionó. Usa "Copiar como texto" abajo.','inline'); const dt=document.querySelector('details'); if(dt) dt.open=true; }
+}
+function viewTurnin(){return `${stepper('turnin')}
+  <section class="card"><h2>${B('Turn it in','Entrégalo')}</h2>
+    <ol style="padding-left:22px;margin:8px 0 0">
+      <li style="margin-bottom:8px">${B('Press Download my PDF.','Presiona Descargar mi PDF.')}</li>
+      <li style="margin-bottom:8px">${B('Open the Canvas assignment and choose File Upload.','Abre la tarea en Canvas y elige Subir archivo.')}</li>
+      <li>${B('Upload the PDF, then press Submit.','Sube el PDF y presiona Enviar.')}</li></ol>
+    <div class="row" style="margin-top:14px"><button class="btn" id="btnPdf" data-act="pdf">${B('Download my PDF','Descargar mi PDF')}</button><span id="pdfmsg" class="copied" role="status"></span></div>
+    <details style="margin-top:16px"><summary style="cursor:pointer">${B('Trouble downloading? Copy as text instead','¿Problemas para descargar? Copia como texto')}</summary>
+      <textarea id="sumbox" class="sumbox" readonly aria-label="Summary" style="margin-top:10px">${esc(summary())}</textarea>
+      <div class="row" style="margin-top:10px"><button class="btn ghost" data-act="copy">${B('Copy as text','Copiar como texto')}</button><span id="copymsg" class="copied" role="status"></span></div></details></section>
+  <button class="reset" data-act="reset">${B('Start over (clears this device)','Empezar de nuevo (borra este dispositivo)','inline')}</button>`;}
+
+/* ================= render + actions ================= */
+function render(){
+  document.body.setAttribute('data-lang',S.lang); document.documentElement.lang=S.lang;
+  document.querySelectorAll('.langtog button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.l===S.lang));
+  const v={welcome:viewWelcome,tests:viewTests,ask:viewAsk,verify:viewVerify,refl:viewRefl,turnin:viewTurnin}[S.stage];
+  $('#app').innerHTML=v(); save();
+}
+function go(st){S.stage=st; render(); window.scrollTo(0,0);}
+document.addEventListener('input',e=>{
+  const t=e.target,id=t.id;
+  if(id==='inName'){S.name=t.value; save(); const b=$('#btnStart'); if(b) b.disabled=S.name.trim().length<2;}
+  else if(id==='inPeriod'){S.period=t.value; save();}
+  else if(id==='inRefl'){S.refl=t.value; save(); const b=$('#btnRefl'),n=$('#reflneed'); if(b) b.disabled=len(S.refl)<20; if(n) n.innerHTML=reflNeed();}
+  else if(id==='inPrompt'){ const n=len(t.value); $('#pneed').innerHTML=needLetters(n,20); $('#btnSend').disabled=n<20; }
+});
+function doCopy(){
+  const ta=$('#sumbox'); ta.value=summary(); const m=$('#copymsg');
+  const ok=()=>{m.innerHTML=B('Copied! Now paste it into Canvas.','¡Copiado! Ahora pégalo en Canvas.','inline');};
+  const fb=()=>{ta.focus();ta.select();try{document.execCommand('copy');ok();}catch(x){m.innerHTML=B('Select the text and press Ctrl+C.','Selecciona el texto y presiona Ctrl+C.','inline');}};
+  if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(ta.value).then(ok,fb); else fb();
+}
+function addTest(){
+  const inp=$('#inTest'), msg=$('#addmsg'); const x=SC.parseIn(inp.value);
+  if(x===null){ msg.innerHTML=B(`That input does not work here. ${esc(SC.inputHint[0])}`,`Esa entrada no funciona aquí. ${esc(SC.inputHint[1])}`); return; }
+  if(S.tests.some(t=>key(t.x)===key(x))){ msg.innerHTML=B('You already have that test. Try a different input.','Ya tienes esa prueba. Prueba otra entrada.'); return; }
+  if(S.tests.length>=MAXTESTS) return;
+  S.tests.push({x:x}); render(); const el=$('#inTest'); if(el&&!el.disabled) el.focus();
+}
+document.addEventListener('keydown',e=>{ if(e.key==='Enter'&&e.target&&e.target.id==='inTest'){ e.preventDefault(); addTest(); } });
+document.addEventListener('click',e=>{
+  const t=e.target.closest('[data-act]'); if(!t||t.disabled) return; const a=t.dataset.act;
+  if(a==='lang'){S.lang=t.dataset.l; render();}
+  else if(a==='start'){ if(S.name.trim().length>=2) go('tests'); }
+  else if(a==='add') addTest();
+  else if(a==='rm'){ S.tests.splice(+t.dataset.i,1); render(); }
+  else if(a==='send'){ const txt=$('#inPrompt').value; if(len(txt)<20||S.p3.status==='done') return; const c=promptCheck(SC,txt); S.p3.prompts.push({text:txt.trim(),c1:c.c1,c2:c.c2,c3:c.c3,fixed:c.fixed}); if(c.fixed||S.p3.prompts.length>=3){ S.p3.status='done'; S.p3.revealed=!c.fixed; } render(); const els=document.querySelectorAll('.attempt'); if(els.length) els[els.length-1].scrollIntoView({block:'center'}); }
+  else if(a==='next'){ const to=t.dataset.to; if(to==='ask'&&!canAsk()) return; if(to==='verify'&&S.p3.status!=='done') return; go(to); }
+  else if(a==='pdf') doPDF();
+  else if(a==='copy') doCopy();
+  else if(a==='reset'){ if(confirm('Start over? This clears your work on this device. / ¿Empezar de nuevo? Esto borra tu trabajo en este dispositivo.')){try{localStorage.removeItem(KEY);}catch(x){} S=fresh(); setup(); render();} }
+});
+
+S=load(); setup();
+if(!['welcome','tests','ask','verify','refl','turnin'].includes(S.stage)) S.stage='welcome';
+if(['ask','verify','refl','turnin'].includes(S.stage)&&!canAsk()) S.stage='tests';
+if(['verify','refl','turnin'].includes(S.stage)&&S.p3.status!=='done') S.stage='ask';
+render();
+window.__S=()=>S; window.__H={sc:()=>SC,runPair:runPair};
+})();
+
+</script>
+</body>
+</html>
