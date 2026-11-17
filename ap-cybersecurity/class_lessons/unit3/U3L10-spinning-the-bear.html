@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>U3L10 Spinning the Bear: Seven Incidents, Seven Days</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caladea:wght@400;700&family=Carlito:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --green:#1B4332; --green-2:#2D6A4F; --green-soft:#E3EDE6;
+  --gold:#D4A017; --gold-soft:#FBF1D3;
+  --brick:#8E3B2E; --brick-soft:#F6E4DF;
+  --cream:#FBF7EC; --paper:#FFFDF7; --ink:#1E2A23; --muted:#56655B; --line:#D9D2BE;
+  --serif:"Caladea","Cambria",Georgia,serif;
+  --sans:"Carlito","Calibri","Segoe UI",Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--cream);color:var(--ink);font-family:var(--sans);font-size:17px;line-height:1.55}
+a{color:var(--green-2)}
+:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+
+/* header */
+.top{background:var(--green);color:#fff;padding:14px 24px;display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.top h1{font-family:var(--serif);font-size:24px;margin:0;font-weight:700;letter-spacing:.2px}
+.top .sub{color:#CFE0D5;font-size:15px}
+.top .back{margin-left:auto;color:#fff;font-size:14px;text-decoration:none;border:1px solid rgba(255,255,255,.45);padding:6px 12px;border-radius:6px}
+.top .back:hover{background:rgba(255,255,255,.12)}
+.cutoff{background:var(--gold-soft);border-bottom:1px solid var(--line);padding:7px 24px;font-size:14px;color:#5B4708}
+
+/* layout */
+.wrap{display:grid;grid-template-columns:250px minmax(0,1fr);gap:28px;max-width:1180px;margin:0 auto;padding:22px 24px 60px}
+nav.side{position:sticky;top:16px;align-self:start;min-width:0}
+.side h2{font-family:var(--serif);font-size:16px;margin:0 0 8px;color:var(--green)}
+.side ol{list-style:none;margin:0;padding:0}
+.side li button{width:100%;text-align:left;background:none;border:0;border-left:3px solid transparent;padding:7px 10px;font:inherit;font-size:15px;color:var(--ink);cursor:pointer;display:flex;gap:9px;align-items:center;border-radius:0 6px 6px 0}
+.side li button:hover{background:var(--green-soft)}
+.side li button[aria-current="true"]{border-left-color:var(--gold);background:var(--paper);font-weight:700}
+.dot{flex:none;width:11px;height:11px;border-radius:50%;border:2px solid var(--muted);background:transparent}
+.dot.started{border-color:var(--gold);background:linear-gradient(90deg,var(--gold) 50%,transparent 50%)}
+.dot.done{border-color:var(--green);background:var(--green)}
+.side .sep{height:1px;background:var(--line);margin:8px 0}
+.side .tally{font-size:14px;color:var(--muted);margin-top:10px}
+
+main{min-width:0}
+.panel{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:26px 30px}
+.measure{max-width:72ch}
+h2.case{font-family:var(--serif);font-size:30px;line-height:1.2;color:var(--green);margin:4px 0 6px}
+.meta{font-size:15px;color:var(--muted);margin-bottom:16px}
+h3{font-family:var(--serif);color:var(--green);font-size:20px;margin:26px 0 10px}
+p{margin:0 0 12px}
+
+/* statements */
+.stmts{display:grid;gap:14px}
+.group{border-left:5px solid var(--green);background:#fff;border-radius:0 8px 8px 0;padding:12px 16px}
+.group.unoff{border-left-color:var(--gold)}
+.group.skep{border-left-color:var(--brick)}
+.group h4{margin:0 0 8px;font-size:16px;font-family:var(--serif)}
+.group.off h4{color:var(--green)} .group.unoff h4{color:#7A5C05} .group.skep h4{color:var(--brick)}
+.stmt{margin:0 0 10px;padding-bottom:10px;border-bottom:1px dashed var(--line)}
+.stmt:last-child{margin:0;padding:0;border:0}
+.stmt .who{font-weight:700}
+.stmt .src{font-size:13px;color:var(--muted)}
+.consider{background:var(--green-soft);border-radius:8px;padding:12px 16px;margin-top:16px}
+.consider strong{color:var(--green)}
+details.sources{margin-top:12px;font-size:14px;color:var(--muted)}
+details.sources ul{margin:6px 0 0;padding-left:20px}
+
+/* response */
+.respond{margin-top:28px;border-top:3px solid var(--green);padding-top:6px}
+fieldset{border:0;padding:0;margin:0 0 18px}
+legend,.lbl{font-weight:700;margin-bottom:8px;font-size:16px;display:block}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chips label{display:inline-flex;align-items:center;gap:7px;border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:6px 14px;cursor:pointer;font-size:15px}
+.chips input{accent-color:var(--green)}
+.chips label:has(input:checked){border-color:var(--green);background:var(--green-soft);font-weight:700}
+textarea{width:100%;font:inherit;font-size:16px;line-height:1.5;border:1.5px solid var(--line);border-radius:8px;padding:12px;background:#fff;color:var(--ink);resize:vertical}
+textarea:focus{border-color:var(--green-2);outline:none;box-shadow:0 0 0 3px rgba(45,106,79,.18)}
+textarea.big{min-height:220px}
+textarea.small{min-height:90px}
+.prompt{font-size:15px;color:var(--muted);margin:-4px 0 8px}
+.wc{font-size:14px;color:var(--muted);margin-top:4px;display:flex;justify-content:space-between}
+.wc.ok{color:var(--green-2);font-weight:700}
+
+.navrow{display:flex;justify-content:space-between;gap:12px;margin-top:24px;flex-wrap:wrap}
+.btn{font:inherit;font-size:16px;border-radius:8px;padding:10px 20px;cursor:pointer;border:2px solid var(--green);background:var(--green);color:#fff;font-weight:700}
+.btn:hover{background:var(--green-2);border-color:var(--green-2)}
+.btn.ghost{background:transparent;color:var(--green)}
+.btn.ghost:hover{background:var(--green-soft)}
+.btn.gold{background:var(--gold);border-color:var(--gold);color:#2B2205}
+.btn.gold:hover{background:#E4B42A}
+
+/* intro */
+.hero{display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:26px;align-items:center}
+.hero h2{font-family:var(--serif);font-size:38px;line-height:1.1;color:var(--green);margin:0 0 12px}
+.hero p.lead{font-size:19px}
+.ring{width:100%;height:auto}
+.ring text{font-family:var(--sans)}
+.hyps{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:8px 0 6px}
+.hyp{background:#fff;border:1px solid var(--line);border-radius:8px;padding:12px 14px}
+.hyp b{font-family:var(--serif);color:var(--green);font-size:17px;display:block;margin-bottom:2px}
+.idrow{display:flex;gap:14px;flex-wrap:wrap;margin:6px 0 4px}
+.idrow label{display:flex;flex-direction:column;font-weight:700;font-size:15px;gap:4px}
+.idrow input{font:inherit;font-size:16px;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px;width:240px;background:#fff}
+.note{border:1px solid var(--brick);background:var(--brick-soft);border-radius:8px;padding:10px 14px;font-size:15px;margin-top:14px}
+ul.tight{margin:0 0 12px;padding-left:22px}
+ul.tight li{margin-bottom:4px}
+
+/* review */
+.status{list-style:none;padding:0;margin:0 0 16px}
+.status li{display:flex;gap:10px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line)}
+.status li span.what{margin-left:auto;font-size:14px;color:var(--muted)}
+.warn{background:var(--gold-soft);border:1px solid var(--gold);border-radius:8px;padding:10px 14px;margin:12px 0}
+
+.rubric{background:#fff;border:1px solid var(--line);border-top:4px solid var(--gold);border-radius:8px;padding:16px 20px;margin-top:14px}
+.rubric h3{margin-top:0}
+.rubric table{width:100%;border-collapse:collapse;font-size:15px;margin:8px 0 12px}
+.rubric th,.rubric td{text-align:left;vertical-align:top;padding:7px 8px;border-bottom:1px solid var(--line)}
+.rubric th{white-space:nowrap;background:var(--green-soft);color:var(--green);font-family:var(--serif)}
+.rubric td.pt{white-space:nowrap;font-weight:700;color:var(--green)}
+.rubric .scroll{overflow-x:auto}
+#printSheet{display:none}
+
+@media (max-width:900px){
+  .wrap{grid-template-columns:1fr;padding:14px}
+  nav.side{position:static}
+  .side ol{display:flex;overflow-x:auto;gap:4px;padding-bottom:6px}
+  .side li button{white-space:nowrap;border-left:0;border-bottom:3px solid transparent;border-radius:6px 6px 0 0}
+  .side li button[aria-current="true"]{border-bottom-color:var(--gold)}
+  .side .sep,.side h2{display:none}
+  .hero{grid-template-columns:1fr}
+  .hero .ringbox{max-width:300px}
+  .hyps{grid-template-columns:1fr}
+  .panel{padding:18px}
+}
+@media (prefers-reduced-motion:no-preference){
+  .ring .node{transition:fill .25s}
+}
+
+@media print{
+  body{background:#fff;font-size:11.5pt}
+  .top,.cutoff,.wrap{display:none !important}
+  #printSheet{display:block}
+  #printSheet h1{font-family:var(--serif);font-size:18pt;color:#1B4332;margin:0 0 4px}
+  #printSheet .pmeta{font-size:10.5pt;margin-bottom:10px;border-bottom:2px solid #1B4332;padding-bottom:6px}
+  #printSheet .pcase{break-inside:auto;margin:0 0 12px;padding-top:6px;border-top:1px solid #bbb}
+  #printSheet .pcase h2{font-family:var(--serif);font-size:13pt;margin:0 0 3px;color:#1B4332}
+  #printSheet .pline{font-size:10.5pt;margin:0 0 4px}
+  #printSheet .pans{white-space:pre-wrap;font-size:11pt;margin:2px 0 6px}
+  #printSheet .plabel{font-weight:700;font-size:10.5pt}
+}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div>
+    <h1>U3L10: Spinning the Bear</h1>
+    <div class="sub">Seven incidents, seven days. Wolves, or a stumbling bear?</div>
+  </div>
+  <a class="back" href="../" >Back to AP Cybersecurity lessons</a>
+</header>
+<div class="cutoff" id="cutoffBar"></div>
+
+<div class="wrap">
+  <nav class="side" aria-label="Activity sections">
+    <h2>Your progress</h2>
+    <ol id="navList"></ol>
+    <div class="tally" id="tally"></div>
+  </nav>
+  <main id="main"></main>
+</div>
+
+<div id="printSheet"></div>
+
+<script>
+/* ===================== SETTINGS (Mr. Sullivan can edit) ===================== */
+const REQUIRED_CASES = 4;          // how many incidents a student must complete
+const TARGET_WORDS = 80;           // "a paragraph or more" per incident
+const SYNTH_TARGET = 150;          // words for the big-picture argument
+const EVIDENCE_CUTOFF = "Tuesday, November 17, 2026, early afternoon (Pacific time)";
+const STORE_KEY = "u3l10-spinning-the-bear-v1";
+
+/* ===================== INCIDENTS ===================== */
+const CASES = [
+{
+  id:"clickfix", short:"ClickFix pages", date:"Ongoing; new research Nov 10",
+  title:"The ClickFix “surge”",
+  happened:[
+    "ClickFix is a trick, not a single attack. A web page shows a fake “verify you are human” box or a fake error message, then tells the visitor to paste a command into their computer and press Enter. The visitor ends up installing the malware with their own hands, so no software flaw is needed.",
+    "This month, security companies published new research showing ClickFix being used in more advanced ways, such as hiding malware inside image files and using one infected computer to reach other machines on a company network."
+  ],
+  official:[
+    {who:"Microsoft (security research)", text:"Reported that ClickFix activity grew about 23 times over between December 2025 and May 2026, with malware following almost every time.", src:"Computer Weekly"},
+    {who:"Push Security (browser security company)", text:"Said ClickFix was its most common detection in spring 2026 and reached two-thirds of all detections in August. About 4 in 5 ClickFix pages were reached through search engines, not email.", src:"BleepingComputer"}
+  ],
+  unofficial:[
+    {who:"Huntress (security firm), Nov. 10 report", text:"Researchers believe unrelated criminal groups keep adopting ClickFix simply because it keeps working, not because one group is directing it.", src:"Cyber Security News"},
+    {who:"SOCRadar (threat intelligence)", text:"Tracked one Russian-speaking group running a ClickFix phishing campaign since August 2026, aimed at victims in Latin America, Asia, and Europe. It is one campaign among many.", src:"Cyber Security News"},
+    {who:"Fake AI-tool pages", text:"Researchers found many recent lures pretend to be install pages for popular AI tools, including ChatGPT and Claude, and are promoted through search ads.", src:"BleepingComputer"}
+  ],
+  skeptic:[
+    {who:"Open question", text:"The numbers above describe growth over many months. Nobody in these sources reports a sudden jump in ClickFix during the week of November 10.", src:"Your own reading of the dates"}
+  ],
+  consider:"Did ClickFix surge this week, or has it been growing for a year and we only started noticing because everything else went wrong? Check the dates on every number before you use it as evidence.",
+  sources:[
+    ["Computer Weekly: ClickFix risk to education sector","https://www.computerweekly.com/news/366652423/ClickFix-scams-pose-growing-risk-to-education-sector-Jisc-says"],
+    ["BleepingComputer: ClickFix has never been bigger","https://www.bleepingcomputer.com/news/security/clickfix-has-never-been-bigger-and-ai-tools-are-its-most-convincing-lure-yet/"],
+    ["Cyber Security News: ClickFix attacks evolve","https://cybersecuritynews.com/clickfix-attacks-evolve/"],
+    ["Cyber Security News: Russian-speaking group campaign","https://cybersecuritynews.com/hackers-use-ai-assisted-malware/"]
+  ]
+},
+{
+  id:"microsoft", short:"Microsoft 365", date:"Thu Nov 12 to Sat Nov 14",
+  title:"Microsoft 365 goes down worldwide",
+  happened:[
+    "Around 10 a.m. Pacific on Thursday, November 12, Outlook email, Teams, Copilot, and other Microsoft 365 services stopped working for huge numbers of users. Outage reports came in from 74 countries within about an hour. Full service was not back until Saturday.",
+    "The effects spread well beyond email. Hospitals in Toronto reported trouble operating, and one think tank estimated lost productivity could approach $7 billion. In Germany, a hotel pool’s chemical-monitoring system could not send its warning email, and guests were hurt by excess chlorine."
+  ],
+  official:[
+    {who:"Microsoft, during the outage", text:"Said there was “no indication this is the result of malicious or cyber activity.”", src:"ABC News"},
+    {who:"Microsoft, after recovery", text:"Explained that a problem introduced during an earlier network capacity upgrade surfaced after a recent network change. It promised a full post-incident report.", src:"CNN"},
+    {who:"Charles Lamanna, Microsoft executive", text:"Described three things combining: a hidden defect in gateway servers from a change deployed back in July, a shift in traffic that made the defect more likely to appear, and maintenance that cut server capacity by 14%.", src:"Wikipedia summary of his post"}
+  ],
+  unofficial:[
+    {who:"Tony Burke, Australia’s cyber security minister", text:"Said Microsoft believed it was dealing with something like the 2024 CrowdStrike incident, when a faulty software update crashed computers worldwide.", src:"CNBC"},
+    {who:"Timing context", text:"Two days before the outage, Microsoft released its monthly security update, fixing roughly 1,100 vulnerabilities.", src:"Wikipedia / Security Boulevard"}
+  ],
+  skeptic:[
+    {who:"Josh Gottheimer, U.S. lawmaker", text:"Asked whether something nefarious was going on, pointing to “the size of it and the length of it and the timing of it.”", src:"CNBC"}
+  ],
+  consider:"Microsoft is describing its own failure. What reasons might a company have to say “not a hack,” and what reasons might it have to be careful about saying that if it weren’t sure? Notice the defect it blames was installed in July.",
+  sources:[
+    ["ABC News: Microsoft apologizes, says there was no hack","https://abcnews.com/US/outlook-down-microsoft-outage-reported-mail/story?id=138088203"],
+    ["CNN: Microsoft outage live updates","https://edition.cnn.com/2026/11/12/business/live-news/microsoft-global-outage-intl-hnk"],
+    ["CNBC: Microsoft apologizes for massive outage","https://www.cnbc.com/2026/11/12/microsoft-outage-outlook-aws-google.html"],
+    ["Wikipedia: 2026 Microsoft outage","https://en.wikipedia.org/wiki/2026_Microsoft_outage"]
+  ]
+},
+{
+  id:"faa", short:"FAA ground stop", date:"Fri Nov 13",
+  title:"The FAA grounds every departing flight",
+  happened:[
+    "Around 12:30 p.m. Pacific on Friday, air traffic controllers started seeing unstable radar data and communications at 17 of the country’s 22 en-route control centers. The FAA stopped all departures nationwide for about four and a half hours. About 3,500 planes already in the air all landed safely.",
+    "This was only the second nationwide ground stop since September 11, 2001. Airlines canceled more than 18,000 flights over three days."
+  ],
+  official:[
+    {who:"FAA", text:"Said that based on all available evidence it had “no indication that this was a cyberattack or an outside nefarious actor.”", src:"FAA.gov"},
+    {who:"Sean Duffy, Transportation Secretary", text:"Said a contractor, L3Harris, was replacing old copper phone lines with fiber at a remote site. A router installed there began flooding the network with more than 1,000 connection attempts every four to five seconds. Investigators had not yet decided whether the router was faulty or installed wrong.", src:"U.S. Department of Transportation"},
+    {who:"Markwayne Mullin, Homeland Security Secretary, Friday night", text:"Said it did not appear to be an attack but would not rule it out: “There’s nothing completely certain right now.”", src:"ABC News"}
+  ],
+  unofficial:[
+    {who:"Timing context", text:"Three days earlier, the FAA expanded a new AI air-traffic tool called SMART to all control centers. The company that makes it said its product had nothing to do with the ground stop.", src:"NPR / Wikipedia"},
+    {who:"National Weather Service", text:"Had to post that its weather radar was working fine, because outdated pages claiming a radar outage were circulating online.", src:"The War Zone"},
+    {who:"History", text:"The last nationwide ground stop, in 2023, also set off fears of a cyberattack. It turned out contractors had accidentally deleted important files.", src:"NPR"}
+  ],
+  skeptic:[
+    {who:"Sen. Richard Blumenthal", text:"Called the outage alarming and a danger to national security, and demanded a fast, thorough investigation.", src:"NPR"},
+    {who:"Tyler Rogoway, defense journalist", text:"Argued that people shouldn’t underestimate how patched-together and outdated air traffic control systems are, pointing toward failure rather than attack.", src:"The War Zone"}
+  ],
+  consider:"A device sending 1,000+ connection attempts every few seconds looks a lot like a flooding attack in the logs. If you only had the network traffic to look at, how would you tell a broken router from a malicious one? What else would you need to know?",
+  sources:[
+    ["FAA: Nationwide Ground Stop Q&A","https://www.faa.gov/newsroom/faa-statement-nationwide-ground-stop"],
+    ["DOT: Secretary Duffy update","https://www.transportation.gov/briefing-room/icymi-us-transportation-secretary-sean-p-duffy-provides-update-restoration-airspace"],
+    ["ABC News: Ground stop lifted","https://abcnews.com/US/nationwide-ground-stop-ordered-airports-faa/story?id=138121848"],
+    ["NPR: FAA lifts ground stop","https://www.npr.org/2026/11/13/nx-s1-6040403/faa-nationwide-groundstop-airports"],
+    ["The War Zone: FAA ground stop coverage","https://www.twz.com/air/faa-orders-ground-stop-for-all-flights-across-the-u-s"],
+    ["Wikipedia: 2026 FAA nationwide ground stop","https://en.wikipedia.org/wiki/2026_FAA_nationwide_ground_stop"]
+  ]
+},
+{
+  id:"banks", short:"United + banks", date:"Mon Nov 16",
+  title:"United Airlines and the big banks stumble",
+  happened:[
+    "On Monday, United Airlines reported a widespread system outage that briefly stopped many of its departing flights. The same day, JPMorgan Chase, the largest U.S. bank, had trouble processing transactions.",
+    "Customer complaints on the outage-tracking site Downdetector also spiked for Bank of America, Wells Fargo, U.S. Bank, and others. Everything was working again by Tuesday morning."
+  ],
+  official:[
+    {who:"JPMorgan Chase", text:"Blamed a software bug in its own on-site hardware and said “there is no evidence this is cyber-related.” It added that other banks doing business with Chase may have been affected, but that this was not a system-wide problem.", src:"The Daily Wire (quoting Chase)"},
+    {who:"United Airlines", text:"Said a computer problem caused the halt and that it was resolved.", src:"Reuters"},
+    {who:"Markwayne Mullin, Homeland Security Secretary", text:"Said he was 98% certain these were not cyberattacks: “We’re not seeing the footprints going in.” He called the incidents individually unrelated and said new technology is being stacked on top of very old systems.", src:"Fox News / Reuters"}
+  ],
+  unofficial:[
+    {who:"Mullin, relaying an unnamed tech expert", text:"Said the expert suggested AI tools that rewrite code could be overwhelming old systems. Mullin said the idea made sense to him. No evidence for the theory was offered, and the expert was not named.", src:"Fox News"}
+  ],
+  skeptic:[
+    {who:"Open question", text:"Downdetector counts complaints from users, not confirmed failures. Chase itself said other banks could be affected through transactions with Chase.", src:"Yahoo Finance / The Daily Wire"}
+  ],
+  consider:"Weigh every claim by its evidence, not by who said it. That includes the “98%” and the AI theory. Also ask: after a week of outage headlines, would people be more likely to report a problem on Downdetector?",
+  sources:[
+    ["Reuters via Investing.com: Recent tech woes not tied to cyberattacks","https://www.investing.com/news/stock-market-news/us-official-says-recent-tech-woes-not-tied-to-cyberattacks-5033346"],
+    ["Fox News: DHS chief says outages unrelated","https://www.foxnews.com/media/dhs-chief-tells-americans-breathe-amid-tech-outages-insists-homeland-secure"],
+    ["The Daily Wire: Mullin on the outages","https://www.dailywire.com/news/mullin-suspects-ai-is-behind-system-meltdowns-explains-how"],
+    ["Yahoo Finance: Bank outage reports spike","https://finance.yahoo.com/markets/article/jpmorgan-confirms-transaction-delays-as-bank-outage-reports-spike-205454016.html"]
+  ]
+},
+{
+  id:"optimizely", short:"Optimizely", date:"Mon Nov 16",
+  title:"Malicious code on 178 major websites",
+  happened:[
+    "Optimizely makes a tool that big websites use to test different versions of their pages. Each site loads a small piece of Optimizely’s code. On Monday, an attacker abused a flaw in Optimizely’s account signup process and slipped malicious code into many customers’ projects.",
+    "Because the code came from Optimizely’s own trusted servers, it ran on sites like the BBC, CNN, Zoom, Salesforce, HSBC, and IKEA. It swapped cryptocurrency wallet addresses for the attacker’s, stole payment card details typed into forms, and tried to send hacking tools to older iPhones. Most of it was cleaned up by Monday evening."
+  ],
+  official:[
+    {who:"Optimizely", text:"Confirmed that an unauthorized party exploited a vulnerability to add malicious code to some customer projects. It said it fixed the flaw, removed the code, and secured affected accounts.", src:"Help Net Security"},
+    {who:"Salesforce", text:"Said it was investigating unauthorized Optimizely changes and turning off the scripts as a precaution.", src:"Help Net Security"}
+  ],
+  unofficial:[
+    {who:"Scott Helme, Report URI (the researcher who found it)", text:"Found the malicious code in 188 of the 1,611 Optimizely files his team checked. The attacker rebuilt the code 26 times that day. One crypto wallet that received stolen money had been used by the same attacker in earlier attacks in March and on November 3.", src:"Report URI"},
+    {who:"Crypto tracking", text:"About $7,000 reached the attacker’s wallets within roughly nine hours.", src:"The Hacker News"},
+    {who:"Helme’s lesson", text:"“Trusted JavaScript doesn’t always remain trustworthy.”", src:"SecurityWeek"}
+  ],
+  skeptic:[
+    {who:"Hudson Rock and Cynet (security researchers)", text:"Stressed that their iPhone findings show the attack code was delivered, not that phones were actually hacked. The number of real victims is unknown.", src:"The Hacker News / Safeguard"},
+    {who:"Still unexplained", text:"How the attacker got access to so many unrelated customers, and why those particular projects were chosen.", src:"Report URI / BreachHistory"}
+  ],
+  consider:"This is the one confirmed attack on the list. Use your triage habit: what was compromised, then who and why. What does the attacker’s goal, and the wallet history, suggest about who this is? Does it look like someone trying to knock the country offline?",
+  sources:[
+    ["Report URI: World's largest brands infected","https://blog.report-uri.com/worlds-largest-brands-infected-with-malware-via-optimizely/"],
+    ["Help Net Security: Malware spread through Optimizely","https://www.helpnetsecurity.com/2026/11/17/optimizely-vulnerability-malicious-javascript/"],
+    ["SecurityWeek: Optimizely vulnerability exploited","https://www.securityweek.com/optimizely-vulnerability-exploited-to-serve-malware-on-major-websites/"],
+    ["The Hacker News: Hijacked Optimizely scripts","https://thehackernews.com/2026/11/hijacked-optimizely-scripts-served-card.html"]
+  ]
+},
+{
+  id:"eas", short:"Emergency Alert test", date:"Tue Nov 17",
+  title:"The Emergency Alert System test",
+  happened:[
+    "At 11:20 a.m. Pacific today, FEMA and the FCC ran a nationwide test of the Emergency Alert System on TV and radio. The message lasts about a minute and says it is only a test. Unlike the last national test in 2023, phones were not part of it this time.",
+    "Online, the test picked up suspicion because it landed in the same week as everything else on this list."
+  ],
+  official:[
+    {who:"FCC", text:"Announced the test date on September 16, with December 3 as a backup date.", src:"FCC.gov"},
+    {who:"FEMA", text:"Is required by law to run a nationwide test at least once every three years, to find problems before a real emergency.", src:"FEMA.gov"},
+    {who:"FEMA, on social media the day before", text:"Posted: “No blackouts, no secret emergencies.”", src:"Fox Weather"}
+  ],
+  unofficial:[
+    {who:"Newsweek", text:"Described the test against a backdrop of governments around the world urging people to stock food and water for emergencies.", src:"Newsweek"},
+    {who:"Mullin, Homeland Security Secretary", text:"Mentioned the long-scheduled test while discussing the outages on Tuesday.", src:"Reuters"}
+  ],
+  skeptic:[
+    {who:"What FEMA’s post tells you", text:"An agency doesn’t usually deny blackouts and secret emergencies unless people are saying those things. The rumors themselves are part of the evidence.", src:"Your own reading"}
+  ],
+  consider:"A test announced two months ago can still feel suspicious this week. Is anything actually compromised here? “Not an incident” is a legitimate conclusion if your evidence supports it.",
+  sources:[
+    ["FCC: Nationwide EAS test announcement","https://www.fcc.gov/consumer-governmental-affairs/fcc-announces-nationwide-emergency-alert-system-test-november-17-2026"],
+    ["FEMA: Test scheduled for November 17","https://www.fema.gov/press-release/20260916/fema-and-fcc-schedule-2026-nationwide-test-emergency-alert-system-november"],
+    ["Fox Weather: FEMA alerts public ahead of test","https://www.foxweather.com/weather-news/fema-test-emergency-alert-system-november-2026"],
+    ["WRAL: Test will interrupt TV and radio","https://www.wral.com/news/ap/nationwide-emergency-alert-tuesday-november-17-2026/"],
+    ["Newsweek: What happens in the test","https://www.newsweek.com/ema-emergency-alert-ipaws-test-november-disaster-12723104"]
+  ]
+},
+{
+  id:"nsa", short:"NSA Net", date:"Tue Nov 17 (developing)",
+  title:"The NSA’s classified network goes dark",
+  happened:[
+    "Late this morning, CNN reported that NSA Net, the highly classified network the National Security Agency uses to share classified information internally, was down. The NSA had made staff arrivals staggered while it figured out how big the problem was.",
+    "This story is only a few hours old. When this page was written, the NSA had not publicly confirmed the outage or said what caused it."
+  ],
+  official:[
+    {who:"NSA", text:"No public statement yet.", src:"International Business Times"},
+    {who:"A current and a former U.S. official (unnamed)", text:"Said the outage would not stop urgent intelligence from reaching the President, who is traveling in Asia with talks planned in China this week, because the government has multiple backup networks.", src:"CNN"}
+  ],
+  unofficial:[
+    {who:"CNN’s six unnamed sources", text:"Said there was no evidence of a cyberattack at that point.", src:"CNN"}
+  ],
+  skeptic:[
+    {who:"Different framing of the same report", text:"The Jerusalem Post, repeating CNN’s story, wrote that it was unclear whether this was a cyberattack. The Daily Beast’s headline described the NSA network going dark amid “cyber chaos.” Same sources, very different feel.", src:"Jerusalem Post / Daily Beast"}
+  ],
+  consider:"How much weight can you put on a story that is a few hours old and comes entirely from unnamed sources? Compare “no evidence of an attack” with “unclear whether it was an attack.” Do those mean the same thing?",
+  sources:[
+    ["CNN: Classified NSA network goes down","https://www.cnn.com/2026/11/17/politics/highly-classified-national-security-communications-network-goes-down"],
+    ["International Business Times: NSA network outage","https://www.ibtimes.com.au/nsa-classified-network-outage-no-cyberattack-evidence-1878803"],
+    ["Jerusalem Post: NSA network shuts down","https://www.jpost.com/international/article-915216"],
+    ["The Daily Beast: NSA network goes dark","https://www.thedailybeast.com/nsas-top-secret-network-goes-dark-amid-cyber-chaos"]
+  ]
+}
+];
+
+const HYPS = [
+  ["wolfpack","The wolfpack","One actor, or a group working together, is attacking from many directions on purpose."],
+  ["stumble","The stumbling bear","Separate failures that happened to land in the same week. No attacker, just bad luck and old systems."],
+  ["root","One root, many symptoms","Some failures share a hidden common cause, like the same vendor, the same kind of upgrade, or one failure triggering another."],
+  ["scavengers","The scavengers","Mostly accidents, but criminals moved in to take advantage of the confusion."],
+  ["mixed","Mixed","Different explanations fit different incidents. Say which fits which."]
+];
+
+/* ===================== STATE ===================== */
+const blank = () => ({screen:"intro", name:"", period:"", cases:{}, synth:{hyp:"", argument:"", prediction:"", defender:""}});
+let S = blank();
+try { const raw = localStorage.getItem(STORE_KEY); if (raw) S = Object.assign(blank(), JSON.parse(raw)); } catch(e) {}
+function save(){ try { localStorage.setItem(STORE_KEY, JSON.stringify(S)); } catch(e) {} }
+function C(id){ if(!S.cases[id]) S.cases[id]={verdict:"",conf:"",cia:[],reason:"",change:""}; return S.cases[id]; }
+
+const words = t => (t||"").trim().split(/\s+/).filter(Boolean).length;
+const esc = t => (t||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+function caseStatus(id){
+  const c=S.cases[id]; if(!c) return "";
+  if(c.verdict && c.conf && words(c.reason)>=TARGET_WORDS) return "done";
+  if(c.verdict||c.conf||c.reason||c.change||(c.cia&&c.cia.length)) return "started";
+  return "";
+}
+function synthStatus(){
+  const s=S.synth;
+  if(s.hyp && words(s.argument)>=SYNTH_TARGET && words(s.prediction)>=20) return "done";
+  if(s.hyp||s.argument||s.prediction||s.defender) return "started";
+  return "";
+}
+const doneCount = () => CASES.filter(c=>caseStatus(c.id)==="done").length;
+
+/* ===================== NAV ===================== */
+function screens(){ return ["intro", ...CASES.map(c=>c.id), "synth", "review"]; }
+function go(screen){ S.screen=screen; save(); render(); window.scrollTo({top:0}); }
+
+function renderNav(){
+  const items = [["intro","Start here",""]]
+    .concat(CASES.map((c,i)=>[c.id, (i+1)+". "+c.short, caseStatus(c.id)]))
+    .concat([["synth","Is the bear spinning?",synthStatus()],["review","Review and download",""]]);
+  document.getElementById("navList").innerHTML = items.map(([id,label,st],i)=>{
+    const sep = (id==="clickfix"||id==="synth") ? '<li><div class="sep"></div></li>' : "";
+    const dot = (id==="intro"||id==="review") ? "" : `<span class="dot ${st}" aria-hidden="true"></span>`;
+    return sep+`<li><button data-go="${id}" aria-current="${S.screen===id}">${dot}${label}</button></li>`;
+  }).join("");
+  document.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>go(b.dataset.go));
+  document.getElementById("tally").innerHTML = `${doneCount()} of ${REQUIRED_CASES} required incidents complete<br><button id="rubLink" style="background:none;border:0;padding:0;margin-top:6px;font:inherit;color:var(--green-2);text-decoration:underline;cursor:pointer">How this is graded</button>`;
+  document.getElementById("rubLink").onclick=()=>{ S.screen="intro"; save(); render(); const r=document.getElementById("rubric"); if(r) r.scrollIntoView(); };
+}
+
+/* ===================== RING (intro graphic) ===================== */
+function ringSVG(){
+  const cx=165, cy=165, r=112, n=CASES.length;
+  let nodes="";
+  CASES.forEach((c,i)=>{
+    const a = -Math.PI/2 + i*2*Math.PI/n;
+    const x=cx+r*Math.cos(a), y=cy+r*Math.sin(a);
+    const st=caseStatus(c.id);
+    const fill = st==="done" ? "#1B4332" : st==="started" ? "#D4A017" : "#FFFDF7";
+    const tc = st==="done" ? "#fff" : "#1B4332";
+    const lx=cx+(r+38)*Math.cos(a), ly=cy+(r+38)*Math.sin(a);
+    const anchor = Math.abs(Math.cos(a))<0.3 ? "middle" : (Math.cos(a)>0?"start":"end");
+    nodes += `<g style="cursor:pointer" data-go="${c.id}" role="button" aria-label="Incident ${i+1}: ${c.short}">
+      <line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" stroke="#D9D2BE" stroke-width="1.5" stroke-dasharray="4 4"/>
+      <circle class="node" cx="${x}" cy="${y}" r="19" fill="${fill}" stroke="#1B4332" stroke-width="2"/>
+      <text x="${x}" y="${y+5}" text-anchor="middle" font-size="15" font-weight="700" fill="${tc}">${i+1}</text>
+      <text x="${lx}" y="${ly+4}" text-anchor="${anchor}" font-size="14" fill="#56655B">${c.short}</text>
+    </g>`;
+  });
+  return `<svg class="ring" viewBox="-105 -5 540 340" role="img" aria-label="Seven incidents arranged around one target">
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#D9D2BE" stroke-width="1.5"/>
+    ${nodes}
+    <circle cx="${cx}" cy="${cy}" r="46" fill="#1B4332"/>
+    <text x="${cx}" y="${cy-3}" text-anchor="middle" font-family="Caladea,Cambria,serif" font-size="17" font-weight="700" fill="#fff">U.S.</text>
+    <text x="${cx}" y="${cy+16}" text-anchor="middle" font-family="Caladea,Cambria,serif" font-size="17" font-weight="700" fill="#D4A017">systems</text>
+  </svg>`;
+}
+
+/* ===================== SCREENS ===================== */
+function rubricHTML(){
+  return `<div class="rubric" id="rubric">
+    <h3>How this is graded: 30 points</h3>
+    <p><b>Completion, 12 points.</b> Turn in all six required pieces: ${REQUIRED_CASES} incidents, your big-picture argument, and your prediction.</p>
+    <p><b>Quality, 18 points.</b> Each of the six pieces is scored 0, 1, or 2.</p>
+    <div class="scroll"><table>
+      <tr><th>Piece</th><th>2 points</th><th>1 point</th><th>0 points</th></tr>
+      <tr><td>Each incident (${REQUIRED_CASES})</td><td>A clear conclusion, reasoning that names specific statements and who made them, and a specific answer to “what would change your mind?”</td><td>A conclusion with vague or unsupported reasoning, or no real answer about what would change your mind</td><td>Blank or off-topic</td></tr>
+      <tr><td>Big-picture argument</td><td>Picks an explanation, supports it with at least three incidents, and answers the strongest evidence against it</td><td>Picks an explanation but the support is thin, or it ignores the evidence against it</td><td>Blank or off-topic</td></tr>
+      <tr><td>Prediction</td><td>A specific finding you expect, plus one finding that would prove you wrong</td><td>Vague, or missing what would prove you wrong</td><td>Blank or off-topic</td></tr>
+    </table></div>
+    <p><b>Bonus, up to +1.</b> A solid answer to the defender’s view question.</p>
+    <ul class="tight">
+      <li>If you complete more than ${REQUIRED_CASES} incidents, your best ${REQUIRED_CASES} count.</li>
+      <li>A wrong conclusion backed by strong reasoning still earns full credit. You’re graded on how you think, not on guessing right.</li>
+    </ul>
+  </div>`;
+}
+
+function renderIntro(){
+  return `<div class="panel">
+    <div class="hero">
+      <div>
+        <h2>Is someone circling the bear?</h2>
+        <p class="lead">In one week, U.S. email, air travel, banking, major websites, and a classified NSA network all had serious problems. Officials say none of it is connected. Plenty of people online think it is. Your job is to decide what the evidence actually supports.</p>
+      </div>
+      <div class="ringbox">${ringSVG()}</div>
+    </div>
+
+    <div class="measure">
+      <h3>The analogy</h3>
+      <p>A single wolf can’t beat a bear. But a pack that circles the bear and keeps attacking from whichever side is unguarded can keep the bear spinning to face each new attack. The bear never finishes dealing with one threat before the next arrives, and its strength stops mattering. Attackers can use the same strategy against any powerful entity, whether a country or a corporation: many attacks, from many directions, using different methods, until defenders are stretched too thin to respond.</p>
+      <p>Here’s the catch. From the outside, a bear fighting off wolves and a bear that tripped over its own feet can look exactly the same: lots of thrashing, no clear pattern. And a stumbling bear is still vulnerable, no matter why it stumbled.</p>
+
+      <h3>Four ways to explain this week</h3>
+    </div>
+    <div class="hyps">
+      ${HYPS.slice(0,4).map(h=>`<div class="hyp"><b>${h[1]}</b>${h[2]}</div>`).join("")}
+    </div>
+
+    <div class="measure">
+      <h3>What you’ll do</h3>
+      <ul class="tight">
+        <li>Read the evidence for each incident: what happened, what officials said, what others claimed, and what skeptics pointed out.</li>
+        <li>For at least <b>${REQUIRED_CASES} of the 7 incidents</b>, decide what you think happened and write <b>a paragraph or more</b> (about ${TARGET_WORDS}+ words) explaining your reasoning.</li>
+        <li>Finish with your big-picture argument: is the bear being spun?</li>
+        <li>Use your triage habit: <b>what was compromised first, then who and why</b>. Naming a “who” takes evidence. Timing alone is not evidence.</li>
+      </ul>
+      <p>You’re graded on the quality of your reasoning, not on guessing right. “Too early to tell” is a strong answer if you explain what’s missing. In December we’ll come back, read what investigators found, and see how your predictions held up.</p>
+
+      ${rubricHTML()}
+
+      <div class="note"><b>Stay safe while researching.</b> Read news articles and security write-ups only. Do not go looking for live ClickFix pages, and do not visit or look up any attacker web addresses or crypto wallets mentioned in reports.</div>
+
+      <h3>Who you are</h3>
+      <div class="idrow">
+        <label>Name <input id="nm" value="${esc(S.name)}" autocomplete="name"></label>
+        <label>Period <input id="pd" value="${esc(S.period)}"></label>
+      </div>
+    </div>
+    <div class="navrow"><span></span><button class="btn" data-go="clickfix">Start with incident 1</button></div>
+  </div>`;
+}
+
+function stmtGroup(cls, title, list){
+  if(!list||!list.length) return "";
+  return `<div class="group ${cls}"><h4>${title}</h4>${list.map(s=>`<p class="stmt"><span class="who">${s.who}:</span> ${s.text} <span class="src">(${s.src})</span></p>`).join("")}</div>`;
+}
+
+function renderCase(idx){
+  const k=CASES[idx], a=C(k.id);
+  const sc=screens(), pos=sc.indexOf(k.id);
+  const radios=(name,opts,val)=>opts.map(o=>`<label><input type="radio" name="${name}" value="${o}" ${val===o?"checked":""}> ${o}</label>`).join("");
+  const cia=["Confidentiality","Integrity","Availability","Nothing confirmed"];
+  return `<div class="panel">
+    <div class="meta">Incident ${idx+1} of ${CASES.length} &nbsp;|&nbsp; ${k.date}</div>
+    <h2 class="case">${k.title}</h2>
+    <div class="measure">
+      <h3>What happened</h3>
+      ${k.happened.map(p=>`<p>${p}</p>`).join("")}
+    </div>
+    <h3>What people are saying</h3>
+    <div class="stmts">
+      ${stmtGroup("off","Official statements",k.official)}
+      ${stmtGroup("unoff","Unofficial claims and context",k.unofficial)}
+      ${stmtGroup("skep","Skeptics and open questions",k.skeptic)}
+    </div>
+    <div class="consider measure"><strong>Think about it:</strong> ${k.consider}</div>
+    <details class="sources"><summary>Sources (open in a new tab)</summary><ul>
+      ${k.sources.map(s=>`<li><a href="${s[1]}" target="_blank" rel="noopener">${s[0]}</a></li>`).join("")}
+    </ul></details>
+
+    <section class="respond measure">
+      <h3>Your analysis</h3>
+      <fieldset><legend>What do you conclude?</legend>
+        <div class="chips">${radios("verdict",["Deliberate attack","Accident, error, or failure","Not an incident","Too early to tell"],a.verdict)}</div>
+      </fieldset>
+      <fieldset><legend>How confident are you?</legend>
+        <div class="chips">${radios("conf",["Low","Medium","High"],a.conf)}</div>
+      </fieldset>
+      <fieldset><legend>What was compromised? (check all that apply)</legend>
+        <div class="chips">${cia.map(o=>`<label><input type="checkbox" name="cia" value="${o}" ${a.cia.includes(o)?"checked":""}> ${o}</label>`).join("")}</div>
+      </fieldset>
+      <label for="reason" class="lbl">Your reasoning</label>
+      <p class="prompt">Explain your conclusion in a paragraph or more. Name the specific statements you relied on and who made them, and say why you trust or doubt them.</p>
+      <textarea id="reason" class="big">${esc(a.reason)}</textarea>
+      <div class="wc" id="wcReason"></div>
+      <label for="change" class="lbl" style="margin-top:16px">What evidence would change your mind?</label>
+      <p class="prompt">Be specific. This is what we’ll look for when we revisit in December.</p>
+      <textarea id="change" class="small">${esc(a.change)}</textarea>
+    </section>
+
+    <div class="navrow">
+      <button class="btn ghost" data-go="${sc[pos-1]}">Previous</button>
+      <button class="btn" data-go="${sc[pos+1]}">${idx===CASES.length-1?"Go to the big picture":"Next incident"}</button>
+    </div>
+  </div>`;
+}
+
+function renderSynth(){
+  const s=S.synth;
+  return `<div class="panel">
+    <div class="meta">The big picture</div>
+    <h2 class="case">Is the bear being spun?</h2>
+    <section class="respond measure" style="border-top:0;margin-top:0">
+      <fieldset><legend>Which explanation best fits the evidence?</legend>
+        <div class="hyps" style="grid-template-columns:1fr">
+          ${HYPS.map(h=>`<label class="hyp" style="display:flex;gap:10px;cursor:pointer"><input type="radio" name="hyp" value="${h[0]}" ${s.hyp===h[0]?"checked":""} style="accent-color:#1B4332;margin-top:5px"><span><b>${h[1]}</b>${h[2]}</span></label>`).join("")}
+        </div>
+      </fieldset>
+      <label for="arg" class="lbl">Make your case</label>
+      <p class="prompt">Defend your choice using at least three incidents. Then take on the strongest piece of evidence <i>against</i> your choice and explain why it doesn’t change your mind. (About ${SYNTH_TARGET}+ words.)</p>
+      <textarea id="arg" class="big" style="min-height:280px">${esc(s.argument)}</textarea>
+      <div class="wc" id="wcArg"></div>
+
+      <label for="pred" class="lbl" style="margin-top:16px">Your prediction</label>
+      <p class="prompt">When the full investigations come out, what do you expect them to say? Name one finding that would prove you wrong.</p>
+      <textarea id="pred" class="small">${esc(s.prediction)}</textarea>
+
+      <label for="def" class="lbl" style="margin-top:16px">The defender’s view</label>
+      <p class="prompt">Even if none of this was an attack, why is a week like this dangerous? What would a smart attacker do while defenders are busy?</p>
+      <textarea id="def" class="small">${esc(s.defender)}</textarea>
+    </section>
+    <div class="navrow">
+      <button class="btn ghost" data-go="nsa">Previous</button>
+      <button class="btn" data-go="review">Review and download</button>
+    </div>
+  </div>`;
+}
+
+function renderReview(){
+  const dc=doneCount(), ss=synthStatus();
+  const lines = CASES.map((c,i)=>{
+    const st=caseStatus(c.id), a=S.cases[c.id];
+    const what = st==="done" ? `${a.verdict}, ${a.conf.toLowerCase()} confidence, ${words(a.reason)} words`
+      : st==="started" ? "Started, not finished" : "Not attempted";
+    return `<li><span class="dot ${st}"></span>${i+1}. ${c.short}<span class="what">${what}</span></li>`;
+  }).join("");
+  const warns=[];
+  if(!S.name.trim()) warns.push("Add your name on the Start here screen.");
+  if(dc<REQUIRED_CASES) warns.push(`You’ve finished ${dc} of the ${REQUIRED_CASES} required incidents. Each needs a conclusion, a confidence level, and at least ${TARGET_WORDS} words of reasoning.`);
+  if(ss!=="done") warns.push(`Your big-picture argument needs an explanation picked, about ${SYNTH_TARGET}+ words, and a prediction.`);
+  return `<div class="panel">
+    <h2 class="case">Review and download</h2>
+    <div class="measure">
+      <ul class="status">${lines}
+        <li><span class="dot ${ss}"></span>Big picture<span class="what">${ss==="done"?"Complete":ss==="started"?"Started, not finished":"Not attempted"}</span></li>
+      </ul>
+      ${warns.length?`<div class="warn"><b>Before you submit:</b><ul class="tight" style="margin:6px 0 0">${warns.map(w=>`<li>${w}</li>`).join("")}</ul></div>`:`<p>Everything required is complete.</p>`}
+      <div class="idrow">
+        <label>Name <input id="nm" value="${esc(S.name)}"></label>
+        <label>Period <input id="pd" value="${esc(S.period)}"></label>
+      </div>
+      <p>Download your work as a PDF, then upload it to the Canvas assignment. In the print window, set the destination to <b>Save as PDF</b>.</p>
+      ${rubricHTML()}
+    </div>
+    <div class="navrow">
+      <button class="btn ghost" data-go="synth">Back to edit</button>
+      <button class="btn gold" id="dl">Download as PDF</button>
+    </div>
+    <p style="margin-top:30px;font-size:14px;color:var(--muted)">Your work saves automatically in this browser. <button class="btn ghost" id="reset" style="font-size:13px;padding:4px 10px;margin-left:6px">Clear my answers and start over</button></p>
+  </div>`;
+}
+
+/* ===================== RENDER + WIRING ===================== */
+function wc(el, n, target){
+  const w=words(n);
+  el.className = "wc"+(w>=target?" ok":"");
+  el.innerHTML = `<span>${w} words</span><span>${w>=target?"Meets the target":"Target: "+target}</span>`;
+}
+
+function render(){
+  renderNav();
+  const m=document.getElementById("main");
+  const idx=CASES.findIndex(c=>c.id===S.screen);
+  if(S.screen==="intro") m.innerHTML=renderIntro();
+  else if(idx>=0) m.innerHTML=renderCase(idx);
+  else if(S.screen==="synth") m.innerHTML=renderSynth();
+  else m.innerHTML=renderReview();
+
+  m.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>go(b.dataset.go));
+  const nm=document.getElementById("nm"), pd=document.getElementById("pd");
+  if(nm) nm.oninput=e=>{S.name=e.target.value;save();};
+  if(pd) pd.oninput=e=>{S.period=e.target.value;save();};
+
+  if(idx>=0){
+    const a=C(CASES[idx].id);
+    m.querySelectorAll('input[name="verdict"]').forEach(r=>r.onchange=()=>{a.verdict=r.value;save();renderNav();});
+    m.querySelectorAll('input[name="conf"]').forEach(r=>r.onchange=()=>{a.conf=r.value;save();renderNav();});
+    m.querySelectorAll('input[name="cia"]').forEach(r=>r.onchange=()=>{a.cia=[...m.querySelectorAll('input[name="cia"]:checked')].map(x=>x.value);save();});
+    const t=document.getElementById("reason"), w=document.getElementById("wcReason");
+    wc(w,a.reason,TARGET_WORDS);
+    t.oninput=()=>{a.reason=t.value;wc(w,t.value,TARGET_WORDS);save();renderNav();};
+    const ch=document.getElementById("change"); ch.oninput=()=>{a.change=ch.value;save();renderNav();};
+  }
+  if(S.screen==="synth"){
+    const s=S.synth;
+    m.querySelectorAll('input[name="hyp"]').forEach(r=>r.onchange=()=>{s.hyp=r.value;save();renderNav();});
+    const t=document.getElementById("arg"), w=document.getElementById("wcArg");
+    wc(w,s.argument,SYNTH_TARGET);
+    t.oninput=()=>{s.argument=t.value;wc(w,t.value,SYNTH_TARGET);save();renderNav();};
+    document.getElementById("pred").oninput=e=>{s.prediction=e.target.value;save();renderNav();};
+    document.getElementById("def").oninput=e=>{s.defender=e.target.value;save();renderNav();};
+  }
+  if(S.screen==="review"){
+    document.getElementById("dl").onclick=downloadPDF;
+    document.getElementById("reset").onclick=()=>{
+      if(confirm("This erases all of your answers on this computer. Are you sure?")){
+        try{localStorage.removeItem(STORE_KEY);}catch(e){}
+        S=blank(); render();
+      }
+    };
+  }
+}
+
+function downloadPDF(){
+  const hypName = (HYPS.find(h=>h[0]===S.synth.hyp)||[,"(none chosen)"])[1];
+  const caseBlocks = CASES.map((k,i)=>{
+    const a=S.cases[k.id];
+    if(!a || caseStatus(k.id)===""){
+      return `<div class="pcase"><h2>${i+1}. ${k.title}</h2><p class="pline"><i>Not attempted</i></p></div>`;
+    }
+    return `<div class="pcase"><h2>${i+1}. ${k.title}</h2>
+      <p class="pline"><b>Conclusion:</b> ${esc(a.verdict)||"—"} &nbsp; <b>Confidence:</b> ${esc(a.conf)||"—"} &nbsp; <b>Compromised:</b> ${esc((a.cia||[]).join(", "))||"—"}</p>
+      <div class="plabel">Reasoning (${words(a.reason)} words)</div><div class="pans">${esc(a.reason)||"—"}</div>
+      <div class="plabel">Evidence that would change my mind</div><div class="pans">${esc(a.change)||"—"}</div></div>`;
+  }).join("");
+  const s=S.synth;
+  document.getElementById("printSheet").innerHTML = `
+    <h1>U3L10 Spinning the Bear: Seven Incidents, Seven Days</h1>
+    <div class="pmeta"><b>Name:</b> ${esc(S.name)||"—"} &nbsp;&nbsp; <b>Period:</b> ${esc(S.period)||"—"} &nbsp;&nbsp; <b>Downloaded:</b> ${new Date().toLocaleString()}<br>
+    Evidence as of ${EVIDENCE_CUTOFF}. Incidents complete: ${doneCount()} of ${REQUIRED_CASES} required.</div>
+    ${caseBlocks}
+    <div class="pcase"><h2>The big picture: is the bear being spun?</h2>
+      <p class="pline"><b>Best explanation:</b> ${esc(hypName)}</p>
+      <div class="plabel">My case (${words(s.argument)} words)</div><div class="pans">${esc(s.argument)||"—"}</div>
+      <div class="plabel">My prediction</div><div class="pans">${esc(s.prediction)||"—"}</div>
+      <div class="plabel">The defender’s view</div><div class="pans">${esc(s.defender)||"—"}</div></div>`;
+  const prev=document.title;
+  document.title = "U3L10_Spinning_the_Bear - " + ((S.name||"Student").trim().replace(/\s+/g,"_"));
+  window.print();
+  document.title = prev;
+}
+
+document.getElementById("cutoffBar").innerHTML = `Evidence on this page was collected <b>${EVIDENCE_CUTOFF}</b>. Some of these stories are still developing. <b>Due Friday, November 20.</b> If you use news published after this page was written, name the source and the date.`;
+render();
+</script>
+</body>
+</html>
