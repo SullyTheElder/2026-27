@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>U3L11: Guard the Ports - MAC Filtering</title>
+<style>
+  :root{
+    --navy:#0B1F3A; --green:#8FC53E; --cream:#F4F1E9; --gold:#D9A441;
+    --ink:#1b2430; --muted:#55606e; --line:#d9d3c3; --card:#ffffff;
+    --head: Cambria, "Iowa Old Style", Georgia, serif;
+    --body: Calibri, Inter, "Segoe UI", Arial, sans-serif;
+    --mono: "IBM Plex Mono", Consolas, "Courier New", monospace;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--cream);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.55}
+  a{color:var(--navy)}
+  :focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+  .topbar{background:var(--navy);color:#fff;padding:10px 20px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+  .topbar .brand{font-family:var(--head);font-weight:700;letter-spacing:.02em}
+  .topbar a{color:var(--green);text-decoration:none;font-weight:600}
+  .topbar a:hover{text-decoration:underline}
+  main{max-width:900px;margin:0 auto;padding:24px 20px 60px}
+  .eyebrow{color:var(--muted);font-size:.85rem;text-transform:uppercase;letter-spacing:.08em;margin:0}
+  h1{font-family:var(--head);color:var(--navy);font-size:2.1rem;line-height:1.2;margin:.2em 0 .1em}
+  .sub{color:var(--muted);margin:0 0 18px}
+  h2{font-family:var(--head);color:var(--navy);font-size:1.5rem;margin:36px 0 8px;padding-bottom:6px;border-bottom:3px solid var(--green)}
+  h3{font-family:var(--head);color:var(--navy);margin:20px 0 6px;font-size:1.15rem}
+  .idbar{display:flex;gap:14px;flex-wrap:wrap;background:#fff;border:1px solid var(--line);border-radius:8px;padding:12px 14px;margin:14px 0 8px}
+  .idbar label{display:flex;gap:8px;align-items:center;font-weight:600}
+  input[type=text],textarea{font:inherit;border:1px solid #b8b09b;border-radius:6px;padding:7px 9px;background:#fff;color:var(--ink);width:100%}
+  .idbar input[type=text]{width:220px}
+  .idbar .period{width:90px}
+  textarea{min-height:74px;resize:vertical}
+  table{width:100%;border-collapse:collapse;background:#fff;margin:10px 0 16px;font-size:.98rem}
+  th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+  th{background:var(--navy);color:#fff;font-weight:600}
+  td input[type=text]{padding:5px 7px}
+  .scroll{overflow-x:auto}
+  code,.mono{font-family:var(--mono);background:#eef0e4;border-radius:4px;padding:1px 6px;font-size:.92em}
+  .callout{background:#fff;border-left:6px solid var(--green);border-radius:6px;padding:12px 16px;margin:14px 0}
+  .callout.note{border-left-color:var(--gold)}
+  .mission{background:var(--card);border:1px solid var(--line);border-left:8px solid var(--green);border-radius:10px;padding:16px 20px;margin:18px 0;break-inside:avoid}
+  .mission h3{margin-top:0;display:flex;align-items:center;gap:12px}
+  .badge{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;background:var(--navy);color:var(--green);font-family:var(--head);font-weight:700;flex:none}
+  .time{margin-left:auto;font-size:.82rem;font-weight:600;color:var(--muted);background:var(--cream);border-radius:999px;padding:2px 10px;white-space:nowrap}
+  .goal{font-weight:600;color:var(--navy);margin:.2em 0 .6em}
+  ol.steps{padding-left:22px;margin:.4em 0}
+  ol.steps li{margin:.35em 0}
+  .check{display:flex;gap:10px;align-items:flex-start;background:var(--cream);border-radius:8px;padding:10px 12px;margin:12px 0 6px}
+  .check input{width:20px;height:20px;margin-top:3px;accent-color:var(--navy);flex:none}
+  details{background:#fbfaf5;border:1px dashed #b8b09b;border-radius:8px;padding:8px 12px;margin:8px 0}
+  summary{cursor:pointer;font-weight:600;color:var(--navy)}
+  .lights{display:flex;gap:14px;flex-wrap:wrap;margin:8px 0}
+  .lights span{display:inline-flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--line);border-radius:999px;padding:3px 12px 3px 6px;font-size:.95rem}
+  .dot{width:16px;height:16px;border-radius:50%;display:inline-block;border:2px solid rgba(0,0,0,.25)}
+  .dot.g{background:#2fb344}.dot.a{background:#f59f00}.dot.r{background:#e03131}
+  .stretch{border-left-color:var(--gold)}
+  .stretch .badge{color:var(--gold)}
+  dl.vocab dt{font-weight:700;color:var(--navy);margin-top:10px}
+  dl.vocab dd{margin:0 0 0 0}
+  .actions{margin:26px 0 6px;display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+  button.pdf{font:inherit;font-weight:700;background:var(--navy);color:#fff;border:0;border-radius:8px;padding:12px 20px;cursor:pointer}
+  button.pdf:hover{background:#163459}
+  .hint{color:var(--muted);font-size:.92rem}
+  .diagram{background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px;margin:14px 0}
+  .diagram svg{width:100%;height:auto;display:block}
+  .ai{background:#fff;border:1px solid var(--line);border-left:8px solid var(--navy);border-radius:10px;padding:14px 18px;margin:14px 0}
+  .ai .label{font-size:.8rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0 0 6px}
+  .prompt{background:#eef0e4;border-radius:8px;padding:10px 14px;font-family:var(--mono);font-size:.95rem}
+  .designs{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}
+  .designs figure{margin:0;background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px}
+  .designs svg{width:100%;height:auto;display:block}
+  .designs figcaption{font-weight:700;color:var(--navy);text-align:center;margin-top:4px}
+  select{font:inherit;border:1px solid #b8b09b;border-radius:6px;padding:5px 7px;background:#fff;color:var(--ink);max-width:100%}
+  @media (max-width:760px){ .designs{grid-template-columns:1fr} }
+  main.wide{max-width:1240px}
+  .layout{display:grid;grid-template-columns:1fr;gap:24px}
+  @media (min-width:1050px){ .layout{grid-template-columns:minmax(0,1fr) 470px;align-items:start} .col-router{position:sticky;top:10px} }
+  .sr{position:absolute;left:-9999px}
+  .router{background:#e9edf2;border:2px solid #7b8794;border-radius:10px;overflow:hidden;font-family:Arial,Helvetica,sans-serif;font-size:15px;color:#1f2933}
+  .router .bar{display:flex;gap:8px;align-items:center;background:#cbd2d9;padding:8px 10px}
+  .router .lights{display:flex;gap:5px}.router .lights i{width:10px;height:10px;border-radius:50%;background:#7b8794;display:inline-block}
+  .router .urlbox{flex:1;margin:0}.router .urlbox input{width:100%;padding:6px 8px;border:1px solid #9aa5b1;border-radius:14px;background:#fff;font:inherit}
+  .router button{font:inherit;font-weight:700;background:#2c5282;color:#fff;border:0;border-radius:6px;padding:7px 14px;cursor:pointer}
+  .router button.alt{background:#fff;color:#2c5282;border:1px solid #2c5282}
+  .router button:hover{filter:brightness(1.1)}
+  .router .pane{padding:12px 14px}
+  .router h4{margin:0 0 4px;font-size:1.05rem}
+  .router label{display:block;margin:8px 0;font-weight:600}
+  .router label.inline{font-weight:400;display:flex;gap:8px;align-items:flex-start}
+  .router input[type=text],.router input[type=password],.router input[type=number],.router select{display:block;width:100%;margin-top:3px;padding:6px 8px;border:1px solid #9aa5b1;border-radius:5px;font:inherit;background:#fff}
+  .router input[type=checkbox]{width:auto;margin-top:3px}
+  .router fieldset{border:1px solid #9aa5b1;border-radius:6px;margin:10px 0;padding:6px 10px 10px}
+  .router .tabs{display:flex;background:#cbd2d9;border-top:1px solid #9aa5b1}
+  .router .tabs button{flex:1;border-radius:0;background:#cbd2d9;color:#1f2933;font-weight:600;border-right:1px solid #9aa5b1;padding:9px 6px}
+  .router .tabs button[aria-selected=true]{background:#e9edf2;color:#2c5282;box-shadow:inset 0 -3px 0 #2c5282}
+  .router .row{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+  .router .foot{display:flex;gap:8px;flex-wrap:wrap;padding:10px 14px;border-top:1px solid #9aa5b1;background:#dfe4ea}
+  .router .msg{min-height:1.2em;margin:8px 0 0;color:#2c5282;font-weight:600}
+  .router .muted{color:#52606d}
+  .router ul.checks{list-style:none;margin:8px 0 0;padding:0}
+  .router ul.checks li{padding:5px 8px;margin:4px 0;border-radius:5px;background:#fff;border-left:5px solid}
+  .router ul.checks li.ok{border-color:#2f855a}.router ul.checks li.bad{border-color:#c53030}
+  .router .out p{margin:5px 0;padding:5px 8px;border-radius:5px;background:#fff;border-left:5px solid #7b8794}
+  .router .out p.ok{border-color:#2f855a}.router .out p.bad{border-color:#c53030;font-weight:600}.router .out p.muted{color:#52606d}
+  @media print{ .col-router{display:none} .layout{display:block} }
+  textarea.auto{min-height:36px;height:36px;resize:none;overflow:hidden;line-height:1.35;vertical-align:top}
+  td textarea.auto{padding:5px 7px}
+  .pc{display:none}
+  .ports{display:grid;grid-template-columns:repeat(8,1fr);gap:5px;margin:4px 0 10px}
+  .router .port{font:inherit;border:2px solid #7b8794;border-radius:6px;background:#fff;color:#1f2933;padding:3px 0 2px;cursor:pointer;line-height:1.1}
+  .router .port .n{display:block;font-weight:700;font-size:.8rem}.router .port .l{display:block;font-size:.95rem;min-height:1.1em}
+  .router .port.up{border-color:#2f855a;background:#e6f4ea}.router .port.shut{border-color:#c53030;background:#fdecea}.router .port.empty{background:#f1f3f5}
+  .router .port.sel{outline:3px solid #2c5282;outline-offset:1px}
+  .router .mini{font:inherit;font-size:.8rem;padding:2px 7px;background:#fff;color:#2c5282;border:1px solid #2c5282;border-radius:4px;margin-left:6px;cursor:pointer}
+  .router ul.list{list-style:none;margin:6px 0;padding:0}.router ul.list li{padding:3px 0;border-bottom:1px dotted #9aa5b1}
+  .router table{width:100%;border-collapse:collapse;font-size:.85rem;background:#fff;margin:6px 0}
+  .router th,.router td{border:1px solid #cbd2d9;padding:4px 5px;text-align:left;vertical-align:top}
+  .router th{background:#d9e2ec;color:#1f2933}.router td select{margin:0;padding:3px;font-size:.82rem}
+  .router td.ok{color:#2f855a;font-weight:700}.router td.bad{color:#c53030;font-weight:700}.router td.warn{color:#9c4221;font-size:.8rem}
+  .router tr.fake td{background:#fdecea}.router tr.implicit td{background:#f1f3f5;color:#52606d}
+  .barwrap{background:#cbd2d9;border-radius:6px;height:16px;overflow:hidden}.barwrap div{height:100%;background:#2c5282;width:0}.barwrap div.full{background:#c53030}
+  .router .ctl{display:flex;gap:2px;flex-wrap:nowrap}.router .ctl .mini{margin-left:0}
+  .router .lock{background:#fff8e1;border-left:5px solid #d69e2e}
+  .router h5{margin:10px 0 4px;font-size:.95rem}
+  @media (max-width:640px){ h1{font-size:1.65rem} .time{display:none} }
+  @media print{
+    body{background:#fff;font-size:11.5pt}
+    .topbar,.actions,.noprint{display:none !important}
+    main{max-width:none;padding:0}
+    .mission,.callout,table,tr{break-inside:avoid}
+    .mission{border:1px solid #999;border-left:6px solid #555}
+    h2{break-after:avoid}
+    textarea{display:none !important}
+    .pc{display:block;white-space:pre-wrap;overflow-wrap:anywhere;border:1px solid #888;border-radius:6px;padding:5px 7px;min-height:1.9em;line-height:1.35;background:#fff}
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <span class="brand">🐾 Bulldog Networking — AP Networking</span>
+  <a href="https://whatwasithinking.us/ap-networking/index.html">← Back to AP Networking</a>
+</div>
+
+<main class="wide">
+  <p class="eyebrow">AP Networking · Local Unit 3 · U3L11</p>
+  <h1>Guard the Ports: MAC Filtering</h1>
+  <p class="sub">Controlling which devices can connect to a switch — CB 3.5.A (activity first, concept after)</p>
+
+  <div class="idbar">
+    <label>Name: <input type="text" id="name" autocomplete="name"></label>
+    <label>Period: <input type="text" id="period" class="period"></label>
+  </div>
+  <p class="hint noprint">Everything you do in the practice switch shows up in the "Lab Evidence" table, which prints with your page. Nothing is saved or sent anywhere. When you finish, use "Download as PDF" to save a copy to turn in.</p>
+
+  <h2>The Situation</h2>
+  <p>In U3L09 you found an unknown device on the lobby wall jack, and in U3L10 you shut down unused ports. But some ports <em>have</em> to stay on: the players, the casters, the server. How do you make sure only the <strong>right device</strong> uses each port? Today you'll run a practice switch for the <strong>Bulldog Esports Invitational</strong> and decide who may plug in where.</p>
+
+  <div class="layout">
+    <div class="col-missions">
+      <h2>Mission Board</h2>
+
+      <section class="mission" aria-labelledby="m1">
+        <h3 id="m1"><span class="badge">1</span> Meet the Switch <span class="time">about 6 min</span></h3>
+        <p class="goal">Goal: see how the switch keeps track of devices, and what happens with no protection.</p>
+        <ol class="steps">
+          <li>Open the <strong>Address Table</strong> tab. The switch learns each device's <strong>MAC address</strong> and the port it is on. Fill in the port for each device.</li>
+          <li>Open the <strong>Plug In</strong> tab. Plug the <strong>Unknown laptop</strong> into <strong>Port 14</strong> (the lobby wall jack). Nothing is protected yet.</li>
+        </ol>
+        <div class="scroll"><table>
+          <thead><tr><th>Device</th><th>Port</th></tr></thead>
+          <tbody>
+            <tr><td>Player 1 PC</td><td><input type="text" aria-label="Port for Player 1" style="width:70px"></td></tr>
+            <tr><td>Player 2 PC</td><td><input type="text" aria-label="Port for Player 2" style="width:70px"></td></tr>
+            <tr><td>Caster PC</td><td><input type="text" aria-label="Port for Caster" style="width:70px"></td></tr>
+            <tr><td>Admin PC</td><td><input type="text" aria-label="Port for Admin" style="width:70px"></td></tr>
+            <tr><td>Tournament Server</td><td><input type="text" aria-label="Port for Server" style="width:70px"></td></tr>
+          </tbody>
+        </table></div>
+        <p>What happened when the unknown laptop was plugged into port 14? <input type="text" aria-label="Unknown laptop result with no protection" style="width:60%"></p>
+        <div class="check"><input type="checkbox" id="c1"><label for="c1">Checkpoint: I filled in the ports and saw the unknown laptop connect.</label></div>
+      </section>
+
+      <section class="mission" aria-labelledby="m2">
+        <h3 id="m2"><span class="badge">2</span> Lock the Player Ports <span class="time">about 10 min</span></h3>
+        <p class="goal">Goal: let only each player's own PC use that player's port.</p>
+        <ol class="steps">
+          <li>Open the <strong>Ports</strong> tab and click <strong>port 1</strong>. Turn <strong>port security</strong> on and choose <em>only the addresses on my allowed list</em>. Add <strong>Player 1 PC</strong> to the list.</li>
+          <li>Do the same for <strong>port 2</strong> with <strong>Player 2 PC</strong>.</li>
+          <li><strong>Test it.</strong> On port 1, press <strong>Unplug device</strong>. On the Plug In tab, plug the <strong>Unknown laptop</strong> into port 1. Read the result.</li>
+          <li><strong>Recover.</strong> Back on port 1, unplug the laptop, press <strong>Re-enable this port</strong>, then plug <strong>Player 1 PC</strong> back in.</li>
+        </ol>
+        <p>What happened to the unknown laptop, and what happened when Player 1 came back? <input type="text" aria-label="Result of the player port test" style="width:60%"></p>
+        <div class="check"><input type="checkbox" id="c2"><label for="c2">Checkpoint: ports 1 and 2 are protected, and Player 1's PC works again.</label></div>
+        <details><summary>Stuck?</summary>A port that breaks the rule shuts itself down. It stays down until you unplug the bad device and re-enable the port.</details>
+      </section>
+
+      <section class="mission" aria-labelledby="m3">
+        <h3 id="m3"><span class="badge">3</span> Close the Lobby Jack <span class="time">about 6 min</span></h3>
+        <p class="goal">Goal: make port 14 refuse the unknown laptop, without turning the port off.</p>
+        <ol class="steps">
+          <li>Unplug the unknown laptop from port 14 if it is still there.</li>
+          <li>On port 14, turn port security on with an allowed list, and <strong>don't add anyone</strong>.</li>
+          <li>Plug the unknown laptop into port 14 again and read the result. Then press <strong>Re-enable</strong> after you unplug it.</li>
+        </ol>
+        <p>Why might you protect the port this way instead of just shutting it off? <input type="text" aria-label="Why filter instead of shut off" style="width:70%"></p>
+        <div class="check"><input type="checkbox" id="c3"><label for="c3">Checkpoint: port 14 refuses the unknown laptop.</label></div>
+      </section>
+
+      <section class="mission" aria-labelledby="m4">
+        <h3 id="m4"><span class="badge">4</span> The Flood Test <span class="time">about 10 min</span></h3>
+        <p class="goal">Goal: see what a flood of fake addresses does to an unprotected switch, and how port security stops it.</p>
+        <p>A switch remembers addresses in a limited-size table. Someone who sends thousands of fake addresses can <strong>overflow</strong> it. This is a <strong>test</strong> you run on your own switch to learn how to defend it.</p>
+        <ol class="steps">
+          <li>Click <strong>port 9</strong> (nothing is plugged in, and security is off). Press <strong>Run a flood test on this port</strong>. Read the result, then open the <strong>Address Table</strong> tab and look at the bar.</li>
+          <li>Press <strong>Clear the fake entries</strong> on the Address Table tab.</li>
+          <li>On port 9, turn port security on and choose <em>any addresses, up to a maximum number</em>. Set the maximum to <strong>2</strong>. Run the flood test again.</li>
+        </ol>
+        <p>Unprotected port: <input type="text" aria-label="Flood result unprotected" style="width:70%"></p>
+        <p>Protected port: <input type="text" aria-label="Flood result protected" style="width:70%"></p>
+        <div class="check"><input type="checkbox" id="c4"><label for="c4">Checkpoint: I ran the flood test on both an unprotected and a protected port.</label></div>
+      </section>
+
+      <section class="mission" aria-labelledby="m5">
+        <h3 id="m5"><span class="badge">5</span> When an Approved PC Dies <span class="time">about 6 min</span></h3>
+        <p class="goal">Goal: handle a real-world problem MAC filtering creates.</p>
+        <p>Player 2's PC has failed, and the only spare is a <strong>loaner laptop</strong>.</p>
+        <ol class="steps">
+          <li>On port 2, unplug Player 2's PC. Plug the <strong>Loaner laptop</strong> into port 2. Read the result.</li>
+          <li>Unplug the loaner, re-enable port 2, and <strong>add the loaner laptop</strong> to port 2's allowed list. Plug it in again.</li>
+        </ol>
+        <p>What extra work does MAC filtering create for the network team? <input type="text" aria-label="Extra work from MAC filtering" style="width:70%"></p>
+        <div class="check"><input type="checkbox" id="c5"><label for="c5">Checkpoint: the loaner laptop connects on port 2.</label></div>
+      </section>
+    </div>
+
+    <div class="col-router noprint-sticky">
+      <h2>Practice Switch</h2>
+      <div class="router" id="lab">
+        <div class="bar"><span class="lights" aria-hidden="true"><i></i><i></i><i></i></span><strong>Gym-Switch console</strong></div>
+        <div class="tabs" role="tablist">
+          <button type="button" role="tab" id="tPorts" aria-selected="true">Ports</button>
+          <button type="button" role="tab" id="tTable" aria-selected="false">Address Table</button>
+          <button type="button" role="tab" id="tPlug" aria-selected="false">Plug In</button>
+          <button type="button" role="tab" id="tFw" aria-selected="false">Firewall Rules</button>
+        </div>
+
+        <div id="pPorts" class="pane" role="tabpanel">
+          <div id="face" class="ports"></div>
+          <h4 id="pcTitle"></h4>
+          <p id="pcDev" class="muted"></p>
+          <label class="inline"><input type="checkbox" id="pcOn"> Port security on (only approved addresses may connect)</label>
+          <div id="pcOpts" hidden>
+            <label>How should this port decide?
+              <select id="pcMode"><option value="list">Only the addresses on my allowed list</option><option value="limit">Any addresses, up to a maximum number</option></select></label>
+            <div id="pcListBox" hidden>
+              <label>Add an allowed address <select id="pcPick"></select></label>
+              <div class="row"><button type="button" id="pcAdd">Add</button><button type="button" id="pcAllowConnected" class="alt">Allow the connected device</button></div>
+              <ul id="pcAllowed" class="list"></ul>
+            </div>
+            <div id="pcLimitBox" hidden><label>Maximum addresses on this port <input type="number" id="pcMax" min="1" max="8" value="1"></label></div>
+          </div>
+          <div class="row"><button type="button" id="pcUnplug" class="alt">Unplug device</button><button type="button" id="pcFlood" class="alt">Run a flood test on this port</button><button type="button" id="pcReset" hidden>Re-enable this port</button></div>
+          <p id="pcMsg" class="msg" role="status"></p>
+          <div class="row"><button type="button" id="macCheck">Check my port security</button></div>
+          <ul id="macList" class="checks"></ul>
+        </div>
+
+        <div id="pTable" class="pane" role="tabpanel" hidden>
+          <p class="muted">The switch learns which MAC address is on which port.</p>
+          <div class="barwrap"><div id="camBar"></div></div>
+          <p id="camTxt" class="msg"></p>
+          <table><thead><tr><th>MAC address</th><th>Port</th><th>Device</th></tr></thead><tbody id="camBody"></tbody></table>
+          <p id="camWarn" class="msg" hidden>The table is full. The switch can't remember where devices are, so it sends everything out every port.</p>
+          <div class="row"><button type="button" id="camClear" class="alt" hidden>Clear the fake entries</button></div>
+        </div>
+
+        <div id="pPlug" class="pane" role="tabpanel" hidden>
+          <label>Device <select id="plDev"></select></label>
+          <label>Port <select id="plPort"></select></label>
+          <div class="row"><button type="button" id="plGo">Plug in</button><button type="button" id="plUnplug" class="alt">Unplug the port</button></div>
+          <div id="plOut" class="out" role="status"></div>
+        </div>
+
+        <div id="pFw" class="pane" role="tabpanel" hidden>
+          <div id="fwLocked" class="pane lock"><strong>🔒 This part of the lab opens in a later lesson.</strong><p class="muted">Your teacher will unlock it when we reach firewall rules.</p></div>
+          <div id="fwBody" hidden>
+            <p class="muted">Rules are checked from the top. The <strong>first rule that matches</strong> decides what happens to a packet. Packets that match no rule get the default policy.</p>
+            <table><thead><tr><th>#</th><th>Action</th><th>From</th><th>To</th><th>Service</th><th></th><th></th></tr></thead><tbody id="ruleBody"></tbody></table>
+            <div class="row"><button type="button" id="addRule">Add rule</button><button type="button" id="clrRules" class="alt">Clear all rules</button><button type="button" id="loadDraft" class="alt">Load the draft rules</button></div>
+            <label>Default policy <select id="defPol"><option>Deny</option><option>Permit</option></select></label>
+            <div class="row"><button type="button" id="runFw">Test my rules</button><button type="button" id="fwCheck" class="alt">Check my rules</button></div>
+            <p id="fwSum" class="msg" role="status"></p>
+            <table><thead><tr><th>Test packet</th><th>Goal</th><th>Result</th><th>Decided by</th><th></th></tr></thead><tbody id="testBody"></tbody></table>
+            <ul id="fwList" class="checks"></ul>
+          </div>
+        </div>
+
+        <div class="foot"><button type="button" id="labReset" class="alt">Reset the whole lab</button></div>
+      </div>
+    </div>
+  </div>
+
+  <section class="mission" aria-labelledby="ev">
+    <h3 id="ev"><span class="badge">✔</span> Your Lab Evidence <span class="time">fills in by itself</span></h3>
+    <p class="hint">This table reads what you set up and tested on the practice switch and prints with your page.</p>
+    <div id="evidence"></div>
+  </section>
+
+  <h2>Concept: MAC Filtering and Port Security</h2>
+  <div class="callout">
+    <ul>
+      <li><strong>MAC filtering</strong> restricts access by allowing only <strong>approved MAC addresses</strong>. A switch port can be set to permit a limited, specific set of addresses, and every other address is refused.</li>
+      <li><strong>Limiting the number and range of addresses</strong> on a physical switch port can stop unauthorized devices from physically connecting to the network.</li>
+      <li>The same limits can also prevent <strong>MAC flooding</strong>. This happens when a switch receives so many different addresses that its address table overflows. A switch with a full table can start sending traffic out every port, so port security keeps the table from filling.</li>
+    </ul>
+    <p>Notice the trade-off from Mission 5: every new or replacement device has to be approved first. And because a MAC address can be copied, filtering is one layer of protection and not the whole answer. Next, you'll look at firewalls, which control traffic between networks.</p>
+  </div>
+
+  <h2>Debrief Questions</h2>
+  <p class="hint">Finish these in class if you have time. Otherwise they are due at the start of our next class.</p>
+  <p><strong>1.</strong> Explain how MAC filtering and a limit on addresses per port stop an unauthorized device from connecting.</p>
+  <textarea aria-label="Question 1"></textarea>
+  <p><strong>2.</strong> In your flood test, what happened to the unprotected switch, and how did port security prevent it on port 9?</p>
+  <textarea aria-label="Question 2"></textarea>
+  <p><strong>3.</strong> Give one downside of relying on MAC filtering alone.</p>
+  <textarea aria-label="Question 3"></textarea>
+
+  <h2>Vocabulary</h2>
+  <dl class="vocab">
+    <dt>MAC address</dt><dd>A hardware address that identifies a network device on its local network.</dd>
+    <dt>MAC filtering</dt><dd>Allowing only approved MAC addresses to connect.</dd>
+    <dt>Port security</dt><dd>Settings on a switch port that limit which addresses, and how many, may use it.</dd>
+    <dt>Allowed list</dt><dd>The set of addresses a port will accept.</dd>
+    <dt>Address table</dt><dd>The switch's memory of which MAC address is on which port.</dd>
+    <dt>MAC flooding</dt><dd>Overflowing a switch's address table with many fake addresses so it sends traffic out every port.</dd>
+    <dt>Violation</dt><dd>When a device breaks a port's rules. The port shuts down.</dd>
+  </dl>
+
+  <div class="actions noprint">
+    <button class="pdf" type="button" onclick="window.print()">📄 Download as PDF</button>
+    <span class="hint">In the print dialog, set <strong>Destination</strong> to <strong>Save as PDF</strong>, then save.</span>
+  </div>
+</main>
+<script>
+(function(){
+"use strict";
+var $=function(id){return document.getElementById(id);};
+var UNLOCKED=(location.hash==="#unlock");
+/* ---------------- shared helpers ---------------- */
+function el(t,cls,txt){var e=document.createElement(t);if(cls)e.className=cls;if(txt!==undefined)e.textContent=txt;return e;}
+function opt(sel,v,t){var o=document.createElement("option");o.value=v;o.textContent=t;sel.appendChild(o);}
+/* ---------------- MAC / port security ---------------- */
+var DEV=[
+ {id:"p1",name:"Player 1 PC",mac:"02:BD:00:00:01:01",approved:true},
+ {id:"p2",name:"Player 2 PC",mac:"02:BD:00:00:01:02",approved:true},
+ {id:"cs",name:"Caster PC",mac:"02:BD:00:00:02:01",approved:true},
+ {id:"ad",name:"Admin PC",mac:"02:BD:00:00:03:01",approved:true},
+ {id:"sv",name:"Tournament Server",mac:"02:BD:00:00:04:01",approved:true},
+ {id:"rt",name:"Router (uplink)",mac:"02:BD:00:00:05:01",approved:true},
+ {id:"ln",name:"Loaner laptop",mac:"02:BD:00:00:09:09",approved:false},
+ {id:"uk",name:"Unknown laptop",mac:"3C:22:FB:9A:10:5E",approved:false}
+];
+var byId={}; DEV.forEach(function(d){byId[d.id]=d;});
+var NP=16, CAP=40, FLOODSEND=500;
+var ports=[],sel=1,log=[],flood={entries:0,full:false,runs:[]};
+function resetPorts(){
+  ports=[null];
+  for(var i=1;i<=NP;i++) ports.push({dev:null,on:false,mode:"list",allowed:[],max:1,learned:[],err:false});
+  ["p1","p2","cs","ad","sv","rt"].forEach(function(d,k){ports[k+1].dev=d;});
+  flood={entries:0,full:false,runs:[]}; log=[];
+}
+resetPorts();
+function realEntries(){var n=0;for(var i=1;i<=NP;i++){var p=ports[i]; if(p.dev&&!p.err) n++;} return n;}
+function tableUsed(){return realEntries()+flood.entries;}
+function status(i){var p=ports[i]; if(p.err) return "shut"; return p.dev?"up":"empty";}
+function note(t){log.push(t); if(log.length>10) log.shift();}
+function plug(devId,i){
+  var p=ports[i],d=byId[devId];
+  if(p.dev) return {ok:false,msg:"Port "+i+" is already in use. Unplug first."};
+  for(var k=1;k<=NP;k++) if(ports[k].dev===devId) return {ok:false,msg:d.name+" is already plugged into port "+k+". Unplug it first."};
+  p.dev=devId; p.err=false;
+  if(!p.on){
+    var warn=d.approved?"":" Warning: this device is not on the approved list, and nothing stopped it.";
+    var m=d.name+" connected to port "+i+" (link up)."+warn; note(m); return {ok:true,good:d.approved,msg:m};
+  }
+  if(p.mode==="list"){
+    if(p.allowed.indexOf(d.mac)>-1){var m1=d.name+" is on port "+i+"'s allowed list: connected."; note(m1); return {ok:true,good:true,msg:m1};}
+    p.err=true; var m2=d.name+" ("+d.mac+") is NOT on port "+i+"'s allowed list. The port shut down."; note(m2); return {ok:true,good:!d.approved,blocked:true,msg:m2};
+  } else {
+    if(p.learned.length<p.max){p.learned.push(d.mac); var m3=d.name+" connected to port "+i+" ("+p.learned.length+" of "+p.max+" addresses used)."; note(m3); return {ok:true,good:true,msg:m3};}
+    p.err=true; var m4=d.name+" would be address number "+(p.learned.length+1)+" on port "+i+", over the limit of "+p.max+". The port shut down."; note(m4); return {ok:true,good:!d.approved,blocked:true,msg:m4};
+  }
+}
+function unplug(i){var p=ports[i]; if(!p.dev) return "Port "+i+" is empty."; var d=byId[p.dev]; p.dev=null; if(p.mode==="limit"){} return d.name+" unplugged from port "+i+".";}
+function floodPort(i){
+  var p=ports[i], r;
+  if(p.err) return {msg:"Port "+i+" is already shut down."};
+  if(!p.on){
+    var room=CAP-realEntries(); flood.entries=CAP-realEntries(); flood.full=true;
+    r={bad:true,msg:"Port "+i+" has no protection. "+FLOODSEND+" fake addresses arrived and the address table filled up ("+CAP+" of "+CAP+"). With no room to remember where devices are, the switch now sends traffic out every port. Anyone plugged into any port could see it."};
+  } else if(p.mode==="list"){
+    p.err=true; r={bad:false,msg:"Port "+i+" only accepts its allowed addresses. The first fake address broke the rule, so the port shut down. The address table stayed at "+tableUsed()+" of "+CAP+"."};
+  } else {
+    var take=Math.max(0,p.max-p.learned.length); flood.entries+=take; p.err=true;
+    r={bad:false,msg:"Port "+i+" accepted "+take+" address"+(take===1?"":"es")+" (its limit is "+p.max+"), then shut down. The address table is at "+tableUsed()+" of "+CAP+"."};
+  }
+  flood.runs.push({port:i,safe:!r.bad}); note(r.msg); return r;
+}
+function resetTable(){flood.entries=0;flood.full=false;}
+function reenable(i){var p=ports[i]; p.err=false; if(p.dev&&p.mode==="limit"){p.learned=[byId[p.dev].mac];} return "Port "+i+" re-enabled.";}
+
+/* ---------------- firewall rules ---------------- */
+var ZONES=["Any","Staff","Guest","Servers","Internet"];
+var SVCS=["Any","Web (TCP 80, 443)","DNS (UDP 53)","Ping (ICMP)","Tournament app (TCP 4433)","File share (TCP 445)","SSH (TCP 22)"];
+var PK=[
+ {n:"Guest phone to the internet, web",from:"Guest",to:"Internet",svc:"Web (TCP 80, 443)",want:"Permit"},
+ {n:"Guest phone to the internet, DNS",from:"Guest",to:"Internet",svc:"DNS (UDP 53)",want:"Permit"},
+ {n:"Guest phone to the Tournament Server, app",from:"Guest",to:"Servers",svc:"Tournament app (TCP 4433)",want:"Deny"},
+ {n:"Guest phone to the PlayerRoster server, file share",from:"Guest",to:"Servers",svc:"File share (TCP 445)",want:"Deny"},
+ {n:"Guest phone to an Admin PC, ping",from:"Guest",to:"Staff",svc:"Ping (ICMP)",want:"Deny"},
+ {n:"Staff laptop to the Tournament Server, app",from:"Staff",to:"Servers",svc:"Tournament app (TCP 4433)",want:"Permit"},
+ {n:"Staff laptop to the PlayerRoster server, file share",from:"Staff",to:"Servers",svc:"File share (TCP 445)",want:"Deny"},
+ {n:"Staff laptop to the internet, web",from:"Staff",to:"Internet",svc:"Web (TCP 80, 443)",want:"Permit"},
+ {n:"Staff laptop to the internet, DNS",from:"Staff",to:"Internet",svc:"DNS (UDP 53)",want:"Permit"},
+ {n:"Internet host to the Servers network, SSH",from:"Internet",to:"Servers",svc:"SSH (TCP 22)",want:"Deny"},
+ {n:"Internet host to a Staff device, ping",from:"Internet",to:"Staff",svc:"Ping (ICMP)",want:"Deny"}
+];
+var rules=[],defPol="Deny",fwRan=false,fwRes=[];
+function covers(a,b){return a==="Any"||a===b;} // does field a cover everything field b matches
+function matches(r,p){return (r.from==="Any"||r.from===p.from)&&(r.to==="Any"||r.to===p.to)&&(r.svc==="Any"||r.svc===p.svc);}
+function evalPkt(p){
+  for(var i=0;i<rules.length;i++){ if(matches(rules[i],p)) return {verdict:rules[i].act,rule:i+1}; }
+  return {verdict:defPol,rule:0};
+}
+function shadowed(i){
+  for(var j=0;j<i;j++){var a=rules[j],b=rules[i]; if(covers(a.from,b.from)&&covers(a.to,b.to)&&covers(a.svc,b.svc)) return j+1;}
+  return 0;
+}
+function runFw(){
+  fwRan=true; fwRes=PK.map(function(p){var e=evalPkt(p); return {p:p,verdict:e.verdict,rule:e.rule,ok:e.verdict===p.want};});
+}
+var DRAFT=[
+ {act:"Permit",from:"Guest",to:"Any",svc:"Any"},
+ {act:"Deny",from:"Guest",to:"Staff",svc:"Any"},
+ {act:"Deny",from:"Guest",to:"Servers",svc:"Any"},
+ {act:"Permit",from:"Staff",to:"Servers",svc:"Tournament app (TCP 4433)"},
+ {act:"Permit",from:"Staff",to:"Internet",svc:"Web (TCP 80, 443)"},
+ {act:"Permit",from:"Staff",to:"Internet",svc:"DNS (UDP 53)"}
+];
+
+/* ---------------- UI: tabs ---------------- */
+var tabs=[["tPorts","pPorts"],["tTable","pTable"],["tPlug","pPlug"],["tFw","pFw"]];
+tabs.forEach(function(t){
+  $(t[0]).addEventListener("click",function(){
+    if(t[0]==="tFw"&&!UNLOCKED){ $("fwLocked").hidden=false; }
+    tabs.forEach(function(x){ $(x[0]).setAttribute("aria-selected",x[0]===t[0]?"true":"false"); $(x[1]).hidden=(x[0]!==t[0]); });
+    if(t[0]==="tFw"&&!UNLOCKED){ $("pFw").hidden=false; $("fwBody").hidden=true; }
+    render();
+  });
+});
+if(UNLOCKED){ $("tFw").textContent="Firewall Rules"; $("fwLocked").hidden=true; $("fwBody").hidden=false; }
+else { $("tFw").textContent="Firewall Rules 🔒"; $("fwLocked").hidden=false; $("fwBody").hidden=true; }
+
+/* ---------------- UI: ports ---------------- */
+function renderFace(){
+  var f=$("face"); f.innerHTML="";
+  for(var i=1;i<=NP;i++){
+    (function(i){
+      var b=el("button","port"); b.type="button"; var s=status(i);
+      b.className="port "+s+(i===sel?" sel":"");
+      var d=ports[i].dev?byId[ports[i].dev]:null;
+      b.innerHTML="<span class='n'>"+i+"</span><span class='l'>"+(ports[i].on?"🔒":"")+(s==="shut"?"✕":(d?"●":"○"))+"</span>";
+      b.setAttribute("aria-label","Port "+i+": "+(s==="shut"?"shut down":(d?d.name:"empty"))+(ports[i].on?", port security on":""));
+      b.addEventListener("click",function(){sel=i;render();});
+      f.appendChild(b);
+    })(i);
+  }
+}
+function renderPortCfg(){
+  var p=ports[sel],d=p.dev?byId[p.dev]:null,s=status(sel);
+  $("pcTitle").textContent="Port "+sel+(sel===14?" (lobby wall jack)":"");
+  $("pcDev").textContent=s==="shut"?(d?d.name+" is plugged in, but the port is SHUT DOWN (violation).":"This port is shut down (violation)."):(d?"Connected: "+d.name+" ("+d.mac+")":"Nothing is plugged in.");
+  $("pcOn").checked=p.on;
+  $("pcMode").value=p.mode; $("pcMax").value=p.max;
+  $("pcListBox").hidden=!(p.on&&p.mode==="list"); $("pcLimitBox").hidden=!(p.on&&p.mode==="limit");
+  $("pcOpts").hidden=!p.on;
+  var ul=$("pcAllowed"); ul.innerHTML="";
+  p.allowed.forEach(function(m){ var dv=DEV.filter(function(x){return x.mac===m;})[0]; var li=el("li",null,(dv?dv.name+"  ":"")+m);
+    var b=el("button","mini","Remove"); b.type="button"; b.addEventListener("click",function(){p.allowed.splice(p.allowed.indexOf(m),1);render();}); li.appendChild(b); ul.appendChild(li);});
+  if(!p.allowed.length) ul.appendChild(el("li","muted","No addresses allowed yet. Nothing can connect."));
+  $("pcReset").hidden=!p.err;
+  $("pcAllowConnected").hidden=!(d&&p.on&&p.mode==="list"&&!p.err);
+}
+$("pcOn").addEventListener("change",function(){ports[sel].on=$("pcOn").checked; if(!ports[sel].on) ports[sel].learned=[]; render();});
+$("pcMode").addEventListener("change",function(){var p=ports[sel]; p.mode=$("pcMode").value; p.learned=(p.mode==="limit"&&p.dev&&!p.err)?[byId[p.dev].mac]:[]; render();});
+$("pcMax").addEventListener("change",function(){var v=parseInt($("pcMax").value,10); ports[sel].max=(v>=1&&v<=8)?v:1; render();});
+$("pcAdd").addEventListener("click",function(){var v=$("pcPick").value; if(!v) return; var p=ports[sel]; if(p.allowed.indexOf(v)<0) p.allowed.push(v); render();});
+$("pcAllowConnected").addEventListener("click",function(){var p=ports[sel]; var m=byId[p.dev].mac; if(p.allowed.indexOf(m)<0) p.allowed.push(m); render();});
+$("pcReset").addEventListener("click",function(){$("pcMsg").textContent=reenable(sel); render();});
+$("pcFlood").addEventListener("click",function(){var r=floodPort(sel); $("pcMsg").textContent=r.msg; render();});
+$("pcUnplug").addEventListener("click",function(){$("pcMsg").textContent=unplug(sel); render();});
+var pick=$("pcPick"); opt(pick,"","Choose a device to allow…"); DEV.forEach(function(d){opt(pick,d.mac,d.name+" ("+d.mac+")");});
+
+/* ---------------- UI: table ---------------- */
+function renderTbl(){
+  var tb=$("camBody"); tb.innerHTML="";
+  for(var i=1;i<=NP;i++){var p=ports[i]; if(p.dev&&!p.err){var d=byId[p.dev]; var tr=el("tr"); [d.mac,String(i),d.name].forEach(function(t){tr.appendChild(el("td",null,t));}); tb.appendChild(tr);} }
+  if(flood.entries>0){var tr2=el("tr","fake"); [flood.entries+" fake addresses","(flood)","not real devices"].forEach(function(t){tr2.appendChild(el("td",null,t));}); tb.appendChild(tr2);}
+  var used=tableUsed(); $("camBar").style.width=Math.min(100,Math.round(used/CAP*100))+"%"; $("camBar").className=flood.full?"full":"";
+  $("camTxt").textContent="Address table: "+Math.min(used,CAP)+" of "+CAP+" entries used"+(flood.full?" (FULL)":"");
+  $("camWarn").hidden=!flood.full;
+  $("camClear").hidden=!(flood.entries>0);
+}
+$("camClear").addEventListener("click",function(){resetTable();render();});
+/* ---------------- UI: plug ---------------- */
+var plugDev=$("plDev"),plugPort=$("plPort");
+DEV.forEach(function(d){opt(plugDev,d.id,d.name+" ("+d.mac+")");});
+for(var q=1;q<=NP;q++) opt(plugPort,String(q),"Port "+q+(q===14?" (lobby wall jack)":""));
+$("plGo").addEventListener("click",function(){
+  var r=plug(plugDev.value,parseInt(plugPort.value,10)); var o=$("plOut"); o.innerHTML="";
+  var pEl=el("p",r.ok?((r.blocked||r.good)?"ok":"bad"):"bad",(r.ok?((r.blocked||r.good)?"✔ ":"✘ "):"✘ ")+r.msg); o.appendChild(pEl); render();
+});
+$("plUnplug").addEventListener("click",function(){var o=$("plOut"); o.innerHTML=""; o.appendChild(el("p",null,unplug(parseInt(plugPort.value,10)))); render();});
+/* ---------------- checks (config based) ---------------- */
+function macChecks(){
+  var uk=byId.uk.mac;
+  function blocksUnknown(i){var p=ports[i]; return p.on&&((p.mode==="list"&&p.allowed.indexOf(uk)<0)||(p.mode==="limit"&&false));}
+  function onlyOwn(i,id){var p=ports[i]; return p.on&&p.mode==="list"&&p.allowed.length===1&&p.allowed[0]===byId[id].mac;}
+  var p9=ports[9];
+  return [
+    {ok:blocksUnknown(14),t:"Lobby jack (port 14) refuses the unknown laptop",h:"Turn port security on for port 14 and allow only addresses you approve."},
+    {ok:onlyOwn(1,"p1")&&ports[2].on&&ports[2].mode==="list"&&ports[2].allowed.length>0&&ports[2].allowed.every(function(m){return m===byId.p2.mac||m===byId.ln.mac;}),t:"Ports 1 and 2 each allow only their own player PC (port 2 may also allow the approved loaner)",h:"Use the allowed list on ports 1 and 2, with only that player's PC on each list."},
+    {ok:p9.on&&((p9.mode==="limit"&&p9.max<=4)||p9.mode==="list"),t:"Port 9 is protected against a flood of fake addresses",h:"Turn on port security for port 9 with a list or a small limit, then run the flood test again."},
+    {ok:flood.runs.some(function(r){return r.safe;}),t:"I ran a flood test on a protected port and the table stayed safe",h:"Select a protected port and press the flood test."},
+    {ok:ports[2].allowed.indexOf(byId.ln.mac)>-1,t:"The loaner laptop has been approved for port 2",h:"Add the loaner laptop's address to port 2's allowed list."}
+  ];
+}
+function renderChecks(id,items){var ul=$(id); ul.innerHTML=""; items.forEach(function(it){var li=el("li",it.ok?"ok":"bad",(it.ok?"✔ ":"✘ ")+it.t+(it.ok?"":" — "+it.h)); ul.appendChild(li);});}
+$("macCheck").addEventListener("click",function(){renderChecks("macList",macChecks());});
+
+/* ---------------- UI: firewall ---------------- */
+function mkSel(list,val,cb,label){var s=document.createElement("select"); s.setAttribute("aria-label",label); list.forEach(function(x){opt(s,x,x);}); s.value=val; s.addEventListener("change",function(){cb(s.value);}); return s;}
+function renderFw(){
+  if(!UNLOCKED) return;
+  var tb=$("ruleBody"); tb.innerHTML="";
+  rules.forEach(function(r,i){
+    var tr=el("tr"); var td=function(c){var x=el("td"); if(c) x.appendChild(c); tr.appendChild(x); return x;};
+    td(document.createTextNode(String(i+1)));
+    td(mkSel(["Permit","Deny"],r.act,function(v){r.act=v;fwRan=false;render();},"Action for rule "+(i+1)));
+    td(mkSel(ZONES,r.from,function(v){r.from=v;fwRan=false;render();},"From for rule "+(i+1)));
+    td(mkSel(ZONES,r.to,function(v){r.to=v;fwRan=false;render();},"To for rule "+(i+1)));
+    td(mkSel(SVCS,r.svc,function(v){r.svc=v;fwRan=false;render();},"Service for rule "+(i+1)));
+    var ctl=el("div","ctl");
+    var up=el("button","mini","▲"); up.type="button"; up.setAttribute("aria-label","Move rule "+(i+1)+" up"); up.disabled=(i===0); up.addEventListener("click",function(){var t=rules[i];rules[i]=rules[i-1];rules[i-1]=t;fwRan=false;render();});
+    var dn=el("button","mini","▼"); dn.type="button"; dn.setAttribute("aria-label","Move rule "+(i+1)+" down"); dn.disabled=(i===rules.length-1); dn.addEventListener("click",function(){var t=rules[i];rules[i]=rules[i+1];rules[i+1]=t;fwRan=false;render();});
+    var rm=el("button","mini","✕"); rm.type="button"; rm.setAttribute("aria-label","Delete rule "+(i+1)); rm.addEventListener("click",function(){rules.splice(i,1);fwRan=false;render();});
+    ctl.appendChild(up); ctl.appendChild(dn); ctl.appendChild(rm); td(ctl);
+    var w=shadowed(i); var wn=el("td","warn",w?("⚠ Never used: rule "+w+" already matches everything this rule would."):"");
+    tr.appendChild(wn); tb.appendChild(tr);
+  });
+  var tr=el("tr","implicit"); [" ","Implicit",defPol==="Deny"?"Everything else is denied":"Everything else is permitted","",""," ",""].slice(0,6).forEach(function(t,k){var c=el("td",null,k===1?(defPol==="Deny"?"Deny":"Permit"):(k===2?"any":(k===3?"any":(k===4?"any":(k===0?"·":""))))); tr.appendChild(c);});
+  var last=el("td","muted","Unmatched traffic gets the default policy."); tr.appendChild(last);
+  tb.appendChild(tr);
+  $("defPol").value=defPol;
+  var rb=$("testBody"); rb.innerHTML="";
+  PK.forEach(function(p,k){
+    var tr2=el("tr"); var r=fwRan?fwRes[k]:null;
+    [p.n,p.want==="Permit"?"Allow":"Block",r?(r.verdict==="Permit"?"Allowed":"Blocked"):"—",r?(r.rule?("Rule "+r.rule):"Default policy"):"—",r?(r.ok?"✔":"✘"):"—"].forEach(function(t,c){var x=el("td",(c===4&&r)?(r.ok?"ok":"bad"):null,t); tr2.appendChild(x);});
+    rb.appendChild(tr2);
+  });
+  var met=fwRan?fwRes.filter(function(r){return r.ok;}).length:0; var sh=0; rules.forEach(function(r,i){if(shadowed(i)) sh++;});
+  $("fwSum").textContent=fwRan?("Goals met: "+met+" of "+PK.length+(sh?(" · "+sh+" rule"+(sh===1?"":"s")+" never used"):"")):"Press Test my rules to see how your rules handle the 11 test packets.";
+  $("addRule").disabled=(rules.length>=10);
+}
+$("addRule").addEventListener("click",function(){rules.push({act:"Permit",from:"Any",to:"Any",svc:"Any"});fwRan=false;render();});
+$("clrRules").addEventListener("click",function(){rules=[];fwRan=false;render();});
+$("loadDraft").addEventListener("click",function(){rules=DRAFT.map(function(r){return {act:r.act,from:r.from,to:r.to,svc:r.svc};});fwRan=false;render();});
+$("defPol").addEventListener("change",function(){defPol=$("defPol").value;fwRan=false;render();});
+$("runFw").addEventListener("click",function(){runFw();render();});
+function fwChecks(){
+  var met=fwRan?fwRes.filter(function(r){return r.ok;}).length:0; var sh=0; rules.forEach(function(r,i){if(shadowed(i)) sh++;});
+  return [
+    {ok:fwRan&&met===PK.length,t:"All 11 test packets get the result the goals call for",h:"Look at the ✘ rows. Which rule decided each one, and is it in the right place?"},
+    {ok:sh===0&&rules.length>0,t:"No rule is hidden behind an earlier rule",h:"A rule that never gets used is in the wrong spot or isn't needed."},
+    {ok:defPol==="Deny",t:"The default policy denies anything not allowed",h:"Set the default policy to Deny."},
+    {ok:rules.length>0&&rules.length<=8,t:"The rule list is short and simple (8 rules or fewer)",h:"Fewer rules are easier to understand and maintain."},
+    {ok:rules.length>0&&!rules.some(function(r){return r.act==="Permit"&&r.to==="Any"&&r.svc==="Any";}),t:"No rule permits everything to everywhere",h:"A permit rule with To: Any and Service: Any is too broad. Narrow it to what is really needed."}
+  ];
+}
+$("fwCheck").addEventListener("click",function(){renderChecks("fwList",fwChecks());});
+
+/* ---------------- evidence ---------------- */
+function renderEvidence(){
+  var h=$("evidence"); if(!h) return; h.innerHTML="";
+  var cs=macChecks(); var okn=cs.filter(function(c){return c.ok;}).length;
+  var p=el("p"); p.innerHTML="<span class='stat'>Port security checks: "+okn+" of "+cs.length+"</span><span class='stat'>Flood tests run: "+flood.runs.length+"</span>"; h.appendChild(p);
+  var t=el("table"); t.innerHTML="<thead><tr><th>Port</th><th>Port security</th><th>Setting</th></tr></thead>"; var tb=el("tbody");
+  var any=false;
+  for(var i=1;i<=NP;i++){var pp=ports[i]; if(pp.on){any=true; var tr=el("tr"); var set=pp.mode==="list"?("Only: "+(pp.allowed.map(function(m){var dv=DEV.filter(function(x){return x.mac===m;})[0];return dv?dv.name:m;}).join(", ")||"(nothing allowed)")):("Limit of "+pp.max+" address"+(pp.max===1?"":"es")); [String(i),"On",set].forEach(function(x){tr.appendChild(el("td",null,x));}); tb.appendChild(tr);} }
+  if(!any){var r0=el("tr"); [" ","Off on every port","(nothing configured yet)"].forEach(function(x){r0.appendChild(el("td",null,x));}); tb.appendChild(r0);}
+  t.appendChild(tb); h.appendChild(t);
+  var l=el("p"); l.innerHTML="<strong>What happened when I tested:</strong>"; h.appendChild(l);
+  if(!log.length) h.appendChild(el("p","muted","No tests yet."));
+  else {var ul=el("ul"); log.forEach(function(x){ul.appendChild(el("li",null,x));}); h.appendChild(ul);}
+  if(UNLOCKED&&(rules.length||fwRan)){
+    var m=fwRan?fwRes.filter(function(r){return r.ok;}).length:0;
+    var f=el("p"); f.innerHTML="<strong>My firewall rules</strong> (top to bottom; default policy: "+defPol+"; goals met: "+(fwRan?m+" of "+PK.length:"not tested")+")"; h.appendChild(f);
+    var ft=el("table"); ft.innerHTML="<thead><tr><th>#</th><th>Action</th><th>From</th><th>To</th><th>Service</th></tr></thead>"; var fb=el("tbody");
+    rules.forEach(function(r,i){var tr=el("tr"); [String(i+1),r.act,r.from,r.to,r.svc].forEach(function(x){tr.appendChild(el("td",null,x));}); fb.appendChild(tr);});
+    ft.appendChild(fb); h.appendChild(ft);
+  }
+}
+/* ---------------- reset / render ---------------- */
+$("labReset").addEventListener("click",function(){resetPorts();rules=[];defPol="Deny";fwRan=false;sel=1;$("pcMsg").textContent="";$("plOut").innerHTML="";$("macList").innerHTML="";render();});
+function render(){renderFace();renderPortCfg();renderTbl();renderFw();renderEvidence();}
+render();
+window.__lab={ports:function(){return ports;},plug:plug,floodPort:floodPort,rules:function(){return rules;},setRules:function(r,d){rules=r;if(d)defPol=d;fwRan=false;render();},runFw:function(){runFw();return fwRes;},shadowed:shadowed,macChecks:macChecks,fwChecks:fwChecks,unlocked:UNLOCKED,evalPkt:evalPkt,PK:PK};
+})();
+
+</script>
+<script>
+(function(){
+  "use strict";
+  function grow(t){t.style.height="auto";t.style.height=(t.scrollHeight+2)+"px";}
+  document.querySelectorAll("input[type=text]").forEach(function(i){
+    if(i.id==="name"||i.id==="period"||i.closest(".router")) return;
+    var t=document.createElement("textarea");
+    t.rows=1; t.className="auto";
+    ["aria-label","style"].forEach(function(a){ if(i.hasAttribute(a)) t.setAttribute(a,i.getAttribute(a)); });
+    i.parentNode.replaceChild(t,i);
+  });
+  var areas=Array.prototype.slice.call(document.querySelectorAll("textarea"));
+  areas.forEach(function(t){
+    var d=document.createElement("div");
+    d.className="pc"; d.setAttribute("aria-hidden","true");
+    if(t.hasAttribute("style")) d.setAttribute("style",t.getAttribute("style"));
+    t.parentNode.insertBefore(d,t.nextSibling);
+    function sync(){d.textContent=t.value;}
+    t.addEventListener("input",function(){sync();if(t.className==="auto")grow(t);});
+    t._sync=sync; sync(); if(t.className==="auto") grow(t);
+  });
+  window.addEventListener("beforeprint",function(){areas.forEach(function(t){t._sync();});});
+  window.addEventListener("resize",function(){areas.forEach(function(t){if(t.className==="auto")grow(t);});});
+})();
+</script>
+</body>
+</html>
